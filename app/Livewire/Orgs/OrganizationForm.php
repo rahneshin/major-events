@@ -27,11 +27,17 @@ class OrganizationForm extends Component
 
     public string $description = '';
 
-    public function mount(?int $organization = null): void
+    public function mount(mixed $organization = null): void
     {
-        // route model binding passes id; resolve manually for create/edit dual use
-        if ($organization) {
-            $model = Organization::query()->findOrFail($organization);
+        $model = null;
+
+        if ($organization instanceof Organization) {
+            $model = $organization;
+        } elseif (is_numeric($organization)) {
+            $model = Organization::query()->findOrFail((int) $organization);
+        }
+
+        if ($model) {
             $this->authorize('update', $model);
             $this->organizationId = $model->id;
             $this->name = $model->name;
