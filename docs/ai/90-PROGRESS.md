@@ -15,8 +15,8 @@
 | دیتابیس | SQLite (تا Step 16) |
 | مخزن Git | https://github.com/rahneshin/major-events |
 | شاخه‌ی اصلی | main |
-| آخرین مرحله‌ی DONE | 01 |
-| مرحله‌ی در حال انجام | 02 |
+| آخرین مرحله‌ی DONE | 02 |
+| مرحله‌ی در حال انجام | — (آماده Step 03) |
 | تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۸/۲۹ |
 
 ---
@@ -29,7 +29,7 @@
 |---|---|---|---|---|---|
 | 00 | نصب Laravel، Git، محیط | ✅ | step/00-tooling-and-locale | سبز | اسکلت + Pest + Larastan + Livewire + locale fa + CI |
 | 01 | زیرساخت UI/RTL/جلالی | ✅ | step/01-ui-rtl-jalali | سبز | لایوت RTL، کامپوننت‌ها، Jalali، PhoneNumber، styleguide |
-| 02 | ورود با موبایل (OTP) | 🟨 | step/02-otp-login | — | کد پیاده‌سازی شده؛ منتظر migrate + تست |
+| 02 | ورود با موبایل (OTP) | ✅ | step/02-otp-login | سبز | OTP، Livewire، rate-limit، تست‌ها پاس |
 | 03 | نوع حساب و Entitlement | ⬜ | | | |
 | 04 | سازمان مجازی و اعضا | ⬜ | | | |
 | 05 | رویداد (هسته) | ⬜ | | | |
@@ -44,7 +44,7 @@
 | 14 | خروجی گرفتن | ⬜ | | | |
 | 15 | پایگاه دانش: آپلود/استخراج | ⬜ | | | |
 | 16 | Chunk/Embedding/جست‌وجو | ⬜ | | | |
-| 17 gross vis | Prompt Composer و AI Planner | ⬜ | | | |
+| 17 | Prompt Composer و AI Planner | ⬜ | | | |
 | 18 | پیشنهاد AI ← تأیید ← وظیفه | ⬜ | | | |
 | 19 | ارزیابی پسارویداد | ⬜ | | | |
 | 20 | پنل ادمین و امنیت | ⬜ | | | |
@@ -104,6 +104,7 @@ phpstan.neon                           [Step 00]
 pint.json                              [Step 00]
 .github/workflows/ci.yml               [Step 00]
 vite.config.js                         [Step 01]
+tests/Pest.php                         [Step 02] TestCase + RefreshDatabase برای Feature
 
 ### Auth / OTP
 app/Models/User.php                    [Step 02] phone-based, soft deletes, uuid
@@ -118,6 +119,7 @@ app/Livewire/Auth/CompleteProfile.php  [Step 02]
 app/Console/Commands/PruneOtpCodes.php [Step 02]
 resources/views/livewire/auth/*        [Step 02]
 lang/fa/auth.php                       [Step 02]
+tests/Feature/Auth/OtpLoginTest.php    [Step 02]
 
 ### Support (Step 01)
 app/Support/PhoneNumber.php
@@ -165,9 +167,9 @@ APP_*, DB_*, SMS_DRIVER
 ## ۷. Changelog
 
 ## UPDATE — Step 02 — ورود با موبایل OTP — ۱۴۰۵/۰۸/۲۹
-Status: PARTIAL (کد کامل؛ منتظر migrate + تست محلی)
+Status: DONE
 Branch: step/02-otp-login
-Commit: feat(auth): mobile OTP login - migrations, models, services, Livewire, tests
+Commit: feat(auth): mobile OTP login + fix(tests): add Pest.php
 Files created: [
   database/migrations/2026_11_19_000001_create_otp_codes_table.php,
   app/Models/OtpCode.php,
@@ -184,7 +186,8 @@ Files created: [
   resources/views/livewire/auth/complete-profile.blade.php,
   lang/fa/auth.php,
   config/sms.php,
-  tests/Feature/Auth/OtpLoginTest.php
+  tests/Feature/Auth/OtpLoginTest.php,
+  tests/Pest.php
 ]
 Files modified: [
   database/migrations/0001_01_01_000000_create_users_table.php,
@@ -201,8 +204,8 @@ New packages: []
 Routes added: [/login, /verify, /complete-profile, POST /logout]
 Decisions: [SMS driver=log تا انتخاب سرویس واقعی؛ کد هش‌شده؛ rate-limit شماره+IP]
 Known issues / TODO: [انتخاب سرویس پیامک ایرانی]
-Tests: نوشته شده — باید محلی اجرا شود
-Next suggested step: 03 (پس از سبز شدن تست‌ها)
+Tests: سبز (OtpLoginTest پاس شد)
+Next suggested step: 03 — نوع حساب و Entitlement
 
 ## UPDATE — Step 01 — زیرساخت UI/RTL/جلالی — ۱۴۰۵/۰۸/۲۹
 Status: DONE
