@@ -15,8 +15,8 @@
 | دیتابیس | SQLite (تا Step 16) |
 | مخزن Git | https://github.com/rahneshin/major-events |
 | شاخه‌ی اصلی | main |
-| آخرین مرحله‌ی DONE | 03 |
-| مرحله‌ی در حال انجام | — (آماده Step 04) |
+| آخرین مرحله‌ی DONE | 04 |
+| مرحله‌ی در حال انجام | — (آماده Step 05) |
 | تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۸/۲۹ |
 
 ---
@@ -29,9 +29,9 @@
 |---|---|---|---|---|---|
 | 00 | نصب Laravel، Git، محیط | ✅ | step/00-tooling-and-locale | سبز | اسکلت + Pest + Larastan + Livewire + locale fa + CI |
 | 01 | زیرساخت UI/RTL/جلالی | ✅ | step/01-ui-rtl-jalali | سبز | لایوت RTL، کامپوننت‌ها، Jalali، PhoneNumber، styleguide |
-| 02 | ورود با موبایل (OTP) | ✅ | step/02-otp-login | سبز | OTP، Livewire، rate-limit، تست‌ها پاس |
-| 03 | نوع حساب و Entitlement | ✅ | step/03-account-type-entitlement | نوشته‌شده | AccountType، plans.php، EntitlementService، onboarding، ارتقا |
-| 04 | سازمان مجازی و اعضا | ⬜ | | | |
+| 02 | ورود با موبایل (OTP) | ✅ | step/02-otp-login | سبز | OTP، Livewire، rate-limit |
+| 03 | نوع حساب و Entitlement | ✅ | step/03-account-type-entitlement | سبز + تست دستی | onboarding، ارتقا، plans.php |
+| 04 | سازمان مجازی و اعضا | ✅ | step/04-organizations | نوشته‌شده | سازمان، عضو، دعوت، نقش، انتقال مالکیت |
 | 05 | رویداد (هسته) | ⬜ | | | |
 | 06 | اعضا و نقش‌های رویداد | ⬜ | | | |
 | 07 | کمیته‌ها | ⬜ | | | |
@@ -55,6 +55,8 @@
 
 ## ۳. پیش‌فرض‌های محصول (قابل تغییر توسط امیر)
 
+منبع: `config/plans.php`
+
 | کلید | کاربر عادی | کاربر سازمانی |
 |---|---|---|
 | active_events | 1 | نامحدود |
@@ -63,11 +65,6 @@
 | tasks_per_event | 50 | نامحدود |
 | organizations | 0 | 3 |
 | knowledge_ai_requests_per_month | 0 | 100 |
-| export | PDF ساده | PDF/Word/Excel |
-| مسابقات، اسپانسرینگ | ندارد | دارد |
-| پایگاه دانش و AI | ندارد | دارد (با سهمیه‌ی ماهانه) |
-
-منبع حقیقت اعداد: `config/plans.php`
 
 ---
 
@@ -75,117 +72,68 @@
 
 | تاریخ | تصمیم | دلیل | جایگزین‌های ردشده | مرحله |
 |---|---|---|---|---|
-| ۱۴۰۵/۰۸/۲۹ | استفاده از SQLite تا Step 16 | سادگی توسعه محلی با Herd | PostgreSQL از ابتدا | 00 |
-| ۱۴۰۵/۰۸/۲۹ | سطح Larastan = 5 | تعادل بین سخت‌گیری و سرعت اولیه | سطح بالاتر | 00 |
-| ۱۴۰۵/۰۸/۲۹ | فونت Vazirmatn self-hosted | بدون CDN، کنترل کامل | CDN / Bunny fonts | 01 |
-| ۱۴۰۵/۰۸/۲۹ | date-picker ساده متنی (شمسی) | سادگی MVP؛ بعداً تقویم پیشرفته | پکیج سنگین تقویم | 01 |
-| ۱۴۰۵/۰۸/۲۹ | ورود فقط با OTP موبایل، بدون رمز | سادگی برای کاربر ایرانی | ایمیل/رمز | 02 |
-| ۱۴۰۵/۰۸/۲۹ | SMS driver پیش‌فرض: log | تا انتخاب سرویس واقعی | — | 02 |
-| ۱۴۰۵/۰۸/۲۹ | کاهش سازمانی → عادی فعلاً ممنوع | سادگی؛ جلوگیری از نقض سقف سازمان/رویداد | کاهش مشروط | 03 |
-| ۱۴۰۵/۰۸/۲۹ | محدودیت‌ها فقط از EntitlementService | تغییر سقف بدون تغییر کد | if پراکنده روی account_type | 03 |
-| — | مبلغ‌ها به ریال، عدد صحیح | جلوگیری از خطای اعشاری | float/decimal | 09 |
-| — | قرعه و جدول مسابقات با الگوریتم قطعی | قابل ممیزی و تست | استفاده از AI | 12 |
-| — | AI فقط پیشنهاد می‌دهد؛ اجرا پس از تأیید انسان | کنترل کیفیت و مسئولیت | اجرای خودکار | 18 |
+| ۱۴۰۵/۰۸/۲۹ | SQLite تا Step 16 | سادگی محلی | PostgreSQL از ابتدا | 00 |
+| ۱۴۰۵/۰۸/۲۹ | ورود فقط OTP | سادگی کاربر ایرانی | ایمیل/رمز | 02 |
+| ۱۴۰۵/۰۸/۲۹ | SMS driver=log | تا انتخاب سرویس | — | 02 |
+| ۱۴۰۵/۰۸/۲۹ | کاهش سازمانی→عادی ممنوع | جلوگیری از نقض سقف | کاهش مشروط | 03 |
+| ۱۴۰۵/۰۸/۲۹ | محدودیت‌ها فقط EntitlementService | تغییر سقف بدون کد | if پراکنده | 03 |
+| ۱۴۰۵/۰۸/۲۹ | مالک نمی‌تواند ترک کند مگر انتقال | یکپارچگی مالکیت | حذف آزاد مالک | 04 |
 
 ### تصمیم‌های باز
-- [ ] سرویس پیامک ایرانی (کاوه‌نگار / ملی‌پیامک / sms.ir) — فعلاً LogSmsGateway
-- [ ] RAG داخل Laravel یا سرویس FastAPI جدا؟ (Step 15)
-- [ ] سیاست آپلود و مجوز منابع (Step 15)
-- [ ] مدل embedding و مدل زبانی (Step 16/17)
-- [ ] کتابخانه‌ی PDF فارسی (Step 14)
+- [ ] سرویس پیامک ایرانی
+- [ ] RAG داخل Laravel یا FastAPI (Step 15)
+- [ ] کتابخانه PDF فارسی (Step 14)
 
 ---
 
 ## ۵. Manifest فایل‌های مخزن
 
-### پیکربندی و ریشه
-composer.json, .env.example, config/app.php, config/sms.php, config/plans.php
-phpstan.neon, pint.json, .github/workflows/ci.yml, vite.config.js
-tests/Pest.php
+### Account / Entitlement (03)
+AccountType, EntitlementService, plans.php, SelectAccountType, AccountPage
 
-### Auth / OTP (Step 02)
-app/Models/User.php, OtpCode.php
-app/Services/OtpService.php, Sms/*
-app/Livewire/Auth/PhoneLogin, VerifyOtp, CompleteProfile, SelectAccountType
+### Organizations (04)
+app/Enums/OrgRole.php, OrganizationType.php
+app/Models/Organization.php, OrganizationInvitation.php
+app/Services/OrganizationService.php
+app/Policies/OrganizationPolicy.php
+app/Livewire/Orgs/OrganizationIndex|Form|Show
+database/migrations/2026_11_19_000003_create_organizations_tables.php
+lang/fa/org.php
+tests/Feature/Orgs/OrganizationTest.php
+users.current_organization_id
 
-### Account / Entitlement (Step 03)
-app/Enums/AccountType.php
-app/Services/EntitlementService.php
-app/Exceptions/LimitExceededException.php
-app/Http/Middleware/EnsureAccountTypeSelected.php
-app/Models/AccountUpgrade.php
-app/Livewire/Account/AccountPage.php
-config/plans.php
-lang/fa/account.php
-tests/Feature/Account/EntitlementTest.php
-
-### Support
-app/Support/PhoneNumber.php, Jalali.php, helpers.php (feature, limit_reached)
-
-### Migrationها
-- users (phone, uuid, account_type, softDeletes)
-- otp_codes
-- account_upgrades
-
-### Routeها
-- /login, /verify, /complete-profile, /select-account-type, POST /logout
-- /account (نیازمند account.type)
-- /styleguide (local)
+### Routeها (جدید)
+/organizations, /organizations/create, /organizations/{id}, /organizations/{id}/edit
 
 ---
 
-## ۶. مشکلات شناخته‌شده و بدهی فنی
+## ۶. مشکلات شناخته‌شده
 
-| # | شرح | شدت | مرحله‌ی کشف | وضعیت |
-|---|---|---|---|---|
-| 1 | فایل‌های فونت Vazirmatn باید دستی در resources/fonts/vazirmatn قرار گیرند | پایین | 01 | باز |
-| 2 | اخطار deprecation در Verta::instance (پکیج بالادستی) | پایین | 01 | باز |
-| 3 | درایور واقعی پیامک هنوز انتخاب نشده (فعلاً log) | متوسط | 02 | باز |
+| # | شرح | شدت | وضعیت |
+|---|---|---|---|
+| 1 | فونت Vazirmatn دستی | پایین | باز |
+| 2 | SMS واقعی انتخاب نشده | متوسط | باز |
+| 3 | پذیرش دعوت از لینک عمومی هنوز UI جدا ندارد (accept از سرویس) | پایین | باز |
 
 ---
 
 ## ۷. Changelog
 
-## UPDATE — Step 03 — نوع حساب و Entitlement — ۱۴۰۵/۰۸/۲۹
-Status: DONE (کد کامل؛ تست‌ها نوشته شده — اجرا روی ماشین محلی)
-Branch: step/03-account-type-entitlement
-Commit: feat(accounts): account types, entitlement service, onboarding and upgrade
-Files created: [
-  app/Enums/AccountType.php,
-  config/plans.php,
-  app/Exceptions/LimitExceededException.php,
-  app/Services/EntitlementService.php,
-  app/Http/Middleware/EnsureAccountTypeSelected.php,
-  database/migrations/2026_11_19_000002_create_account_upgrades_table.php,
-  app/Models/AccountUpgrade.php,
-  app/Livewire/Auth/SelectAccountType.php,
-  app/Livewire/Account/AccountPage.php,
-  resources/views/livewire/auth/select-account-type.blade.php,
-  resources/views/livewire/account/account-page.blade.php,
-  lang/fa/account.php,
-  tests/Feature/Account/EntitlementTest.php
-]
-Files modified: [
-  app/Models/User.php,
-  app/Livewire/Auth/CompleteProfile.php,
-  app/Support/helpers.php,
-  app/Providers/AppServiceProvider.php,
-  bootstrap/app.php,
-  routes/web.php,
-  database/factories/UserFactory.php
-]
-Migrations: [account_upgrades]
-New env keys: []
-New packages: []
-Routes added: [/select-account-type, /account]
-Decisions: [کاهش سازمانی→عادی ممنوع؛ همه محدودیت‌ها از EntitlementService؛ ارتقا بدون پرداخت]
-Known issues / TODO: []
-Tests: EntitlementTest نوشته شده
-Next suggested step: 04 — سازمان مجازی و اعضا
+## UPDATE — Step 04 — سازمان مجازی و اعضا — ۱۴۰۵/۰۸/۲۹
+Status: DONE (کد کامل؛ تست‌ها نوشته‌شده — اجرا محلی)
+Branch: step/04-organizations
+Commit: feat(orgs): organizations, members, invitations, roles
+Files created: [Organization*, OrgRole, OrganizationType, OrganizationService, OrganizationPolicy, Livewire Orgs/*, migration, lang/fa/org.php, OrganizationTest]
+Files modified: [User.php, routes/web.php, AppServiceProvider.php]
+Migrations: [organizations, organization_user, organization_invitations, users.current_organization_id]
+Routes added: [/organizations*]
+Decisions: [مالک فقط با transfer ترک می‌کند؛ سقف organizations از Entitlement]
+Tests: OrganizationTest
+Next suggested step: 05 — رویداد (هسته)
 
-## UPDATE — Step 02 — ورود با موبایل OTP — ۱۴۰۵/۰۸/۲۹
-Status: DONE
-Branch: step/02-otp-login
+## UPDATE — Step 03 — نوع حساب و Entitlement — ۱۴۰۵/۰۸/۲۹
+Status: DONE (تست دستی مرورگر تأیید شد)
+Branch: step/03-account-type-entitlement
 ...
 
 ---
@@ -195,5 +143,5 @@ Branch: step/02-otp-login
 1. فایل‌های چت‌بات را جایگزین کن
 2. دستورها را اجرا کن
 3. تست دستی انجام بده
-4. بلوک UPDATE را در بخش ۷ بچسبان و جداول را به‌روز کن
+4. بلوک UPDATE را بچسبان
 5. Commit و push کن

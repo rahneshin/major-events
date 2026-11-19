@@ -27,18 +27,22 @@ class OrganizationForm extends Component
 
     public string $description = '';
 
-    public function mount(?Organization $organization = null): void
+    public function mount(?int $organization = null): void
     {
-        if ($organization?->exists) {
-            $this->authorize('update', $organization);
-            $this->organizationId = $organization->id;
-            $this->name = $organization->name;
-            $this->type = $organization->type->value;
-            $this->city = (string) $organization->city;
-            $this->description = (string) $organization->description;
-        } else {
-            $this->authorize('create', Organization::class);
+        // route model binding passes id; resolve manually for create/edit dual use
+        if ($organization) {
+            $model = Organization::query()->findOrFail($organization);
+            $this->authorize('update', $model);
+            $this->organizationId = $model->id;
+            $this->name = $model->name;
+            $this->type = $model->type->value;
+            $this->city = (string) $model->city;
+            $this->description = (string) $model->description;
+
+            return;
         }
+
+        $this->authorize('create', Organization::class);
     }
 
     public function save(OrganizationService $service): void
