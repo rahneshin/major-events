@@ -10,6 +10,11 @@ class EnsureAccountTypeSelected
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // Livewire AJAX باید بدون ریدایرکت onboarding اجرا شود
+        if ($request->is('livewire/*') || $request->routeIs('livewire.*')) {
+            return $next($request);
+        }
+
         $user = $request->user();
 
         if ($user === null) {
