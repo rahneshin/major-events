@@ -59,7 +59,7 @@
 |---|---|---|
 | active_events | 1 | نامحدود |
 | committees_per_event | 3 | نامحدود |
-| members_per_event | n| 10 | نامحدود |
+| members_per_event | 10 | نامحدود |
 | tasks_per_event | 50 | نامحدود |
 | organizations | 0 | 3 |
 | knowledge_ai_requests_per_month | 0 | 100 |
