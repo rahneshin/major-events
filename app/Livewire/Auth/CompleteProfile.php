@@ -22,6 +22,12 @@ class CompleteProfile extends Component
         }
 
         if (Auth::user()->isProfileComplete()) {
+            if (! Auth::user()->hasSelectedAccountType()) {
+                $this->redirect(route('auth.select-account-type'), navigate: true);
+
+                return;
+            }
+
             $this->redirect(route('home'), navigate: true);
         }
     }
@@ -38,7 +44,7 @@ class CompleteProfile extends Component
         $user = Auth::user();
         $user->forceFill(['name' => trim($this->name)])->save();
 
-        $this->redirect(route('home'), navigate: true);
+        $this->redirect(route('auth.select-account-type'), navigate: true);
     }
 
     public function render()

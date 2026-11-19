@@ -1,7 +1,9 @@
 <?php
 
+use App\Livewire\Account\AccountPage;
 use App\Livewire\Auth\CompleteProfile;
 use App\Livewire\Auth\PhoneLogin;
+use App\Livewire\Auth\SelectAccountType;
 use App\Livewire\Auth\VerifyOtp;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -28,6 +30,7 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/complete-profile', CompleteProfile::class)->name('auth.complete-profile');
+    Route::get('/select-account-type', SelectAccountType::class)->name('auth.select-account-type');
 
     Route::post('/logout', function () {
         Auth::logout();
@@ -36,4 +39,8 @@ Route::middleware('auth')->group(function () {
 
         return redirect()->route('auth.login');
     })->name('auth.logout');
+
+    Route::middleware('account.type')->group(function () {
+        Route::get('/account', AccountPage::class)->name('account.index');
+    });
 });
