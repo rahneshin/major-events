@@ -35,7 +35,7 @@ class Jalali
         try {
             $verta = Verta::parseFormat($format, $jalaliDate);
 
-            return $verta->datetime();
+            return Carbon::instance($verta->datetime());
         } catch (\Exception) {
             return null;
         }
