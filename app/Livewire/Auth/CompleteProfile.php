@@ -16,35 +16,46 @@ class CompleteProfile extends Component
     public function mount(): void
     {
         if (! Auth::check()) {
-            $this->redirect(route('auth.login'), navigate: true);
+            $this->redirect(route('auth.login'));
 
             return;
         }
 
-        if (Auth::user()->isProfileComplete()) {
-            if (! Auth::user()->hasSelectedAccountType()) {
-                $this->redirect(route('auth.select-account-type'), navigate: true);
+        $user = Auth::user();
+
+        if ($user->isProfileComplete()) {
+            if (! $user->hasSelectedAccountType()) {
+                $this->redirect(route('auth.select-account-type'));
 
                 return;
             }
 
-            $this->redirect(route('home'), navigate: true);
+            $this->redirect(route('home'));
         }
     }
 
     public function save(): void
     {
-        $this->validate([
+        $validated = $this->validate([
             'name' => ['required', 'string', 'min:2', 'max:100'],
-        ], [], [
+        ], [
+            'name.required' => 'وارد کردن نام الزامی است.',
+            'name.min' => 'نام باید حداقل ۲ کاراکتر باشد.',
+        ], [
             'name' => __('ui.name'),
+        ]);
         ]);
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $user->forceFill(['name' => trim($this->name)])->save();
 
-        $this->redirect(route('auth.select-account-type'), navigate: true);
+        $user->forceFill([
+            'name' => trim($validated['name']),
+        ])->save();
+
+        // ریدایرکت کامل بدون SPA navigate تا middleware/session درست اعمال شود
+        $this->redirectIntended = false;
+        $this->redirect(route('auth.select-account-type'));
     }
 
     public function render()

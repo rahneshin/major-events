@@ -17,7 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'account.type' => EnsureAccountTypeSelected::class,
         ]);
 
-        $middleware->appendToGroup('web', [
+        // فقط روی درخواست‌های عادی وب؛ Livewire داخل middleware خودش رد می‌شود
+        $middleware->web(append: [
             EnsureAccountTypeSelected::class,
         ]);
     })
