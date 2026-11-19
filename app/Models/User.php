@@ -3,8 +3,11 @@
 namespace App\Models;
 
 use App\Enums\AccountType;
+use App\Enums\OrgRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -22,6 +25,7 @@ class User extends Authenticatable
         'phone',
         'phone_verified_at',
         'account_type',
+        'current_organization_id',
         'avatar_path',
         'last_login_at',
         'status',
@@ -54,6 +58,23 @@ class User extends Authenticatable
         return $this->hasMany(AccountUpgrade::class);
     }
 
+    public function organizations(): BelongsToMany
+    {
+        return $this->belongsToMany(Organization::class)
+            ->withPivot(['role', 'joined_at'])
+            ->withTimestamps();
+    }
+
+    public function ownedOrganizations(): HasMany
+    {
+        return $this->hasMany(Organization::class, 'owner_id');
+    }
+
+    public function currentOrganization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class, 'current_organization_id');
+    }
+
     public function isProfileComplete(): bool
     {
         return filled($this->name);
@@ -82,5 +103,10 @@ class User extends Authenticatable
     public function isOrganizational(): bool
     {
         return $this->account_type === AccountType::Organizational;
+    }
+
+    public function orgRoleIn(Organization $organization): ?OrgRole
+    {
+        return $organization->roleOf($this);
     }
 }
