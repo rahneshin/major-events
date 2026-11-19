@@ -2,21 +2,23 @@
 
 namespace App\Providers;
 
+use App\Services\Sms\LogSmsGateway;
+use App\Services\Sms\NullSmsGateway;
+use App\Services\Sms\SmsGateway;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        //
+        $this->app->bind(SmsGateway::class, function () {
+            return match (config('sms.driver', 'log')) {
+                'null' => new NullSmsGateway,
+                default => new LogSmsGateway,
+            };
+        });
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         //
