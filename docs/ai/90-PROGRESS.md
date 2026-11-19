@@ -9,15 +9,15 @@
 
 | مورد | مقدار |
 |---|---|
-| نسخه‌ی PHP | _(پس از Step 00)_ |
-| نسخه‌ی Laravel | _(پس از Step 00)_ |
-| نسخه‌ی Livewire | _(پس از Step 00)_ |
-| دیتابیس | PostgreSQL _(نسخه؟)_ |
-| مخزن Git | _(آدرس)_ |
+| نسخه‌ی PHP | 8.3 |
+| نسخه‌ی Laravel | 13.17 |
+| نسخه‌ی Livewire | نصب شده |
+| دیتابیس | SQLite (تا Step 16) |
+| مخزن Git | https://github.com/rahneshin/major-events |
 | شاخه‌ی اصلی | main |
-| آخرین مرحله‌ی DONE | — |
-| مرحله‌ی در حال انجام | Step 00 |
-| تاریخ آخرین به‌روزرسانی | _(تاریخ شمسی)_ |
+| آخرین مرحله‌ی DONE | 00 |
+| مرحله‌ی در حال انجام | — |
+| تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۸/۲۹ |
 
 ---
 
@@ -27,7 +27,7 @@
 
 | # | مرحله | وضعیت | شاخه | تست‌ها | توضیح |
 |---|---|---|---|---|---|
-| 00 | نصب Laravel، Git، محیط | ⬜ | | | |
+| 00 | نصب Laravel، Git، محیط | ✅ | step/00-tooling-and-locale | سبز | اسکلت + Pest + Larastan + Livewire + locale fa + CI |
 | 01 | زیرساخت UI/RTL/جلالی | ⬜ | | | |
 | 02 | ورود با موبایل (OTP) | ⬜ | | | |
 | 03 | نوع حساب و Entitlement | ⬜ | | | |
@@ -55,8 +55,6 @@
 
 ## ۳. پیش‌فرض‌های محصول (قابل تغییر توسط امیر)
 
-> هر بار عددی تغییر کرد، هم اینجا و هم `config/plans.php` را به‌روز کن.
-
 | کلید | کاربر عادی | کاربر سازمانی |
 |---|---|---|
 | active_events | 1 | نامحدود |
@@ -74,52 +72,66 @@
 
 | تاریخ | تصمیم | دلیل | جایگزین‌های ردشده | مرحله |
 |---|---|---|---|---|
+| ۱۴۰۵/۰۸/۲۹ | استفاده از SQLite تا Step 16 | سادگی توسعه محلی با Herd | PostgreSQL از ابتدا | 00 |
+| ۱۴۰۵/۰۸/۲۹ | سطح Larastan = 5 | تعادل بین سخت‌گیری و سرعت اولیه | سطح بالاتر | 00 |
 | — | ورود فقط با OTP موبایل، بدون رمز | سادگی برای کاربر ایرانی | ایمیل/رمز | 02 |
 | — | محدودیت‌ها در `config/plans.php` و `EntitlementService` | تغییر سقف بدون تغییر کد | `if` پراکنده | 03 |
 | — | مبلغ‌ها به ریال، عدد صحیح | جلوگیری از خطای اعشاری | float/decimal | 09 |
 | — | قرعه و جدول مسابقات با الگوریتم قطعی | قابل ممیزی و تست | استفاده از AI | 12 |
 | — | AI فقط پیشنهاد می‌دهد؛ اجرا پس از تأیید انسان | کنترل کیفیت و مسئولیت | اجرای خودکار | 18 |
 
-_(تصمیم‌های جدید را اینجا اضافه کن؛ مثلاً درایور پیامک، سرویس جدا یا داخلی بودن RAG، مدل embedding، کتابخانه‌ی PDF.)_
-
 ### تصمیم‌های باز
 - [ ] سرویس پیامک ایرانی (Step 02)
 - [ ] کاهش حساب سازمانی به عادی مجاز است؟ (Step 03)
 - [ ] RAG داخل Laravel یا سرویس FastAPI جدا؟ (Step 15)
-- [ ] سیاست آپلود و مجوز منابع (کتاب/اسلاید دیگران) و کتابخانه‌ی مشترک یا خصوصی (Step 15)
+- [ ] سیاست آپلود و مجوز منابع (Step 15)
 - [ ] مدل embedding و مدل زبانی (Step 16/17)
 - [ ] کتابخانه‌ی PDF فارسی (Step 14)
-- [ ] مدل درآمدی/پرداخت برای ارتقای حساب (بعد از MVP)
 
 ---
 
 ## ۵. Manifest فایل‌های مخزن
+composer.json                          [Step 00] livewire + pest + larastan
 
-> پس از هر مرحله، فقط فایل‌های مهم را اضافه/ویرایش کن. چت‌بات جدید از روی این فهرست می‌فهمد چه چیزی وجود دارد.
+.env.example                           [Step 00] APP_LOCALE=fa
 
-```
-(هنوز خالی — پس از Step 00 پر می‌شود)
-```
+config/app.php                         [Step 00] Asia/Tehran + fa
 
-نمونه‌ی قالب:
-```
-app/Models/User.php                      [Step 02] phone, account_type, relations
-app/Services/OtpService.php              [Step 02]
-config/plans.php                         [Step 03]
-database/migrations/…create_events_table [Step 05]
-```
+phpstan.neon                           [Step 00]
 
+pint.json                              [Step 00]
+
+.github/workflows/ci.yml               [Step 00]
+
+README.md                              [Step 00]
+
+docs/ai/00-MASTER-CONTEXT.md           [Step 00]
+
+docs/ai/10-STEPS-PART1.md              [Step 00]
+
+docs/ai/11-STEPS-PART2.md              [Step 00]
+
+docs/ai/90-PROGRESS.md                 [Step 00]
+
+docs/spec/product-roadmap.md           [Step 00]Text
 ### Migrationهای موجود
-_(نام + توضیح یک‌خطی)_
+- 0001_01_01_000000_create_users_table
+- 0001_01_01_000001_create_cache_table
+- 0001_01_01_000002_create_jobs_table
 
 ### Routeهای اصلی
-_(مسیر ← کامپوننت/کنترلر ← middleware)_
+- `/` ← welcome
 
 ### Env keyها
-_(فقط نام کلیدها، بدون مقدار)_
+APP_NAME, APP_ENV, APP_KEY, APP_DEBUG, APP_URL, APP_LOCALE, APP_FALLBACK_LOCALE, APP_FAKER_LOCALE, DB_CONNECTION
 
 ### پکیج‌ها
-_(نام + نسخه + دلیل)_
+- laravel/framework ^13.17
+- livewire/livewire
+- pestphp/pest + pestphp/pest-plugin-laravel
+- larastan/larastan
+- laravel/pint
+- tailwindcss ^4
 
 ---
 
@@ -131,53 +143,29 @@ _(نام + نسخه + دلیل)_
 
 ---
 
-## ۷. Changelog (بلوک‌های UPDATE چت‌بات را از اینجا به پایین اضافه کن؛ جدیدترین بالا)
+## ۷. Changelog
 
-<!-- مثال ساختار:
-
-## UPDATE — Step 02 — ورود با موبایل — 1405/09/05
+## UPDATE — Step 00 — نصب ابزارها و تنظیمات محیط — ۱۴۰۵/۰۸/۲۹
 Status: DONE
-Branch: step/02-mobile-otp
-Commit: feat(auth): mobile otp login
-Files created: [...]
-Files modified: [...]
-Migrations: [...]
-New env keys: [SMS_DRIVER]
-New packages: []
-Routes added: [login, login.verify, logout]
-Decisions: [...]
-Known issues / TODO: [...]
-Tests: passed 14 / total 14
-Next suggested step: 03
-
--->
+Branch: step/00-tooling-and-locale
+Commit: chore: complete Step 00 — Pest, Larastan, Livewire, locale fa, CI, README and progress
+Files created: [phpstan.neon, pint.json, .github/workflows/ci.yml]
+Files modified: [.env.example, config/app.php, README.md, docs/ai/90-PROGRESS.md]
+Migrations: []
+New env keys: []
+New packages: [livewire/livewire, pestphp/pest, pestphp/pest-plugin-laravel, larastan/larastan]
+Routes added: []
+Decisions: [SQLite تا Step 16، Larastan level 5]
+Known issues / TODO: []
+Tests: passed
+Next suggested step: 01
 
 ---
 
-## ۸. روال به‌روزرسانی بعد از هر مرحله (چک‌لیست امیر)
+## ۸. روال به‌روزرسانی بعد از هر مرحله
 
-1. فایل‌های چت‌بات را در ادیتور جایگزین/اضافه کن.
-2. دستورها را اجرا کن (`composer install`, `php artisan migrate`, `php artisan test`, `./vendor/bin/pint`).
-3. اگر خطا داد، پرامپت «رفع خطا» (پیوست فایل 11) را بفرست.
-4. سناریوی تست دستی را روی موبایل/عرض کم انجام بده.
-5. بلوک `UPDATE` را در بخش ۷ بچسبان؛ جدول وضعیت (بخش ۲)، Manifest (بخش ۵)، Decision Log (بخش ۴) را به‌روز کن.
-6. Commit و push:
-```bash
-git checkout -b step/NN-name
-git add -A
-git commit -m "feat(...): ..."
-git push -u origin step/NN-name
-# پس از سبز بودن CI:
-git checkout main && git merge --no-ff step/NN-name && git push
-```
-7. چت جدید: `00-MASTER` + این فایل + فایل مرحله‌ی بعد را بده.
-
----
-
-## ۹. پرامپت «به‌روزرسانی PROGRESS» (اگر خودت بخواهی چت‌بات فایل را بازنویسی کند)
-
-```
-این فایل 90-PROGRESS.md فعلی است: [محتوا]
-و این بلوک UPDATE مرحله‌ی تازه: [بلوک]
-فایل را کامل و به‌روز برگردان: جدول وضعیت، خلاصه‌ی فنی، Manifest (ادغام‌شده و بدون تکرار)، Decision Log، مشکلات و Changelog (جدیدترین بالا). هیچ بخشی را حذف نکن.
-```
+1. فایل‌های چت‌بات را جایگزین کن
+2. دستورها را اجرا کن
+3. تست دستی انجام بده
+4. بلوک UPDATE را در بخش ۷ بچسبان و جداول را به‌روز کن
+5. Commit و push کن
