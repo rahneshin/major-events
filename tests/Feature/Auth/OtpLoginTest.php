@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 
 beforeEach(function () {
-    $this->app->bind(SmsGateway::class, NullSmsGateway::class);
+    app()->bind(SmsGateway::class, NullSmsGateway::class);
     RateLimiter::clear('otp-phone:+989123456789');
     RateLimiter::clear('otp-phone-hourly:+989123456789');
     RateLimiter::clear('otp-ip:127.0.0.1');
