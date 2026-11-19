@@ -1,0 +1,32 @@
+<?php
+
+return [
+    'account_type' => 'نوع حساب',
+    'type_individual' => 'کاربر عادی',
+    'type_organizational' => 'کاربر سازمانی',
+    'type_individual_desc' => 'مناسب برای مدیریت یک رویداد ورزشی شخصی با امکانات پایه.',
+    'type_organizational_desc' => 'مناسب برای فدراسیون، باشگاه و سازمان‌ها با چند رویداد و امکانات کامل.',
+    'select_type_title' => 'نوع حساب خود را انتخاب کنید',
+    'select_type_subtitle' => 'بعداً می‌توانید از حساب عادی به سازمانی ارتقا دهید.',
+    'confirm_selection' => 'تأیید و ادامه',
+    'type_selected' => 'نوع حساب با موفقیت ثبت شد.',
+    'my_account' => 'حساب من',
+    'plan_limits' => 'سقف‌های طرح',
+    'unlimited' => 'نامحدود',
+    'upgrade_title' => 'ارتقا به حساب سازمانی',
+    'upgrade_description' => 'با ارتقا، امکان ساخت سازمان، رویدادهای نامحدود و امکانات پیشرفته فعال می‌شود. در این نسخه پرداختی وجود ندارد.',
+    'upgrade_cta' => 'ارتقا به سازمانی',
+    'upgrade_confirm' => 'آیا از ارتقا به حساب سازمانی مطمئن هستید؟',
+    'upgraded' => 'حساب شما به سازمانی ارتقا یافت.',
+    'already_organizational' => 'حساب شما از قبل سازمانی است.',
+    'limit_exceeded' => 'سقف طرح شما برای این عملیات پر شده است.',
+    'limit_exceeded_detail' => 'سقف «:limit» (:max) پر شده است. برای ادامه حساب خود را ارتقا دهید.',
+    'limits' => [
+        'active_events' => 'رویداد فعال',
+        'committees_per_event' => 'کمیته در هر رویداد',
+        'members_per_event' => 'عضو در هر رویداد',
+        'tasks_per_event' => 'وظیفه در هر رویداد',
+        'organizations' => 'سازمان',
+        'knowledge_ai_requests_per_month' => 'درخواست هوش مصنوعی در ماه',
+    ],
+];

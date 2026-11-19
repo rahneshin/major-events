@@ -15,8 +15,8 @@
 | دیتابیس | SQLite (تا Step 16) |
 | مخزن Git | https://github.com/rahneshin/major-events |
 | شاخه‌ی اصلی | main |
-| آخرین مرحله‌ی DONE | 02 |
-| مرحله‌ی در حال انجام | — (آماده Step 03) |
+| آخرین مرحله‌ی DONE | 03 |
+| مرحله‌ی در حال انجام | — (آماده Step 04) |
 | تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۸/۲۹ |
 
 ---
@@ -30,7 +30,7 @@
 | 00 | نصب Laravel، Git، محیط | ✅ | step/00-tooling-and-locale | سبز | اسکلت + Pest + Larastan + Livewire + locale fa + CI |
 | 01 | زیرساخت UI/RTL/جلالی | ✅ | step/01-ui-rtl-jalali | سبز | لایوت RTL، کامپوننت‌ها، Jalali، PhoneNumber، styleguide |
 | 02 | ورود با موبایل (OTP) | ✅ | step/02-otp-login | سبز | OTP، Livewire، rate-limit، تست‌ها پاس |
-| 03 | نوع حساب و Entitlement | ⬜ | | | |
+| 03 | نوع حساب و Entitlement | ✅ | step/03-account-type-entitlement | نوشته‌شده | AccountType، plans.php، EntitlementService، onboarding، ارتقا |
 | 04 | سازمان مجازی و اعضا | ⬜ | | | |
 | 05 | رویداد (هسته) | ⬜ | | | |
 | 06 | اعضا و نقش‌های رویداد | ⬜ | | | |
@@ -59,12 +59,15 @@
 |---|---|---|
 | active_events | 1 | نامحدود |
 | committees_per_event | 3 | نامحدود |
-| members_per_event | 10 | نامحدود |
+| members_per_event | n| 10 | نامحدود |
 | tasks_per_event | 50 | نامحدود |
 | organizations | 0 | 3 |
+| knowledge_ai_requests_per_month | 0 | 100 |
 | export | PDF ساده | PDF/Word/Excel |
 | مسابقات، اسپانسرینگ | ندارد | دارد |
 | پایگاه دانش و AI | ندارد | دارد (با سهمیه‌ی ماهانه) |
+
+منبع حقیقت اعداد: `config/plans.php`
 
 ---
 
@@ -78,14 +81,14 @@
 | ۱۴۰۵/۰۸/۲۹ | date-picker ساده متنی (شمسی) | سادگی MVP؛ بعداً تقویم پیشرفته | پکیج سنگین تقویم | 01 |
 | ۱۴۰۵/۰۸/۲۹ | ورود فقط با OTP موبایل، بدون رمز | سادگی برای کاربر ایرانی | ایمیل/رمز | 02 |
 | ۱۴۰۵/۰۸/۲۹ | SMS driver پیش‌فرض: log | تا انتخاب سرویس واقعی | — | 02 |
-| — | محدودیت‌ها در `config/plans.php` و `EntitlementService` | تغییر سقف بدون تغییر کد | `if` پراکنده | 03 |
+| ۱۴۰۵/۰۸/۲۹ | کاهش سازمانی → عادی فعلاً ممنوع | سادگی؛ جلوگیری از نقض سقف سازمان/رویداد | کاهش مشروط | 03 |
+| ۱۴۰۵/۰۸/۲۹ | محدودیت‌ها فقط از EntitlementService | تغییر سقف بدون تغییر کد | if پراکنده روی account_type | 03 |
 | — | مبلغ‌ها به ریال، عدد صحیح | جلوگیری از خطای اعشاری | float/decimal | 09 |
 | — | قرعه و جدول مسابقات با الگوریتم قطعی | قابل ممیزی و تست | استفاده از AI | 12 |
 | — | AI فقط پیشنهاد می‌دهد؛ اجرا پس از تأیید انسان | کنترل کیفیت و مسئولیت | اجرای خودکار | 18 |
 
 ### تصمیم‌های باز
 - [ ] سرویس پیامک ایرانی (کاوه‌نگار / ملی‌پیامک / sms.ir) — فعلاً LogSmsGateway
-- [ ] کاهش حساب سازمانی به عادی مجاز است؟ (Step 03)
 - [ ] RAG داخل Laravel یا سرویس FastAPI جدا؟ (Step 15)
 - [ ] سیاست آپلود و مجوز منابع (Step 15)
 - [ ] مدل embedding و مدل زبانی (Step 16/17)
@@ -96,61 +99,38 @@
 ## ۵. Manifest فایل‌های مخزن
 
 ### پیکربندی و ریشه
-composer.json                          [Step 01] + hekmatinasser/verta + helpers autoload
-.env.example                           [Step 02] + SMS_DRIVER
-config/app.php                         [Step 00] Asia/Tehran + fa
-config/sms.php                         [Step 02]
-phpstan.neon                           [Step 00]
-pint.json                              [Step 00]
-.github/workflows/ci.yml               [Step 00]
-vite.config.js                         [Step 01]
-tests/Pest.php                         [Step 02] TestCase + RefreshDatabase برای Feature
+composer.json, .env.example, config/app.php, config/sms.php, config/plans.php
+phpstan.neon, pint.json, .github/workflows/ci.yml, vite.config.js
+tests/Pest.php
 
-### Auth / OTP
-app/Models/User.php                    [Step 02] phone-based, soft deletes, uuid
-app/Models/OtpCode.php                 [Step 02]
-app/Services/OtpService.php            [Step 02]
-app/Services/Sms/SmsGateway.php        [Step 02]
-app/Services/Sms/LogSmsGateway.php     [Step 02]
-app/Services/Sms/NullSmsGateway.php    [Step 02]
-app/Livewire/Auth/PhoneLogin.php       [Step 02]
-app/Livewire/Auth/VerifyOtp.php        [Step 02]
-app/Livewire/Auth/CompleteProfile.php  [Step 02]
-app/Console/Commands/PruneOtpCodes.php [Step 02]
-resources/views/livewire/auth/*        [Step 02]
-lang/fa/auth.php                       [Step 02]
-tests/Feature/Auth/OtpLoginTest.php    [Step 02]
+### Auth / OTP (Step 02)
+app/Models/User.php, OtpCode.php
+app/Services/OtpService.php, Sms/*
+app/Livewire/Auth/PhoneLogin, VerifyOtp, CompleteProfile, SelectAccountType
 
-### Support (Step 01)
-app/Support/PhoneNumber.php
-app/Support/Jalali.php
-app/Support/helpers.php
+### Account / Entitlement (Step 03)
+app/Enums/AccountType.php
+app/Services/EntitlementService.php
+app/Exceptions/LimitExceededException.php
+app/Http/Middleware/EnsureAccountTypeSelected.php
+app/Models/AccountUpgrade.php
+app/Livewire/Account/AccountPage.php
+config/plans.php
+lang/fa/account.php
+tests/Feature/Account/EntitlementTest.php
+
+### Support
+app/Support/PhoneNumber.php, Jalali.php, helpers.php (feature, limit_reached)
 
 ### Migrationها
-- 0001_01_01_000000_create_users_table (بازنویسی‌شده: phone, uuid, softDeletes)
-- 0001_01_01_000001_create_cache_table
-- 0001_01_01_000002_create_jobs_table
-- 2026_11_19_000001_create_otp_codes_table
+- users (phone, uuid, account_type, softDeletes)
+- otp_codes
+- account_upgrades
 
 ### Routeها
-- `/` home
-- `/login` auth.login (guest)
-- `/verify` auth.verify (guest)
-- `/complete-profile` auth.complete-profile (auth)
-- `POST /logout` auth.logout (auth)
-- `/styleguide` local only
-
-### Env keyها
-APP_*, DB_*, SMS_DRIVER
-
-### پکیج‌ها
-- laravel/framework ^13.17
-- livewire/livewire
-- hekmatinasser/verta
-- pestphp/pest + pestphp/pest-plugin-laravel
-- larastan/larastan
-- laravel/pint
-- tailwindcss ^4
+- /login, /verify, /complete-profile, /select-account-type, POST /logout
+- /account (نیازمند account.type)
+- /styleguide (local)
 
 ---
 
@@ -166,50 +146,46 @@ APP_*, DB_*, SMS_DRIVER
 
 ## ۷. Changelog
 
+## UPDATE — Step 03 — نوع حساب و Entitlement — ۱۴۰۵/۰۸/۲۹
+Status: DONE (کد کامل؛ تست‌ها نوشته شده — اجرا روی ماشین محلی)
+Branch: step/03-account-type-entitlement
+Commit: feat(accounts): account types, entitlement service, onboarding and upgrade
+Files created: [
+  app/Enums/AccountType.php,
+  config/plans.php,
+  app/Exceptions/LimitExceededException.php,
+  app/Services/EntitlementService.php,
+  app/Http/Middleware/EnsureAccountTypeSelected.php,
+  database/migrations/2026_11_19_000002_create_account_upgrades_table.php,
+  app/Models/AccountUpgrade.php,
+  app/Livewire/Auth/SelectAccountType.php,
+  app/Livewire/Account/AccountPage.php,
+  resources/views/livewire/auth/select-account-type.blade.php,
+  resources/views/livewire/account/account-page.blade.php,
+  lang/fa/account.php,
+  tests/Feature/Account/EntitlementTest.php
+]
+Files modified: [
+  app/Models/User.php,
+  app/Livewire/Auth/CompleteProfile.php,
+  app/Support/helpers.php,
+  app/Providers/AppServiceProvider.php,
+  bootstrap/app.php,
+  routes/web.php,
+  database/factories/UserFactory.php
+]
+Migrations: [account_upgrades]
+New env keys: []
+New packages: []
+Routes added: [/select-account-type, /account]
+Decisions: [کاهش سازمانی→عادی ممنوع؛ همه محدودیت‌ها از EntitlementService؛ ارتقا بدون پرداخت]
+Known issues / TODO: []
+Tests: EntitlementTest نوشته شده
+Next suggested step: 04 — سازمان مجازی و اعضا
+
 ## UPDATE — Step 02 — ورود با موبایل OTP — ۱۴۰۵/۰۸/۲۹
 Status: DONE
 Branch: step/02-otp-login
-Commit: feat(auth): mobile OTP login + fix(tests): add Pest.php
-Files created: [
-  database/migrations/2026_11_19_000001_create_otp_codes_table.php,
-  app/Models/OtpCode.php,
-  app/Services/OtpService.php,
-  app/Services/Sms/SmsGateway.php,
-  app/Services/Sms/LogSmsGateway.php,
-  app/Services/Sms/NullSmsGateway.php,
-  app/Livewire/Auth/PhoneLogin.php,
-  app/Livewire/Auth/VerifyOtp.php,
-  app/Livewire/Auth/CompleteProfile.php,
-  app/Console/Commands/PruneOtpCodes.php,
-  resources/views/livewire/auth/phone-login.blade.php,
-  resources/views/livewire/auth/verify-otp.blade.php,
-  resources/views/livewire/auth/complete-profile.blade.php,
-  lang/fa/auth.php,
-  config/sms.php,
-  tests/Feature/Auth/OtpLoginTest.php,
-  tests/Pest.php
-]
-Files modified: [
-  database/migrations/0001_01_01_000000_create_users_table.php,
-  app/Models/User.php,
-  app/Providers/AppServiceProvider.php,
-  routes/web.php,
-  routes/console.php,
-  database/factories/UserFactory.php,
-  .env.example
-]
-Migrations: [users rewritten, otp_codes]
-New env keys: [SMS_DRIVER]
-New packages: []
-Routes added: [/login, /verify, /complete-profile, POST /logout]
-Decisions: [SMS driver=log تا انتخاب سرویس واقعی؛ کد هش‌شده؛ rate-limit شماره+IP]
-Known issues / TODO: [انتخاب سرویس پیامک ایرانی]
-Tests: سبز (OtpLoginTest پاس شد)
-Next suggested step: 03 — نوع حساب و Entitlement
-
-## UPDATE — Step 01 — زیرساخت UI/RTL/جلالی — ۱۴۰۵/۰۸/۲۹
-Status: DONE
-Branch: step/01-ui-rtl-jalali
 ...
 
 ---
