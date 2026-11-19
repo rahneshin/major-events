@@ -18,13 +18,19 @@ class VerifyOtp extends Component
 
     public int $resendAvailableIn = 0;
 
+    public ?string $debugCode = null;
+
     public function mount(): void
     {
         $this->phone = (string) session('otp_phone', '');
 
         if ($this->phone === '') {
             $this->redirect(route('auth.login'), navigate: true);
+
+            return;
         }
+
+        $this->debugCode = session('otp_debug_code');
     }
 
     public function verify(OtpService $otp): void
@@ -45,10 +51,16 @@ class VerifyOtp extends Component
             throw $e;
         }
 
-        session()->forget('otp_phone');
+        session()->forget(['otp_phone', 'otp_debug_code']);
 
         if (! $user->isProfileComplete()) {
             $this->redirect(route('auth.complete-profile'), navigate: true);
+
+            return;
+        }
+
+        if (! $user->hasSelectedAccountType()) {
+            $this->redirect(route('auth.select-account-type'), navigate: true);
 
             return;
         }
@@ -59,7 +71,7 @@ class VerifyOtp extends Component
     public function resend(OtpService $otp): void
     {
         try {
-            $otp->send(
+            $code = $otp->send(
                 $this->phone,
                 request()->ip(),
                 request()->userAgent()
@@ -68,8 +80,20 @@ class VerifyOtp extends Component
             throw $e;
         }
 
+        if ($code !== null) {
+            session()->put('otp_debug_code', $code);
+            $this->debugCode = $code;
+        }
+
         $this->resendAvailableIn = 60;
         $this->dispatch('otp-resent');
+    }
+
+    public function useDebugCode(): void
+    {
+        if ($this->debugCode) {
+            $this->code = $this->debugCode;
+        }
     }
 
     public function render()

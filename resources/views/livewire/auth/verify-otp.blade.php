@@ -14,6 +14,20 @@
         </p>
     </div>
 
+    @if ($debugCode)
+        <div class="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-center">
+            <p class="text-xs font-medium text-amber-800">{{ __('auth.debug_code_label') }}</p>
+            <p class="mt-1 text-3xl font-bold tracking-[0.3em] text-amber-900" dir="ltr">{{ $debugCode }}</p>
+            <button
+                type="button"
+                wire:click="useDebugCode"
+                class="mt-3 text-sm font-medium text-amber-800 underline hover:text-amber-950"
+            >
+                {{ __('auth.debug_code_fill') }}
+            </button>
+        </div>
+    @endif
+
     <form wire:submit="verify" class="space-y-5">
         <x-input
             label="{{ __('auth.code') }}"

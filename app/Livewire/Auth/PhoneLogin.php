@@ -23,7 +23,7 @@ class PhoneLogin extends Component
         ]);
 
         try {
-            $otp->send(
+            $code = $otp->send(
                 $this->phone,
                 request()->ip(),
                 request()->userAgent()
@@ -33,6 +33,12 @@ class PhoneLogin extends Component
         }
 
         session()->put('otp_phone', $this->phone);
+
+        if ($code !== null) {
+            session()->put('otp_debug_code', $code);
+        } else {
+            session()->forget('otp_debug_code');
+        }
 
         $this->redirect(route('auth.verify'), navigate: true);
     }

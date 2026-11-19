@@ -26,9 +26,11 @@ class OtpService
     /**
      * ارسال کد OTP به شماره موبایل.
      *
+     * @return string|null کد خام فقط وقتی درایور log/null است (برای تست محلی)
+     *
      * @throws ValidationException
      */
-    public function send(string $phone, ?string $ip = null, ?string $userAgent = null): void
+    public function send(string $phone, ?string $ip = null, ?string $userAgent = null): ?string
     {
         $normalized = PhoneNumber::normalize($phone);
 
@@ -62,6 +64,13 @@ class OtpService
         if ($ip) {
             RateLimiter::hit($this->ipLimiterKey($ip), 3600);
         }
+
+        // فقط در محیط توسعه / درایور log|null کد را برمی‌گردانیم تا در UI نمایش داده شود
+        if ($this->shouldExposeCode()) {
+            return $code;
+        }
+
+        return null;
     }
 
     /**
@@ -143,6 +152,15 @@ class OtpService
         session()->regenerate();
 
         return $user;
+    }
+
+    public function shouldExposeCode(): bool
+    {
+        if (app()->environment('local', 'testing')) {
+            return true;
+        }
+
+        return in_array(config('sms.driver', 'log'), ['log', 'null'], true);
     }
 
     private function generateCode(): string

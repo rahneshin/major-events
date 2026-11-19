@@ -28,5 +28,8 @@ return [
 
     'otp_message' => 'کد تأیید شما: :code\nاین کد تا ۲ دقیقه معتبر است.',
 
+    'debug_code_label' => 'کد تست (فقط محیط توسعه)',
+    'debug_code_fill' => 'کپی در کادر بالا',
+
     'logout' => 'خروج',
 ];
