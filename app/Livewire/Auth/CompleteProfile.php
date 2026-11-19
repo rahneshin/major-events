@@ -44,7 +44,6 @@ class CompleteProfile extends Component
         ], [
             'name' => __('ui.name'),
         ]);
-        ]);
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -53,8 +52,6 @@ class CompleteProfile extends Component
             'name' => trim($validated['name']),
         ])->save();
 
-        // ریدایرکت کامل بدون SPA navigate تا middleware/session درست اعمال شود
-        $this->redirectIntended = false;
         $this->redirect(route('auth.select-account-type'));
     }
 
