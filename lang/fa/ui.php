@@ -48,4 +48,6 @@ return [
         'next' => 'بعدی',
         'showing' => 'نمایش :from تا :to از :total مورد',
     ],
+    'dashboard' => 'داشبورد',
+    'system_dashboard' => 'داشبورد سیستم',
 ];

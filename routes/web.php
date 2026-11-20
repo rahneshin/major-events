@@ -1,6 +1,8 @@
 <?php
 
 use App\Livewire\Account\AccountPage;
+use App\Livewire\Admin\Dashboard as AdminDashboard;
+use App\Livewire\App\Dashboard as AppDashboard;
 use App\Livewire\Auth\CompleteProfile;
 use App\Livewire\Auth\PhoneLogin;
 use App\Livewire\Auth\SelectAccountType;
@@ -11,8 +13,13 @@ use App\Livewire\Orgs\OrganizationShow;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Public site
+|--------------------------------------------------------------------------
+*/
 Route::get('/', function () {
-    return view('welcome');
+    return view('public.home');
 })->name('home');
 
 if (app()->environment('local')) {
@@ -44,11 +51,16 @@ Route::middleware('auth')->group(function () {
     })->name('auth.logout');
 
     Route::middleware('account.type')->group(function () {
+        // User app
+        Route::get('/app', AppDashboard::class)->name('app.dashboard');
         Route::get('/account', AccountPage::class)->name('account.index');
 
         Route::get('/organizations', OrganizationIndex::class)->name('orgs.index');
         Route::get('/organizations/create', OrganizationForm::class)->name('orgs.create');
         Route::get('/organizations/{organization}', OrganizationShow::class)->name('orgs.show');
         Route::get('/organizations/{organization}/edit', OrganizationForm::class)->name('orgs.edit');
+
+        // System owner admin shell (full Filament in Step 20)
+        Route::get('/admin', AdminDashboard::class)->name('admin.dashboard');
     });
 });
