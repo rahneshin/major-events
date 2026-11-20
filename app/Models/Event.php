@@ -1,0 +1,143 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Enums\EventScale;
+use App\Enums\EventStatus;
+use App\Enums\EventType;
+use App\Enums\MainGoalType;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
+
+class Event extends Model
+{
+    use SoftDeletes;
+
+    protected $fillable = [
+        'uuid',
+        'organization_id',
+        'created_by',
+        'title',
+        'slug',
+        'sport_type',
+        'event_type',
+        'scale',
+        'status',
+        'start_date',
+        'end_date',
+        'venue_name',
+        'city',
+        'province',
+        'expected_participants',
+        'expected_spectators',
+        'budget_estimate',
+        'main_goal_type',
+        'description',
+        'metadata',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'event_type' => EventType::class,
+            'scale' => EventScale::class,
+            'status' => EventStatus::class,
+            'main_goal_type' => MainGoalType::class,
+            'start_date' => 'date',
+            'end_date' => 'date',
+            'budget_estimate' => 'integer',
+            'expected_participants' => 'integer',
+            'expected_spectators' => 'integer',
+            'metadata' => 'array',
+        ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Event $event) {
+            if (empty($event->uuid)) {
+                $event->uuid = (string) Str::uuid();
+            }
+            if (empty($event->slug)) {
+                $event->slug = static::uniqueSlug($event->title, $event->organization_id);
+            }
+        });
+    }
+
+    public static function uniqueSlug(string $title, ?int $organizationId): string
+    {
+        $base = Str::slug($title) ?: 'event';
+        $slug = $base;
+        $i = 1;
+
+        while (static::withTrashed()
+            ->where('organization_id', $organizationId)
+            ->where('slug', $slug)
+            ->exists()) {
+            $slug = $base.'-'.$i++;
+        }
+
+        return $slug;
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function goals(): HasMany
+    {
+        return $this->hasMany(EventGoal::class)->orderBy('priority');
+    }
+
+    public function stakeholders(): HasMany
+    {
+        return $this->hasMany(EventStakeholder::class);
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereIn('status', [
+            EventStatus::Draft->value,
+            EventStatus::Planning->value,
+            EventStatus::Ready->value,
+            EventStatus::Running->value,
+        ]);
+    }
+
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        return $query->where(function (Builder $q) use ($user) {
+            $q->where('created_by', $user->id);
+
+            $orgIds = $user->organizations()
+                ->wherePivotIn('role', ['owner', 'admin', 'manager'])
+                ->pluck('organizations.id');
+
+            if ($orgIds->isNotEmpty()) {
+                $q->orWhereIn('organization_id', $orgIds);
+            }
+        });
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status?->isActive() ?? false;
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+}
