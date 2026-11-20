@@ -7,6 +7,9 @@ use App\Livewire\Auth\CompleteProfile;
 use App\Livewire\Auth\PhoneLogin;
 use App\Livewire\Auth\SelectAccountType;
 use App\Livewire\Auth\VerifyOtp;
+use App\Livewire\Events\EventForm;
+use App\Livewire\Events\EventIndex;
+use App\Livewire\Events\EventShow;
 use App\Livewire\Orgs\OrganizationForm;
 use App\Livewire\Orgs\OrganizationIndex;
 use App\Livewire\Orgs\OrganizationShow;
@@ -51,7 +54,6 @@ Route::middleware('auth')->group(function () {
     })->name('auth.logout');
 
     Route::middleware('account.type')->group(function () {
-        // User app
         Route::get('/app', AppDashboard::class)->name('app.dashboard');
         Route::get('/account', AccountPage::class)->name('account.index');
 
@@ -60,7 +62,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/organizations/{organization}', OrganizationShow::class)->name('orgs.show');
         Route::get('/organizations/{organization}/edit', OrganizationForm::class)->name('orgs.edit');
 
-        // System owner admin shell (full Filament in Step 20)
+        Route::get('/events', EventIndex::class)->name('events.index');
+        Route::get('/events/create', EventForm::class)->name('events.create');
+        Route::get('/events/{event}', EventShow::class)->name('events.show');
+        Route::get('/events/{event}/edit', EventForm::class)->name('events.edit');
+
         Route::get('/admin', AdminDashboard::class)->name('admin.dashboard');
     });
 });
