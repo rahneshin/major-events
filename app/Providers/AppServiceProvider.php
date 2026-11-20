@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Event;
 use App\Models\Organization;
+use App\Policies\EventPolicy;
 use App\Policies\OrganizationPolicy;
 use App\Services\EntitlementService;
 use App\Services\Sms\LogSmsGateway;
@@ -30,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(Organization::class, OrganizationPolicy::class);
+        Gate::policy(Event::class, EventPolicy::class);
 
         Blade::if('feature', function (string $feature) {
             $user = Auth::user();
