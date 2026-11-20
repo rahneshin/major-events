@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\EventRole;
 use App\Enums\EventScale;
 use App\Enums\EventStatus;
 use App\Enums\EventType;
@@ -11,6 +12,7 @@ use App\Enums\MainGoalType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
@@ -68,6 +70,15 @@ class Event extends Model
                 $event->slug = static::uniqueSlug($event->title, $event->organization_id);
             }
         });
+
+        static::created(function (Event $event) {
+            // Creator becomes event_owner member
+            $event->members()->attach($event->created_by, [
+                'role' => EventRole::EventOwner->value,
+                'added_by' => $event->created_by,
+                'joined_at' => now(),
+            ]);
+        });
     }
 
     public static function uniqueSlug(string $title, ?int $organizationId): string
@@ -106,6 +117,35 @@ class Event extends Model
         return $this->hasMany(EventStakeholder::class);
     }
 
+    public function members(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'event_user')
+            ->withPivot(['role', 'added_by', 'joined_at'])
+            ->withTimestamps();
+    }
+
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(EventInvitation::class);
+    }
+
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class)->latest();
+    }
+
+    public function roleOf(User $user): ?EventRole
+    {
+        $pivot = $this->members()->where('user_id', $user->id)->first()?->pivot;
+
+        return $pivot ? EventRole::tryFrom($pivot->role) : null;
+    }
+
+    public function hasMember(User $user): bool
+    {
+        return $this->members()->where('user_id', $user->id)->exists();
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->whereIn('status', [
@@ -119,7 +159,8 @@ class Event extends Model
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
         return $query->where(function (Builder $q) use ($user) {
-            $q->where('created_by', $user->id);
+            $q->where('created_by', $user->id)
+                ->orWhereHas('members', fn (Builder $m) => $m->where('user_id', $user->id));
 
             $orgIds = $user->organizations()
                 ->wherePivotIn('role', ['owner', 'admin', 'manager'])
