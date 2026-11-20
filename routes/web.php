@@ -8,6 +8,7 @@ use App\Livewire\Auth\VerifyOtp;
 use App\Livewire\Orgs\OrganizationForm;
 use App\Livewire\Orgs\OrganizationIndex;
 use App\Livewire\Orgs\OrganizationShow;
+use App\Livewire\System\SystemDashboard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +46,8 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('account.type')->group(function () {
         Route::get('/account', AccountPage::class)->name('account.index');
+
+        Route::get('/system', SystemDashboard::class)->name('system.dashboard');
 
         Route::get('/organizations', OrganizationIndex::class)->name('orgs.index');
         Route::get('/organizations/create', OrganizationForm::class)->name('orgs.create');

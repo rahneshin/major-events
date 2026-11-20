@@ -27,8 +27,6 @@ class SystemDashboard extends Component
 
     public array $limits = [];
 
-    public array $features = [];
-
     public array $progressSteps = [];
 
     public function mount(EntitlementService $entitlement): void
@@ -44,8 +42,8 @@ class SystemDashboard extends Component
 
         $user = Auth::user();
 
-        if ($user) {
-            $this->accountType = $user->account_type?->value;
+        if ($user && $user->account_type) {
+            $this->accountType = $user->account_type->value;
             $this->limits = [
                 'active_events' => $entitlement->limit($user, 'active_events'),
                 'organizations' => $entitlement->limit($user, 'organizations'),
@@ -53,7 +51,6 @@ class SystemDashboard extends Component
                 'members_per_event' => $entitlement->limit($user, 'members_per_event'),
                 'tasks_per_event' => $entitlement->limit($user, 'tasks_per_event'),
             ];
-            $this->features = $entitlement->features($user) ?? [];
         }
 
         $this->progressSteps = [
