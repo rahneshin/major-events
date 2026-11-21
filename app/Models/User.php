@@ -75,6 +75,20 @@ class User extends Authenticatable
         return $this->belongsTo(Organization::class, 'current_organization_id');
     }
 
+    public function committees(): BelongsToMany
+    {
+        return $this->belongsToMany(Committee::class, 'committee_user')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    public function events(): BelongsToMany
+    {
+        return $this->belongsToMany(Event::class, 'event_user')
+            ->withPivot(['role', 'added_by', 'joined_at'])
+            ->withTimestamps();
+    }
+
     public function isProfileComplete(): bool
     {
         return filled($this->name);

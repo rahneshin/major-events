@@ -210,6 +210,9 @@
             </div>
         </div>
 
+    @elseif ($tab === 'committees')
+        <livewire:events.event-committees :event="$event" :key="'committees-'.$event->id" />
+
     @else
         <div class="glass rounded-2xl px-6 py-14 text-center">
             <p class="text-sm font-medium text-slate-500">{{ __('event.tab_coming_soon') }}</p>

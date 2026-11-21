@@ -79,6 +79,20 @@ class Event extends Model
                 'joined_at' => now(),
             ]);
         });
+
+        // Keep events.created_by in sync when ownership role moves between members.
+        static::updating(function (Event $event) {
+            if (! $event->wasChanged('created_by')) {
+                return;
+            }
+
+            $event->members()->updateExistingPivot((int) $event->getOriginal('created_by'), [
+                'role' => EventRole::Member->value,
+            ]);
+            $event->members()->updateExistingPivot((int) $event->created_by, [
+                'role' => EventRole::EventOwner->value,
+            ]);
+        });
     }
 
     public static function uniqueSlug(string $title, ?int $organizationId): string
@@ -124,6 +138,11 @@ class Event extends Model
             ->withTimestamps();
     }
 
+    public function committees(): HasMany
+    {
+        return $this->hasMany(Committee::class)->orderBy('position');
+    }
+
     public function invitations(): HasMany
     {
         return $this->hasMany(EventInvitation::class);
@@ -138,7 +157,25 @@ class Event extends Model
     {
         $pivot = $this->members()->where('user_id', $user->id)->first()?->pivot;
 
-        return $pivot ? EventRole::tryFrom($pivot->role) : null;
+        if (! $pivot) {
+            return null;
+        }
+
+        $role = EventRole::tryFrom($pivot->role);
+
+        // Head of one or more committees is promoted to committee_head unless higher.
+        if ($role === EventRole::Member && $this->headsCommittee($user)) {
+            return EventRole::CommitteeHead;
+        }
+
+        return $role;
+    }
+
+    public function headsCommittee(User $user): bool
+    {
+        return $this->committees()
+            ->where('head_user_id', $user->id)
+            ->exists();
     }
 
     public function hasMember(User $user): bool
