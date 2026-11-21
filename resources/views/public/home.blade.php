@@ -1,186 +1,239 @@
 @extends('layouts.public')
 
-@section('title', config('app.name') . ' — مدیریت هوشمند رویداد ورزشی')
-@section('meta_description', 'برنامه‌ریزی، کمیته، وظیفه، بودجه و پایگاه دانش رویدادهای ورزشی با هوش مصنوعی')
+@section('title', config('app.name') . ' — مدیریت رویداد ورزشی')
+@section('meta_description', 'کمیته‌ها، اعضا، وظیفه‌ها و بودجه‌ی رویدادهای ورزشی را در یک سامانه‌ی فارسی و راست‌به‌چپ مدیریت کنید.')
 
 @section('content')
-<div class="relative overflow-hidden bg-mesh pt-24 pb-20">
-    {{-- floating orbs --}}
-    <div class="pointer-events-none absolute -top-32 start-1/4 h-96 w-96 rounded-full bg-indigo-400/20 blur-3xl animate-float-slow"></div>
-    <div class="pointer-events-none absolute top-40 -end-20 h-80 w-80 rounded-full bg-fuchsia-400/15 blur-3xl animate-float-slow" style="animation-delay: -4s"></div>
+@php
+    $demoStart = now()->addDays(12)->addHours(5)->addMinutes(20)->toIso8601String();
 
-    {{-- Hero --}}
-    <section class="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <div class="mx-auto max-w-3xl text-center animate-rise">
-            <span class="mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-200/80 bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm backdrop-blur">
-                <span class="relative flex h-2 w-2">
-                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75"></span>
-                    <span class="relative inline-flex h-2 w-2 rounded-full bg-indigo-500"></span>
-                </span>
-                پلتفرم هوشمند رویداد ورزشی
-            </span>
+    $live = [
+        ['رویداد و اهداف', 'مشخصات رویداد، نوع ورزش، مقیاس، تاریخ و محل را ثبت کنید و اهداف را بنویسید.'],
+        ['اعضا و نقش‌ها', 'همکاران را با شماره‌ی موبایل دعوت کنید و برای هرکدام نقش مشخص کنید؛ از مدیر رویداد تا ناظر.'],
+        ['سازمان‌ها', 'برای چند رویداد یک سازمان بسازید و اعضای آن را با نقش‌های مدیریتی کنار هم نگه دارید.'],
+        ['کمیته‌ها', 'کمیته‌های فنی، پزشکی، بازاریابی و داوطلبان را بسازید و رئیس و اعضای هرکدام را تعیین کنید.'],
+    ];
+    $soon = [
+        ['وظایف و زمان‌بندی', 'کارها را بین کمیته‌ها تقسیم کنید، وابستگی بدهید و روی تقویم شمسی ببینید.'],
+        ['بودجه و درآمد', 'خطوط بودجه به ریال، نسخه‌ی مصوب و مقایسه با هزینه‌ی واقعی.'],
+        ['ریسک', 'فهرست ریسک‌ها و ماتریس احتمال و اثر، با مسئول هر ریسک.'],
+        ['مسابقات', 'ثبت‌نام تیم‌ها، قرعه‌کشی قطعی، برنامه‌ی بازی‌ها و ثبت نتایج (حساب سازمانی).'],
+        ['اسپانسرینگ و بازاریابی', 'بسته‌های حمایت، دارایی‌های تبلیغاتی و تقویم کمپین.'],
+        ['پایگاه دانش و برنامه‌ریز هوشمند', 'منابع خودتان را بارگذاری کنید و پیشنهادهای مستند بگیرید؛ هیچ پیشنهادی بدون تأیید شما وارد برنامه نمی‌شود.'],
+    ];
+    $steps = [
+        ['پیش‌نویس', 'رویداد را تعریف کنید', 'نام، نوع ورزش، مقیاس، تاریخ و محل را بنویسید و اهداف را مشخص کنید. هنوز چیزی قطعی نیست و هر زمان می‌توانید ویرایش کنید.'],
+        ['برنامه‌ریزی', 'تیم و کمیته‌ها را بچینید', 'همکاران را دعوت کنید، نقش بدهید و کمیته‌ها را با رئیس و اعضا بسازید. از قالب پیشنهادی هم می‌توانید شروع کنید.'],
+        ['آماده‌ی اجرا', 'وظیفه، بودجه و ریسک را نهایی کنید', 'کارها، بودجه‌ی مصوب و ریسک‌ها را مرور کنید. این ماژول‌ها در نسخه‌های بعدی اضافه می‌شوند.'],
+        ['در حال اجرا', 'روز رویداد را پیگیری کنید', 'با تکمیل ماژول‌های بالا، وضعیت کارها و کمیته‌ها را در همان روز مسابقه یک‌جا می‌بینید.'],
+    ];
+@endphp
 
-            <h1 class="text-4xl font-bold leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                از ایده تا اجرا
-                <span class="gradient-text block mt-1">رویداد ورزشی خود را مدیریت کنید</span>
+<section id="top" class="bg-pool-field relative isolate overflow-hidden pb-24 pt-32 text-white sm:pt-40 lg:pb-32"
+         x-inview.mid="active = ''">
+    <div class="parallax-slow absolute inset-0 -z-10">
+        <x-lanes class="lanes-draw absolute inset-x-0 top-10 h-[120%] w-full text-white/25" />
+    </div>
+
+    <div class="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-12">
+        <div class="lg:col-span-6">
+            <h1 class="text-4xl font-bold leading-[1.35] sm:text-5xl lg:text-[3.4rem]">
+                رویداد ورزشی‌تان را از اولین جلسه تا روز مسابقه یک‌جا مدیریت کنید
             </h1>
-
-            <p class="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
-                برنامه‌ریزی، کمیته‌ها، وظایف، بودجه، ریسک و پایگاه دانش — همه در یک سامانه فارسی و راست‌به‌چپ.
-                پیشنهادهای هوشمند فقط پس از تأیید شما اجرا می‌شوند.
+            <p class="mt-6 max-w-xl text-base leading-8 text-pool-100 sm:text-lg">
+                کمیته‌ها، اعضا، وظیفه‌ها و بودجه را کنار هم ببینید. با شماره‌ی موبایل وارد می‌شوید؛ رمز عبوری در کار نیست.
             </p>
-
-            <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <a href="{{ route('auth.login') }}" class="btn-primary px-7 py-3 text-base">
-                    شروع رایگان با موبایل
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-                </a>
-                <a href="#features" class="btn-ghost px-7 py-3 text-base">مشاهده امکانات</a>
+            <div class="mt-9 flex flex-col gap-3 sm:flex-row">
+                <a href="{{ route('auth.login') }}" class="btn-flag px-7 py-3 text-base">ساخت اولین رویداد</a>
+                <a href="#features" class="btn-ghost-light px-7 py-3 text-base">دیدن امکانات</a>
             </div>
-
-            <p class="mt-4 text-xs text-slate-400">ورود فقط با شماره موبایل · بدون رمز عبور</p>
         </div>
 
-        {{-- Hero visual card --}}
-        <div class="relative mx-auto mt-14 max-w-4xl animate-scale-in stagger-3">
-            <div class="glass overflow-hidden rounded-3xl p-1.5">
-                <div class="rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-violet-950 p-6 sm:p-8">
-                    <div class="flex items-center gap-2 mb-6">
-                        <span class="h-3 w-3 rounded-full bg-rose-400"></span>
-                        <span class="h-3 w-3 rounded-full bg-amber-400"></span>
-                        <span class="h-3 w-3 rounded-full bg-emerald-400"></span>
-                        <span class="ms-3 text-xs text-slate-400">داشبورد رویداد</span>
+        <div class="lg:col-span-6">
+            <div class="parallax-fast mx-auto max-w-md lg:max-w-none">
+                <div class="led-panel rounded-3xl p-5 sm:p-7" x-data="countdown('{{ $demoStart }}')">
+                    <div class="flex items-center justify-between text-xs text-ink-300">
+                        <span class="flex items-center gap-2">
+                            <span class="relative flex h-2 w-2">
+                                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-flag-500 opacity-70"></span>
+                                <span class="relative inline-flex h-2 w-2 rounded-full bg-flag-500"></span>
+                            </span>
+                            تابلوی رویداد
+                        </span>
+                        <span class="rounded-md bg-white/10 px-2 py-0.5">نمونه</span>
                     </div>
-                    <div class="grid gap-4 sm:grid-cols-3">
-                        <div class="rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
-                            <p class="text-xs text-slate-400">پیشرفت کلی</p>
-                            <p class="mt-1 text-2xl font-bold text-white">۶۸٪</p>
-                            <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
-                                <div class="h-full w-[68%] rounded-full bg-gradient-to-l from-indigo-400 to-violet-400"></div>
+
+                    <p class="mt-5 text-lg font-bold text-white sm:text-xl">لیگ والیبال دانشگاه‌ها</p>
+                    <p class="mt-1 text-xs text-ink-300">تا شروع مسابقات</p>
+
+                    <div class="mt-4 grid grid-cols-4 gap-2.5 sm:gap-3">
+                        @foreach ([['d', 'روز', '۱۲', 0], ['h', 'ساعت', '۰۵', 80], ['m', 'دقیقه', '۲۰', 160], ['s', 'ثانیه', '۰۰', 240]] as [$key, $unit, $initial, $delay])
+                            <div class="overflow-hidden rounded-xl bg-black/50 py-3 text-center ring-1 ring-white/10">
+                                @if ($key === 's')
+                                    <p class="led-digit text-3xl font-bold sm:text-4xl" x-text="s"
+                                       x-effect="s; $el.classList.remove('roll'); void $el.offsetWidth; $el.classList.add('roll')">{{ $initial }}</p>
+                                @else
+                                    <p class="led-digit roll text-3xl font-bold sm:text-4xl" style="--d: {{ $delay }}ms" x-text="{{ $key }}">{{ $initial }}</p>
+                                @endif
+                                <p class="mt-1 text-[11px] text-ink-300">{{ $unit }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="mt-6 space-y-4 border-t border-white/10 pt-5 text-sm">
+                        <div>
+                            <div class="flex items-center justify-between text-ink-200">
+                                <span>کمیته‌ها</span>
+                                <span class="font-semibold text-white">۶ از ۶ تشکیل شد</span>
+                            </div>
+                            <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                                <div class="bar-fill h-full rounded-full bg-flag-500" style="--w: 100%; --d: 700ms" x-reveal></div>
                             </div>
                         </div>
-                        <div class="rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
-                            <p class="text-xs text-slate-400">وظایف باز</p>
-                            <p class="mt-1 text-2xl font-bold text-white">۲۴</p>
-                            <p class="mt-2 text-xs text-emerald-400">۸ تکمیل این هفته</p>
-                        </div>
-                        <div class="rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
-                            <p class="text-xs text-slate-400">بودجه مصرفی</p>
-                            <p class="mt-1 text-2xl font-bold text-white">۴۲٪</p>
-                            <p class="mt-2 text-xs text-slate-400">در محدوده مصوب</p>
+                        <div>
+                            <div class="flex items-center justify-between text-ink-200">
+                                <span>وظایف انجام‌شده</span>
+                                <span class="font-semibold text-white">۶۸٪</span>
+                            </div>
+                            <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                                <div class="bar-fill h-full rounded-full bg-flag-500" style="--w: 68%; --d: 900ms" x-reveal></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
-</div>
+    </div>
+</section>
 
-{{-- Features --}}
-<section id="features" class="py-20">
-    <div class="mx-auto max-w-6xl px-4 sm:px-6">
-        <div class="mx-auto max-w-2xl text-center">
-            <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">همه چیز برای یک رویداد حرفه‌ای</h2>
-            <p class="mt-3 text-slate-600">از مفهوم‌سازی تا ارزیابی پسارویداد، در یک فضای یکپارچه.</p>
-        </div>
-
-        <div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            @php
-            $features = [
-                ['title' => 'سازمان و اعضا', 'desc' => 'سازمان مجازی، دعوت با موبایل، نقش‌های owner تا viewer', 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5'],
-                ['title' => 'رویداد و اهداف', 'desc' => 'پروفایل رویداد، اهداف SMART، وضعیت و آرشیو', 'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],
-                ['title' => 'کمیته و وظیفه', 'desc' => 'کمیته‌ها، وابستگی وظایف، کانبان و تقویم شمسی', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'],
-                ['title' => 'بودجه و ریسک', 'desc' => 'خطوط بودجه ریالی، نسخه مصوب، ماتریس ریسک', 'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
-                ['title' => 'مسابقات', 'desc' => 'ثبت‌نام، قرعه قطعی، برنامه و نتایج (حساب سازمانی)', 'icon' => 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z'],
-                ['title' => 'پایگاه دانش + AI', 'desc' => 'آپلود PDF/PPT، RAG و برنامه‌ریز هوشمند با تأیید انسان', 'icon' => 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z'],
-            ];
-            @endphp
-
-            @foreach ($features as $i => $f)
-            <div class="group glass card-hover rounded-2xl p-6 animate-rise stagger-{{ min($i+1, 6) }}">
-                <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 transition group-hover:scale-110 group-hover:bg-indigo-100">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $f['icon'] }}"/></svg>
-                </div>
-                <h3 class="text-base font-bold text-slate-900">{{ $f['title'] }}</h3>
-                <p class="mt-2 text-sm leading-relaxed text-slate-600">{{ $f['desc'] }}</p>
+<section class="border-b border-ink-100 bg-white">
+    <dl class="mx-auto grid max-w-6xl divide-y divide-ink-100 px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6">
+        @foreach ([[6, '', 'ماژول مدیریتی: رویداد، عضو، کمیته، وظیفه، بودجه و ریسک'], [2, '', 'نوع حساب: عادی برای یک رویداد، سازمانی برای چند رویداد و تیم'], [100, '٪', 'فارسی و راست‌به‌چپ، با تاریخ شمسی']] as [$value, $suffix, $text])
+            <div class="px-2 py-8 sm:px-8">
+                <dt class="flex items-baseline gap-1 text-4xl font-bold text-pool-700">
+                    <span x-data="counter({{ $value }})" x-inview.once="run()" x-text="shown">{{ fa_num((string) $value) }}</span>
+                    @if ($suffix)<span class="text-2xl">{{ $suffix }}</span>@endif
+                </dt>
+                <dd class="mt-2 text-sm leading-7 text-ink-500">{{ $text }}</dd>
             </div>
+        @endforeach
+    </dl>
+</section>
+
+<section id="features" class="bg-ink-50 py-20 sm:py-24" x-inview.mid="active = 'features'">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6">
+        <h2 class="max-w-2xl text-3xl font-bold leading-snug text-ink-900 sm:text-4xl">آنچه امروز کار می‌کند و آنچه در راه است</h2>
+        <p class="mt-4 max-w-2xl leading-8 text-ink-500">
+            سامانه مرحله‌به‌مرحله ساخته می‌شود. بخش‌های فعال را همین حالا استفاده کنید؛ بقیه به ترتیب اضافه می‌شوند.
+        </p>
+
+        <div class="mt-12 grid gap-12 lg:grid-cols-2 lg:gap-10">
+            @foreach ([['الان می‌توانید', $live, true], ['به‌زودی', $soon, false]] as [$heading, $rows, $isLive])
+                <div>
+                    <div class="flex items-center gap-3 border-b-2 {{ $isLive ? 'border-pool-600' : 'border-ink-200' }} pb-3">
+                        <h3 class="text-lg font-bold {{ $isLive ? 'text-pool-700' : 'text-ink-500' }}">{{ $heading }}</h3>
+                        <span class="rounded-md px-2 py-0.5 text-xs font-semibold {{ $isLive ? 'bg-pool-100 text-pool-800' : 'bg-ink-100 text-ink-500' }}">{{ fa_num((string) count($rows)) }} بخش</span>
+                    </div>
+                    <ul class="divide-y divide-ink-100">
+                        @foreach ($rows as $i => [$title, $desc])
+                            <li class="reveal py-5" x-reveal style="--d: {{ $i * 70 }}ms">
+                                <p class="font-bold {{ $isLive ? 'text-ink-900' : 'text-ink-600' }}">{{ $title }}</p>
+                                <p class="mt-1.5 max-w-lg text-sm leading-7 {{ $isLive ? 'text-ink-500' : 'text-ink-400' }}">{{ $desc }}</p>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
             @endforeach
         </div>
     </div>
 </section>
 
-{{-- How it works --}}
-<section id="how" class="border-y border-slate-100 bg-white py-20">
+<section id="how" class="border-y border-ink-100 bg-white py-20 sm:py-24"
+         x-data="{ step: 0, names: ['پیش‌نویس', 'برنامه‌ریزی', 'آماده‌ی اجرا', 'در حال اجرا'], digits: ['۱', '۲', '۳', '۴'] }"
+         x-inview.mid="active = 'how'">
     <div class="mx-auto max-w-6xl px-4 sm:px-6">
-        <div class="mx-auto max-w-2xl text-center">
-            <h2 class="text-3xl font-bold text-slate-900">سه قدم تا مدیریت رویداد</h2>
-        </div>
-        <div class="mt-12 grid gap-8 sm:grid-cols-3">
-            @foreach ([
-                ['n' => '۱', 't' => 'ورود با موبایل', 'd' => 'شماره بدهید، کد پیامکی بگیرید. بدون رمز عبور.'],
-                ['n' => '۲', 't' => 'نوع حساب را انتخاب کنید', 'd' => 'عادی برای یک رویداد؛ سازمانی برای چند رویداد و تیم.'],
-                ['n' => '۳', 't' => 'رویداد بسازید و اجرا کنید', 'd' => 'کمیته، وظیفه، بودجه و در آینده پیشنهاد AI با تأیید شما.'],
-            ] as $step)
-            <div class="relative text-center">
-                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-xl font-bold text-white shadow-lg shadow-indigo-500/30">
-                    {{ $step['n'] }}
+        <h2 class="max-w-2xl text-3xl font-bold leading-snug text-ink-900 sm:text-4xl">هر رویداد این چهار مرحله را می‌گذراند</h2>
+
+        <div class="mt-12 grid gap-10 lg:grid-cols-12">
+            <div class="hidden lg:col-span-5 lg:block">
+                <div class="sticky top-28 rounded-3xl border border-ink-100 bg-ink-50 p-8">
+                    <div class="relative mx-auto h-48 w-48">
+                        <svg viewBox="0 0 160 160" class="h-full w-full -rotate-90" aria-hidden="true">
+                            <circle cx="80" cy="80" r="64" fill="none" stroke-width="10" class="stroke-ink-200"/>
+                            <circle cx="80" cy="80" r="64" fill="none" stroke-width="10" stroke-linecap="round"
+                                    class="stroke-pool-600 transition-all duration-700 ease-out"
+                                    stroke-dasharray="402" :stroke-dashoffset="402 * (1 - (step + 1) / 4)"/>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-5xl font-bold text-pool-700" x-text="digits[step]">۱</span>
+                            <span class="mt-1 text-sm font-semibold text-ink-600" x-text="names[step]">پیش‌نویس</span>
+                        </div>
+                    </div>
+                    <div class="mt-8 flex gap-1.5" aria-hidden="true">
+                        <template x-for="(n, i) in names" :key="i">
+                            <span class="h-1.5 flex-1 rounded-full transition-colors duration-500" :class="i <= step ? 'bg-pool-600' : 'bg-ink-200'"></span>
+                        </template>
+                    </div>
                 </div>
-                <h3 class="mt-4 text-lg font-bold text-slate-900">{{ $step['t'] }}</h3>
-                <p class="mt-2 text-sm text-slate-600">{{ $step['d'] }}</p>
             </div>
-            @endforeach
+
+            <ol class="lg:col-span-7">
+                @foreach ($steps as $i => [$stage, $title, $desc])
+                    <li class="flex gap-5 border-t border-ink-100 py-8 first:border-t-0 lg:min-h-[52vh] lg:items-start"
+                        x-inview.mid="step = {{ $i }}">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors duration-300"
+                              :class="step === {{ $i }} ? 'bg-flag-500 text-ink-950' : 'bg-ink-100 text-ink-500'">{{ fa_num((string) ($i + 1)) }}</span>
+                        <div>
+                            <p class="text-sm font-semibold text-pool-700">{{ $stage }}</p>
+                            <h3 class="mt-1 text-xl font-bold text-ink-900">{{ $title }}</h3>
+                            <p class="mt-3 max-w-lg leading-8 text-ink-500">{{ $desc }}</p>
+                        </div>
+                    </li>
+                @endforeach
+            </ol>
         </div>
     </div>
 </section>
 
-{{-- Plans --}}
-<section id="plans" class="py-20">
+<section id="plans" class="bg-ink-50 py-20 sm:py-24" x-inview.mid="active = 'plans'">
     <div class="mx-auto max-w-6xl px-4 sm:px-6">
-        <div class="mx-auto max-w-2xl text-center">
-            <h2 class="text-3xl font-bold text-slate-900">دو نوع حساب، شفاف و قابل ارتقا</h2>
-            <p class="mt-3 text-slate-600">محدودیت‌ها از config قابل تنظیم‌اند و بعداً با پرداخت ارتقا می‌یابند.</p>
-        </div>
+        <h2 class="max-w-2xl text-3xl font-bold leading-snug text-ink-900 sm:text-4xl">حساب عادی برای یک رویداد، حساب سازمانی برای یک تیم</h2>
+        <p class="mt-4 max-w-2xl leading-8 text-ink-500">سقف‌ها قابل تنظیم‌اند و بعداً می‌توانید حساب را ارتقا بدهید.</p>
 
-        <div class="mx-auto mt-12 grid max-w-4xl gap-6 sm:grid-cols-2">
-            <div class="glass card-hover rounded-3xl p-7">
-                <p class="text-sm font-semibold text-slate-500">کاربر عادی</p>
-                <p class="mt-1 text-2xl font-bold text-slate-900">Individual</p>
-                <ul class="mt-5 space-y-2.5 text-sm text-slate-600">
-                    <li class="flex gap-2"><span class="text-emerald-500">✓</span> ۱ رویداد فعال</li>
-                    <li class="flex gap-2"><span class="text-emerald-500">✓</span> تا ۳ کمیته</li>
-                    <li class="flex gap-2"><span class="text-emerald-500">✓</span> وظایف و بودجه ساده</li>
-                    <li class="flex gap-2"><span class="text-slate-300">—</span> سازمان و مسابقات ندارد</li>
+        <div class="mt-12 grid gap-6 md:grid-cols-2">
+            <div class="rounded-3xl border border-ink-200 bg-white p-8">
+                <h3 class="text-xl font-bold text-ink-900">حساب عادی</h3>
+                <p class="mt-1 text-sm text-ink-500">برای برگزارکننده‌ای که یک رویداد را اداره می‌کند.</p>
+                <ul class="mt-6 space-y-3 text-sm text-ink-700">
+                    <li class="flex gap-3"><span class="text-pool-600" aria-hidden="true">✓</span> یک رویداد فعال</li>
+                    <li class="flex gap-3"><span class="text-pool-600" aria-hidden="true">✓</span> تا ۳ کمیته در هر رویداد</li>
+                    <li class="flex gap-3"><span class="text-pool-600" aria-hidden="true">✓</span> دعوت عضو با موبایل</li>
+                    <li class="flex gap-3 text-ink-400"><span aria-hidden="true">–</span> بدون سازمان و مسابقات</li>
                 </ul>
-                <a href="{{ route('auth.login') }}" class="btn-ghost mt-6 w-full">شروع رایگان</a>
+                <a href="{{ route('auth.login') }}" class="btn-ghost mt-8 w-full">شروع با حساب عادی</a>
             </div>
 
-            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 p-7 text-white shadow-2xl shadow-indigo-500/30">
-                <div class="absolute -end-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
-                <p class="text-sm font-semibold text-indigo-100">کاربر سازمانی</p>
-                <p class="mt-1 text-2xl font-bold">Organizational</p>
-                <ul class="mt-5 space-y-2.5 text-sm text-indigo-50">
-                    <li class="flex gap-2"><span>✓</span> رویداد نامحدود</li>
-                    <li class="flex gap-2"><span>✓</span> سازمان و دعوت عضو</li>
-                    <li class="flex gap-2"><span>✓</span> مسابقات، اسپانسر، خروجی کامل</li>
-                    <li class="flex gap-2"><span>✓</span> پایگاه دانش و AI (سهمیه ماهانه)</li>
+            <div class="rounded-3xl bg-pool-700 p-8 text-white">
+                <h3 class="text-xl font-bold">حساب سازمانی</h3>
+                <p class="mt-1 text-sm text-pool-100">برای فدراسیون، باشگاه یا مجموعه‌ای با چند رویداد.</p>
+                <ul class="mt-6 space-y-3 text-sm text-pool-50">
+                    <li class="flex gap-3"><span class="text-flag-400" aria-hidden="true">✓</span> رویداد و کمیته‌ی نامحدود</li>
+                    <li class="flex gap-3"><span class="text-flag-400" aria-hidden="true">✓</span> سازمان، دعوت عضو و نقش‌ها</li>
+                    <li class="flex gap-3"><span class="text-flag-400" aria-hidden="true">✓</span> مسابقات و اسپانسرینگ (به‌زودی)</li>
+                    <li class="flex gap-3"><span class="text-flag-400" aria-hidden="true">✓</span> پایگاه دانش و برنامه‌ریز هوشمند با سهمیه‌ی ماهانه (به‌زودی)</li>
                 </ul>
-                <a href="{{ route('auth.login') }}" class="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-indigo-700 shadow-lg transition hover:bg-indigo-50">شروع سازمانی</a>
+                <a href="{{ route('auth.login') }}" class="btn-flag mt-8 w-full">شروع با حساب سازمانی</a>
             </div>
         </div>
     </div>
 </section>
 
-{{-- CTA --}}
-<section class="pb-24">
-    <div class="mx-auto max-w-4xl px-4 sm:px-6">
-        <div class="relative overflow-hidden rounded-3xl bg-slate-900 px-8 py-14 text-center shadow-2xl">
-            <div class="absolute inset-0 bg-mesh opacity-40"></div>
-            <div class="relative">
-                <h2 class="text-2xl font-bold text-white sm:text-3xl">آماده ساخت اولین رویداد هستید؟</h2>
-                <p class="mx-auto mt-3 max-w-lg text-slate-300">فقط با شماره موبایل وارد شوید و در کمتر از یک دقیقه شروع کنید.</p>
-                <a href="{{ route('auth.login') }}" class="btn-primary mt-7 px-8 py-3 text-base">ورود با موبایل</a>
-            </div>
-        </div>
+<section class="bg-pool-deep relative isolate overflow-hidden py-20 text-white sm:py-24">
+    <x-lanes class="absolute inset-0 -z-10 h-full w-full text-white/10" />
+    <div class="mx-auto max-w-3xl px-4 text-center sm:px-6">
+        <h2 class="text-3xl font-bold leading-snug sm:text-4xl">اولین رویدادتان را همین حالا بسازید</h2>
+        <p class="mx-auto mt-4 max-w-lg leading-8 text-pool-200">شماره‌ی موبایل را وارد کنید، کد پیامکی را بگیرید و شروع کنید. کمتر از یک دقیقه طول می‌کشد.</p>
+        <a href="{{ route('auth.login') }}" class="btn-flag mt-8 px-8 py-3 text-base">ورود با موبایل</a>
     </div>
 </section>
 @endsection
