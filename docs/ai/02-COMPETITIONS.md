@@ -270,7 +270,9 @@ Schema::create('competition_notes', function (Blueprint $table) {   // یادد�
 
 ## ۶. موتورهای قطعی (`app/Services/Competitions/Engine/` — PHP خالص، بدون DB و بدون Laravel)
 
-> **پیاده‌سازی مرجع تست‌شده** در `docs/reference/competition-engines/` موجود است (۴۴ تست، PHP 8.3). در Step 12B این فایل‌ها را به `app/Services/Competitions/Engine/` با namespace `App\Services\Competitions\Engine` منتقل کن، تست‌ها را زیر Pest 5 اجرا کن و `pint` بزن. **قبل از اتکا، دوباره اجرا و تأیید کن**؛ مرجع فقط روی PHPUnit 9.6 اجرا شده است.
+> ⚠️ **وضعیت (۱۴۰۵/۰۸/۳۰):** پوشه‌ی `docs/reference/competition-engines/` هنوز در مخزن **وجود ندارد**؛ قبل از Step 12B اضافه شود (در `90-PROGRESS.md` ثبت شده).
+>
+> **پیاده‌سازی مرجع تست‌شده** در `docs/reference/competition-engines/` (پس از افزودن) موجود است (۴۴ تست، PHP 8.3). در Step 12B این فایل‌ها را به `app/Services/Competitions/Engine/` با namespace `App\Services\Competitions\Engine` منتقل کن، تست‌ها را زیر Pest 5 اجرا کن و `pint` بزن. **قبل از اتکا، دوباره اجرا و تأیید کن**؛ مرجع فقط روی PHPUnit 9.6 اجرا شده است.
 
 | کلاس | وظیفه |
 |---|---|

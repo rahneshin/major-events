@@ -1,4 +1,4 @@
-# 10 — پرامپت مراحل ۰۰ تا ۱۰ (هسته‌ی سامانه)
+# 10 — پرامپت مراحل ۰۰ تا ۱۰ (هسته‌ی سامانه) + 06B + UI-2
 
 > **به چت‌بات:** وقتی امیر گفت «مرحله NN را اجرا کن»، فقط بخش همان مرحله را اجرا کن و خروجی را طبق قالب بخش ۴ از `00-MASTER-CONTEXT.md` بده. هر مرحله فرض می‌کند مراحل قبلی در `90-PROGRESS.md` با وضعیت DONE ثبت شده‌اند؛ اگر نیستند، متوقف شو و بگو.
 
@@ -205,28 +205,100 @@
 
 **کامیت:** `feat(committees): committees with members and templates`
 
+**✅ وضعیت واقعی پیاده‌سازی (شاخه‌ی `step/07-committees`، تفاوت با متن بالا):**
+- `CommitteeType` در کد: `executive, finance, marketing, technical, medical, logistics, volunteers, security, protocol, custom` (نه نام‌های بلند `marketing_media/technical_competitions/...`). **کد مرجع است.**
+- جدول `committees` **ستون `uuid` ندارد** (URL با `id` داخلی در کامپوننت؛ route عمومی `/events/{event}/committees` فقط redirect به تب است). در صورت نیاز در Step 08 بررسی شود.
+- `softDeletes` + حذف `unique(event_id,name)`؛ یکتایی نام در `CommitteeService` (نادیده‌گرفتن حذف‌شده‌ها).
+- نقش «رئیس کمیته» در سطح رویداد **مشتق‌شده** است (`Event::roleOf`)، در pivot نوشته نمی‌شود.
+- حذف کمیته‌ای که وظیفه دارد ممنوع است (`Committee::hasTasks()`؛ تا Step 08 همیشه `false`) ← **Step 08 باید تست واقعی اضافه کند.**
+- اعلان درون‌برنامه: جدول `notifications` (کانال database)؛ UI نمایش اعلان در Step 13.
+- Policy: `CommitteePolicy` (ساخت/ویرایش/حذف/ترتیب = `EventPolicy@update`؛ رئیس همان کمیته: شرح وظایف و اعضا).
+- Migrationها: `000006_create_committees_tables`، `000007_alter_committees_add_soft_deletes`، `000008_create_notifications_table`.
+- **تست:** `tests/Feature/Committees/CommitteeTest.php` نوشته شده؛ اجرای کامل روی سیستم امیر انجام می‌شود (در PROGRESS ثبت شود).
+
 ---
 
-## STEP 08 — وظایف، وابستگی، Milestone و تقویم
+## STEP 06B — تثبیت و امنیت پایه (اجرا بعد از 07 و پیش از 08)
 
+> **چرا این مرحله هست:** در Step 05–06 چند حفره‌ی امنیتی و بدهی فنی ثبت شد (`90-PROGRESS.md` بخش «مشکلات شناخته‌شده»). به دستور مالک محصول، 06B **قبل از Step 08** انجام می‌شود تا وظایف روی پایه‌ی امن ساخته شوند. ترتیب اجرا: 07 ← **06B** ← 08.
+> این متن از MASTER (اصل ۵)، `01-DOMAIN-MODEL` و PROGRESS جمع‌بندی شده؛ قبل از کد، با کد واقعی تطبیق بده (قانون ۱۲ MASTER).
+
+**بخش‌ها (پیشنهاد: 06B-1 امنیت، 06B-2 تست و CI، 06B-3 مرج):**
+
+**06B-1 — امنیت و ادمین سیستم**
+- migration: `users.is_super_admin` (`boolean`, default `false`, index). مقداردهی فقط با seeder/دستور artisan (`php artisan user:make-admin 09...`)، **هرگز از UI**.
+- Gate `access-admin` (یا middleware `super.admin`) روی `/admin` و `/system`؛ کاربر غیرادمین ← ۴۰۳.
+- لایه‌ی چهارم دسترسی (سیستم) در `UserFactory` (`->superAdmin()`) و `User::isSuperAdmin()`.
+- شاخه‌ی `step/04-system-dashboard` (مسیر `/system`، کامپوننت `System\SystemDashboard`) هنوز در زنجیره‌ی اصلی نیست. **تصمیم باز:** (الف) cherry-pick و قفل با همین Gate، یا (ب) ادغام در `/admin` و حذف شاخه. پیش‌فرض: (الف).
+- یکسان‌سازی توکن دعوت: `event_invitations.token` (خام) ← `token_hash` (هش) مثل `organization_invitations`؛ مقایسه با `hash_equals`؛ migration داده‌ی موجود (دعوت‌های pending باطل یا هش شوند).
+- بازبینی rate-limit روی routeهای حساس (OTP موجود است؛ دعوت‌ها و جست‌وجوی شماره بررسی شود).
+
+**06B-2 — تست و CI**
+- `tests/Feature/Security/RouteAccessTest.php`: ماتریس «هر route غیرعمومی × (مهمان | بدون onboarding | کاربر عادی | عضو | غیرعضو | ادمین)» با انتظار redirect/۴۰۳/۲۰۰.
+- تست نشت tenant: کاربر B رویداد/سازمان/کمیته‌ی کاربر A را نبیند (`Event::visibleTo`، `events.show/edit/committees`، `orgs.*`).
+- تکمیل تست‌های Events و Members (مشکل شناخته‌شده ۵).
+- **CI:** افزودن گام Larastan (سطح ۵)؛ همگام‌سازی `composer.lock` (فعلاً `hekmatinasser/verta` فقط در `composer.json` است؛ `composer update hekmatinasser/verta`).
+- **ناسازگاری نسخه‌ی PHP:** `composer.json` و CI روی PHP `^8.3`/`8.3` هستند، اما `composer.lock` بسته‌هایی دارد که PHP ≥ 8.4 می‌خواهند (مثلاً `symfony/http-foundation` v8.1.x). یا CI/محیط به 8.4 ارتقا یابد یا lock با `config.platform.php = 8.3.x` دوباره ساخته شود. **با `php -v` و `composer show` تأیید کن؛ تصمیم با امیر.**
+
+**06B-3 — مرج و نظم شاخه‌ها**
+- زنجیره‌ی فعلی (همه در `step/08-dashboard-site-template`): 01 ← 02 ← 03 ← 04 ← UI ← 05 ← 06 ← 07 ← UI-2. مرج به `main` با PR و CI سبز؛ تگ `v0.07.0`.
+- جدول «توپولوژی شاخه‌ها» و «Routeها و مجوزها» در PROGRESS را نگه‌دار.
+
+**تست‌ها:** همان بخش 06B-2. **معیار پذیرش:** `/admin` و `/system` برای کاربر عادی ۴۰۳؛ CI سبز (migrate + pint + larastan + test)؛ `main` به‌روز.
+
+**کامیت‌ها:** `feat(auth): add super admin gate for admin and system panels` · `refactor(events): hash event invitation tokens` · `test(security): route access matrix and tenant isolation` · `ci: add larastan and sync composer lock`
+
+---
+
+## STEP UI-2 — بازطراحی قالب «Lane lines» (✅ انجام‌شده؛ شاخه‌ی `step/08-dashboard-site-template`)
+
+> **توضیح تاریخی:** این کار یک بازطراحی ظاهری بود که روی شاخه‌ای با نام `step/08-...` انجام شد و در متن مراحل نبود؛ برای جلوگیری از اشتباه با «Step 08 — وظایف» اینجا به‌عنوان مرحله‌ی UI-2 ثبت شد (مشابه ردیف «UI» قبلی). **شماره‌ی Step 08 همچنان «وظایف» است.**
+
+**هدف:** هویت بصری جدید و یکپارچه (ورزشی/استخر-مسیر شنا) برای سایت عمومی و پنل کاربر.
+
+**تحویل‌دادنی (از کامیت‌های `9f994df` تا `6511cae`):**
+- **توکن‌های طراحی** در `resources/css/app.css` (`@theme`): پالت `pool-*` (آبی)، `flag-*` (زرد)، `signal-*` (قرمز هشدار)، `ink-*` (خاکستری-آبی)، `success/warning/danger`؛ فونت Vazirmatn. **نام‌های قدیمی `indigo-*`/`violet-*`/`fuchsia-*` به‌عنوان alias به پالت جدید نگاشت شده‌اند** تا صفحات قدیمی (هاب رویداد، کمیته‌ها، سازمان) بدون تغییر بشکنند؛ در مراحل بعد تدریجی به `pool/ink` مهاجرت شوند.
+- **کامپوننت‌های Blade جدید:** `brand-mark`، `lane-rope`، `lanes`، `event-row`.
+- **لایوت‌ها:** بازنویسی `layouts/app` و `layouts/public`.
+- **صفحات:** `public/home` (لندینگ)، `livewire/app/dashboard`، `livewire/events/event-index` (لیست رویدادها با ردیف و طناب مسیر).
+- **Livewire:** به‌روزرسانی `App\Livewire\App\Dashboard` و `Events\EventIndex`.
+- **JS (`resources/js/app.js`، بدون وابستگی جدید):** دایرکتیوهای Alpine `x-reveal`، `x-inview`، `counter`، `countdown`؛ احترام به `prefers-reduced-motion`.
+- **کلاس‌های CSS:** دکمه‌ها `btn-primary`، `btn-flag`، `btn-ghost`، `btn-ghost-light`؛ سطوح `glass`، `glass-dark`، `card-hover`؛ و `bar-fill`، `skeleton` (ببین `app.css`).
+
+**هنوز با قالب قدیمی:** `event-show` (هاب)، `event-committees`، `event-form`، صفحات سازمان و حساب، لایوت `admin`/`guest`. **قانون برای مراحل بعد:** صفحات جدید (وظایف و …) با توکن‌های `pool/ink/flag/signal` و کلاس‌های `btn-*` نوشته شوند، نه `indigo/slate`.
+
+**تست:** دستی (بدون Pest). **کامیت‌ها:** `feat(ui): replace public home template with Lane lines design` و کامیت‌های هم‌خانواده.
+
+---
+
+## STEP 08 — وظایف، وابستگی، Milestone و تقویم (به سه بخش a/b/c)
+
+> **پیش‌نیاز:** 06B انجام شده باشد (ترتیب: 07 ← 06B ← 08). **UI:** صفحات جدید با توکن‌های قالب UI-2 (`pool/ink/flag/signal`، `btn-primary/btn-flag/btn-ghost`) نوشته شوند.
+> **ماتریس دسترسی** (از `01-DOMAIN-MODEL` بخش ۱۰): تغییر وضعیت وظیفه: مالک/مدیر سازمان، `event_owner`، `event_manager` ✅؛ `committee_head` فقط وظایف کمیته‌ی خودش؛ `member` فقط وظیفه‌ی خودش (assignee)؛ `viewer` ❌. کامنت برای همه‌ی اعضا.
+
+### 08a — دیتابیس و منطق
 **دیتابیس:**
-- `tasks`: `id`, `uuid`, `event_id`, `committee_id` (nullable)، `parent_id` (nullable)، `title`, `description`, `phase` (`pre|during|post`)، `module` (استراتژی/عملیات/بودجه/بازاریابی/اسپانسرینگ/ریسک/لجستیک/مسابقات/ارزیابی)، `assignee_id`, `status` (`todo|doing|blocked|done|cancelled`)، `priority`, `start_at`, `due_at`, `completed_at`, `estimated_hours`, `source` (`manual|ai`)، `ai_recommendation_id` (nullable)، `position`, softDeletes.
-- `task_dependencies`: `task_id`, `depends_on_task_id`, `type` (finish_to_start).
-- `task_comments`, `task_attachments` (ذخیره‌ی فایل با Storage، اندازه/نوع محدود).
+- `tasks`: `id`, `uuid`, `event_id`, `committee_id` (nullable)، `parent_id` (nullable، فقط یک سطح)، `title`, `description`, `phase` (`pre|during|post`)، `module` (`strategy|operations|budget|marketing|sponsorship|risk|logistics|competitions|evaluation`)، `assignee_id` (nullable)، `status` (`todo|doing|blocked|done|cancelled`)، `priority`, `start_at`, `due_at`, `completed_at`, `estimated_hours`, `source` (`manual|ai`)، `ai_recommendation_id` (nullable، **بدون FK تا Step 18**)، `position`, softDeletes.
+  - **`competition_id` (nullable) در این مرحله اضافه نمی‌شود**: جدول `competitions` تا Step 12 وجود ندارد. در migration مرحله‌ی 12F با FK اضافه شود (تصمیم ثبت‌شده).
+- `task_dependencies`: `task_id`, `depends_on_task_id`, `type` (`finish_to_start`)، unique جفت.
+- `task_comments`، `task_attachments` (دیسک خصوصی `local`، نوع/اندازه محدود؛ دانلود از route دارای Policy).
 - `milestones`: `event_id`, `title`, `due_at`, `status`.
 
-**منطق:**
-- جلوگیری از وابستگی چرخشی (DFS)؛ وظیفه‌ی وابسته تا اتمام پیش‌نیاز `blocked` نشان داده شود.
-- فقط assignee/رئیس کمیته/مدیر رویداد می‌تواند وضعیت را تغییر دهد؛ comment برای همه‌ی اعضا.
-- سقف `tasks_per_event`.
-- نماها: لیست با فیلتر (کمیته، وضعیت، مسئول، فاز، موعد)، **Kanban** (Livewire + Alpine/Sortable)، **تقویم** و نمای «وظایف من» در همه‌ی رویدادها.
-- نشانگر تأخیر (overdue) و مرتب‌سازی.
-- دستور زمان‌بندی‌شده‌ی `tasks:remind` برای موعدهای نزدیک (پیام در Step 13).
-- محاسبه‌ی درصد پیشرفت رویداد/کمیته.
+**منطق (`TaskService`):**
+- سقف `tasks_per_event` (Entitlement)؛ جلوگیری از وابستگی چرخشی (DFS)؛ `blocked` خودکار تا اتمام پیش‌نیازها (فقط `done` پیش‌نیاز را آزاد می‌کند؛ `cancelled` آزاد نمی‌کند).
+- `TaskPolicy` طبق ماتریس بالا؛ activity log برای ساخت/تغییر وضعیت/حذف.
+- اتصال `Committee::hasTasks()` به جدول واقعی + تست «حذف کمیته‌ی دارای وظیفه ممنوع».
+- درصد پیشرفت رویداد/کمیته (سرویس).
 
-**تست‌ها:** چرخه‌ی وابستگی، مجوزها، سقف، فیلترها، تغییر وضعیت و تأثیر روی وابسته‌ها.
+**تست‌ها:** چرخه‌ی وابستگی، مجوزها (۴۰۳)، سقف، نشت tenant، تغییر وضعیت و اثر روی وابسته‌ها، `hasTasks`.
 
-**کامیت:** `feat(tasks): tasks, dependencies, milestones and calendar`
+### 08b — رابط (تب وظایف)
+- لیست با فیلتر (کمیته، وضعیت، مسئول، فاز، موعد)، فرم وظیفه، ساب‌تسک، کامنت، پیوست، Milestone، نشانگر تأخیر (overdue) و مرتب‌سازی. جایگزین placeholder تب «وظایف» در `EventShow`.
+
+### 08c — Kanban، تقویم، «وظایف من» و یادآور
+- Kanban (Livewire + Alpine/Sortable؛ پکیج جدید فقط با ثبت دلیل)، تقویم شمسی، نمای «وظایف من» در همه‌ی رویدادها، دستور زمان‌بندی‌شده‌ی `tasks:remind` (پیام در Step 13).
+
+**کامیت‌ها:** `feat(tasks): tasks, dependencies and policy` · `feat(tasks): tasks tab ui` · `feat(tasks): kanban, calendar and reminders`
 
 ---
 

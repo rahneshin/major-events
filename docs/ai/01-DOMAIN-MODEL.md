@@ -2,7 +2,7 @@
 
 > **هدف این فایل:** هر AI بتواند بفهمد کل سامانه از چه موجودیت‌هایی ساخته می‌شود، کدام‌ها **همین الان در کد وجود دارند** و کدام‌ها **برنامه‌ریزی‌شده‌اند**، و چطور به هم وصل‌اند. جزئیات ستون‌های هر مرحله در فایل مرحله است؛ مسابقات در `02-COMPETITIONS.md`؛ دانش و AI در `03-KNOWLEDGE-AND-AI.md`.
 >
-> **علامت‌ها:** ✅ = در migration واقعی مخزن (شاخه‌ی `step/06-event-members`) تأیید شده · ⬜ = برنامه‌ریزی‌شده (طبق فایل مرحله؛ قبل از ساخت، با کد واقعی تطبیق بده).
+> **علامت‌ها:** ✅ = در migration واقعی مخزن (سر زنجیره‌ی شاخه‌ها: `step/08-dashboard-site-template`، شامل Step 07) تأیید شده · ⬜ = برنامه‌ریزی‌شده (طبق فایل مرحله؛ قبل از ساخت، با کد واقعی تطبیق بده).
 
 ---
 
@@ -71,13 +71,14 @@
 
 ---
 
-## ۴. کمیته و وظیفه (Step 07–08) ⬜
+## ۴. کمیته (Step 07 ✅) و وظیفه (Step 08 ⬜)
 
 | جدول | ستون‌های کلیدی |
 |---|---|
-| `committees` | `id, uuid, event_id, name, type (executive|finance|marketing_media|technical_competitions|medical_safety|logistics|hr_volunteers|security|protocol|custom), description?, head_user_id?, color, position, softDeletes` |
-| `committee_user` | `committee_id, user_id, role (head|member)`؛ عضو کمیته باید عضو رویداد باشد |
-| `tasks` | `id, uuid, event_id, committee_id?, parent_id?, competition_id? (وظیفه‌ی مربوط به یک ورزش), title, description, phase (pre|during|post), module (strategy|operations|budget|marketing|sponsorship|risk|logistics|competitions|evaluation), assignee_id?, status (todo|doing|blocked|done|cancelled), priority, start_at?, due_at?, completed_at?, estimated_hours?, source (manual|ai), ai_recommendation_id?, position, softDeletes` |
+| ✅ `committees` | **(کد واقعی)** `id, event_id, name, type (executive|finance|marketing|technical|medical|logistics|volunteers|security|protocol|custom), description?, head_user_id? (FK users, nullOnDelete), color?, position, timestamps, softDeletes; index(event_id, position)`. **بدون `uuid`**؛ یکتایی نام در سرویس (نه DB). نقش «رئیس کمیته» در سطح رویداد مشتق‌شده است (`Event::roleOf`). |
+| ✅ `committee_user` | `id, committee_id, user_id, role (head|member), timestamps; unique(committee_id, user_id)`؛ عضو کمیته باید عضو رویداد باشد |
+| `tasks` | `id, uuid, event_id, committee_id?, parent_id? (فقط یک سطح), title, description, phase (pre|during|post), module (strategy|operations|budget|marketing|sponsorship|risk|logistics|competitions|evaluation), assignee_id?, status (todo|doing|blocked|done|cancelled), priority, start_at?, due_at?, completed_at?, estimated_hours?, source (manual|ai), ai_recommendation_id?, position, softDeletes` |
+| ⬜ `tasks.competition_id?` | وظیفه‌ی مربوط به یک ورزش؛ **در migration مرحله‌ی 12F با FK اضافه می‌شود** (جدول `competitions` تا آن‌جا نیست) |
 | `task_dependencies` | `task_id, depends_on_task_id, type=finish_to_start` (بدون چرخه؛ DFS) |
 | `task_comments`, `task_attachments` | کامنت؛ فایل خصوصی با محدودیت نوع/اندازه |
 | `milestones` | `event_id, title, due_at, status` |
@@ -107,7 +108,7 @@
 
 ## ۷. اعلان و خروجی (Step 13–14) ⬜
 
-`notifications` (جدول Laravel؛ کانال‌های database و sms) · `notification_preferences` · `generated_exports` (نوع، مسیر خصوصی، signed URL موقت)
+`notifications` (✅ جدول Laravel از Step 07 موجود است؛ کانال database؛ sms در Step 13) · `notification_preferences` · `generated_exports` (نوع، مسیر خصوصی، signed URL موقت)
 
 ---
 

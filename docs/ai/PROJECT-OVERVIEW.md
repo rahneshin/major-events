@@ -2,7 +2,7 @@
 
 > **برای چت‌بات‌های دیگر:** این فایل مرجع کامل پروژه است. از اینجا برای درک معماری، وضعیت فعلی، و مراحل بعدی شروع کنید.
 
-**نسخه:** 2.0 | **آخرین به‌روزرسانی:** 1405/08/29 | **وضعیت:** Step 06 ✅
+**نسخه:** 2.1 | **آخرین به‌روزرسانی:** 1405/08/30 | **وضعیت:** Step 07 ✅ · UI-2 ✅ · بعدی: 06B ← 08
 
 ---
 
@@ -11,8 +11,8 @@
 1. [معرفی پروژه](#معرفی-پروژه)
 2. [معماری کلی](#معماری-کلی)
 3. [نقشه داده‌ای](#نقشه-دادهای)
-4. [مراحل انجام‌شده](#مراحل-انجام‌شده-steps-00-06)
-5. [مراحل باقی‌مانده](#مراحل-باقی‌مانده-steps-07-22)
+4. [مراحل انجام‌شده](#مراحل-انجام‌شده-steps-00-07-و-ui-2)
+5. [مراحل باقی‌مانده](#مراحل-باقی‌مانده-06b-و-steps-08-22)
 6. [راهنمای فنی](#راهنمای-فنی)
 7. [شروع کار](#شروع-کار)
 8. [امنیت و Policy](#امنیت-و-policy)
@@ -29,10 +29,10 @@
 | **نام** | پلتفرم هوشمند برنامه‌ریزی و مدیریت رویدادهای ورزشی |
 | **بازار** | ایران (فارسی/RTL) |
 | **هدف** | ترکیب مدیریت عملیاتی رویدادهای ورزشی با هوش مصنوعی مبتنی بر پایگاه دانش |
-| **وضعیت** | Step 06 (اعضا و نقش‌های رویداد) ✅ |
+| **وضعیت** | Step 07 (کمیته‌ها) ✅ + UI-2 (قالب) ✅؛ بعدی: 06B سپس 08 (وظایف) |
 | **مخزن** | https://github.com/rahneshin/major-events |
 | **شاخه اصلی** | `main` (فعلاً Step 00) |
-| **شاخه فعلی** | `step/06-event-members` |
+| **شاخه فعلی** | `step/08-dashboard-site-template` (سر زنجیره؛ UI-2 + docs) |
 
 ### مسئله‌ای که حل می‌کند
 
@@ -121,7 +121,7 @@ users.is_super_admin = true  (ادمین کل سامانه)
 
 ## نقشه دادهای
 
-### جداول کلیدی (تا Step 06)
+### جداول کلیدی (تا Step 07)
 
 | جدول | وضعیت | نکته |
 |------|-------|------|
@@ -137,6 +137,9 @@ users.is_super_admin = true  (ادمین کل سامانه)
 | `event_goals` | ✅ | هدف اصلی + فرعی، SMART |
 | `event_stakeholders` | ✅ | ذی‌نفعان رویداد |
 | `activity_logs` | ✅ | لاگ ممیزی، morphs، action، properties |
+| `committees` | ✅ | softDeletes؛ بدون uuid؛ type: executive\|finance\|marketing\|technical\|medical\|logistics\|volunteers\|security\|protocol\|custom |
+| `committee_user` | ✅ | نقش: head\|member؛ unique(committee_id, user_id) |
+| `notifications` | ✅ | جدول Laravel (کانال database) |
 
 ### قراردادهای مشترک
 
@@ -167,7 +170,7 @@ MainGoalType::SOCIAL | COMMERCIAL | PARTICIPATION | TOURISM | PERFORMANCE | MIXE
 
 ---
 
-## مراحل انجام‌شده (Steps 00-06)
+## مراحل انجام‌شده (Steps 00-07 و UI-2)
 
 ### Step 00 — نصب Laravel و محیط توسعه ✅
 
@@ -643,16 +646,17 @@ class Event extends Model {
 
 ---
 
-## مراحل باقی‌مانده (Steps 07-22)
+### Step 07 — کمیته‌ها ✅
 
-### Step 07 — کمیته‌ها (⬜)
+**هدف:** ساختار اجرایی رویداد.
 
 ```
 Committee {
-    event_id, name,
-    type (executive|finance|technical_competitions|medical_safety|
-          logistics|hr_volunteers|security|protocol|custom),
-    description?, head_user_id?, color, position
+    id, event_id, name,
+    type (executive|finance|marketing|technical|medical|
+          logistics|volunteers|security|protocol|custom),
+    description?, head_user_id?, color?, position,
+    timestamps, softDeletes          // بدون uuid
 }
 
 CommitteeUser {
@@ -661,15 +665,45 @@ CommitteeUser {
 }
 ```
 
-**ویژگی‌ها:**
-- سقف: `committees_per_event` (عادی: 3)
-- قالب پیشنهادی: بر اساس `event_type`
-- عضو کمیته = عضو رویداد باید باشد
-- تب کمیته‌ها در Hub
+**ویژگی‌ها (پیاده‌شده):**
+- سقف `committees_per_event` (عادی: 3)؛ قالب پیشنهادی بر اساس `event_type` (متوقف شدن هنگام پر شدن سقف)
+- عضو کمیته = عضو رویداد؛ رئیس کمیته = `committee_head` **مشتق‌شده** (`Event::roleOf`)
+- حذف کمیته‌ی دارای وظیفه ممنوع (`Committee::hasTasks()`؛ تا Step 08 همیشه false)
+- اعلان درون‌برنامه `AddedToCommittee` (جدول `notifications`)
+- `CommitteePolicy`، `CommitteeService`، Livewire `EventCommittees` (تب «کمیته‌ها» در Hub)
+
+**Migrations:** `2026_11_20_000006_create_committees_tables`، `2026_11_21_000007_alter_committees_add_soft_deletes`، `2026_11_21_000008_create_notifications_table`
+
+---
+
+### Step UI-2 — بازطراحی قالب «Lane lines» ✅
+
+> این کار روی شاخه‌ی `step/08-dashboard-site-template` انجام شد؛ **با «Step 08 — وظایف» یکی نیست** (فقط نام شاخه تداخل دارد).
+
+- توکن‌های طراحی: `pool-*` (آبی)، `flag-*` (زرد)، `signal-*` (قرمز)، `ink-*` (خنثی) در `resources/css/app.css`؛ alias های قدیمی `indigo/violet/fuchsia` به پالت جدید نگاشت شده‌اند.
+- کامپوننت‌های جدید: `brand-mark`، `lane-rope`، `lanes`، `event-row`؛ لایوت‌های `app` و `public` بازنویسی شدند.
+- صفحات جدید: لندینگ (`public/home`)، داشبورد کاربر، لیست رویدادها.
+- JS بدون وابستگی: `x-reveal`، `x-inview`، `counter`، `countdown`.
+- **هنوز قدیمی:** هاب رویداد، کمیته‌ها، فرم رویداد، سازمان، admin، guest. صفحات جدید باید با توکن‌های جدید نوشته شوند.
+
+---
+
+## مراحل باقی‌مانده (06B و Steps 08-22)
+
+### Step 06B — تثبیت و امنیت پایه (⬜ بعدی؛ قبل از 08)
+
+- `users.is_super_admin` + Gate روی `/admin` و `/system` (الان هر کاربر واردشده `/admin` را می‌بیند)
+- تست ۴۰۳ برای هر route غیرعمومی + تست نشت tenant + تکمیل تست Events/Members
+- هش‌کردن توکن دعوت رویداد (`event_invitations.token` ← `token_hash`)
+- CI: افزودن Larastan؛ همگام‌سازی `composer.lock`؛ رفع ناسازگاری PHP 8.3 با بسته‌های نیازمند 8.4
+- مرج زنجیره‌ی شاخه‌ها به `main` (تگ `v0.07.0`)
+- جزئیات: `10-STEPS-PART1.md` بخش 06B
 
 ---
 
 ### Step 08 — وظایف، وابستگی، Milestone
+
+> به سه بخش **08a** (دیتابیس/منطق)، **08b** (تب رابط)، **08c** (Kanban/تقویم/یادآور) تقسیم شده؛ `competition_id` در 12F اضافه می‌شود. جزئیات و تصمیم‌ها: `10-STEPS-PART1.md`.
 
 ```
 Task {
@@ -1168,7 +1202,7 @@ docs/spec/product-roadmap.md        نقشه راه محصول
 ```
 مخزن: https://github.com/rahneshin/major-events
 شاخه اصلی: main (Step 00 فعلاً)
-شاخه فعلی: step/06-event-members
+شاخه فعلی: step/08-dashboard-site-template (سر زنجیره)
 ```
 
 ### داکومنتیشن
@@ -1186,8 +1220,8 @@ Tailwind: https://tailwindcss.com
 
 ### برای چت‌بات‌های بعدی
 
-1. **وضعیت فعلی:** Step 06 ✅
-2. **شاخه کاری:** `step/06-event-members`
+1. **وضعیت فعلی:** Step 07 ✅ + UI-2 ✅ (بعدی: 06B ← 08)
+2. **شاخه کاری:** برای وظایف شاخه‌ی تازه `step/08-tasks` از سر زنجیره بساز
 3. **ریدمی پروژه:** `docs/ai/90-PROGRESS.md` را بخوانید
 4. **برای شروع مرحله جدید:**
    - فایل `docs/ai/10-STEPS-PART1.md` یا `11-STEPS-PART2.md` را بخوانید
@@ -1200,13 +1234,15 @@ Tailwind: https://tailwindcss.com
 1. فونت Vazirmatn: ممکن است woff2 کامل نباشد
 2. SMS: driver=log (انتخاب سرویس واقعی موکول)
 3. UI دعوت رویداد: از لینک عمومی کامل نیست
-4. main branch: عقب است (Step 06 در step/06-event-members)
+4. main branch: عقب است (Step 00؛ کار روی زنجیره‌ی step/*)
 5. تست Event/Members: کامل نیست
-6. بعد از pull: npm run build + php artisan migrate اجباری
+6. بعد از pull: composer install + npm run build + php artisan migrate اجباری
+7. /admin و /system بدون gate (06B)
+8. composer.lock با composer.json هم‌خوان نیست و PHP ≥ 8.4 می‌خواهد در حالی که CI روی 8.3 است (06B)
 ```
 
 ---
 
-**آخرین به‌روزرسانی:** ۱۴۰۵/۰۸/۲۹  
+**آخرین به‌روزرسانی:** ۱۴۰۵/۰۸/۳۰  
 **آماده برای:** تمام چت‌بات‌های مستقبل  
-**نسخه:** 2.0
+**نسخه:** 2.1
