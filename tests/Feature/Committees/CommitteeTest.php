@@ -347,7 +347,10 @@ it('shows a limit message instead of crashing when the cap is reached', function
         ->call('openCreate')
         ->set('name', 'چهارم')
         ->call('save')
-        ->assertSet('error', fn ($e) => str_contains($e, '3'));
+        ->assertSet('error', __('account.limit_exceeded_detail', [
+            'limit' => __('account.limits.committees_per_event'),
+            'max' => 3,
+        ]));
 
     expect($event->committees()->count())->toBe(3);
 });
@@ -465,6 +468,7 @@ it('assigns the head chosen in the create form, adding them to the event if need
     ]);
 
     expect($event->hasMember($newcomer))->toBeTrue()
+        ->and($committee->head_user_id)->toBe($newcomer->id) // returned model is not stale
         ->and($committee->fresh()->head_user_id)->toBe($newcomer->id)
         ->and($committee->roleOf($newcomer))->toBe(CommitteeRole::Head)
         ->and($event->roleOf($newcomer))->toBe(EventRole::CommitteeHead);

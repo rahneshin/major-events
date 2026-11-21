@@ -60,6 +60,8 @@ class CommitteeService
 
             if (! empty($data['head_user_id'])) {
                 $this->assignHead($committee, $actor, (int) $data['head_user_id']);
+                // assignHead works on a fresh copy; never hand back a stale model
+                $committee->refresh();
             }
 
             return $committee;
