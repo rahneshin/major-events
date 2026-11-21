@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\App;
 
-use App\Models\Organization;
+use App\Models\Committee;
+use App\Models\Event;
 use App\Services\EntitlementService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -19,6 +20,7 @@ class Dashboard extends Component
 
     public int $orgCount = 0;
 
+    /** @var array<string, int|null> */
     public array $limits = [];
 
     public function mount(EntitlementService $entitlement): void
@@ -45,7 +47,61 @@ class Dashboard extends Component
 
     public function render()
     {
-        return view('livewire.app.dashboard')
-            ->title(__('ui.dashboard'));
+        $user = Auth::user();
+
+        $visible = fn () => Event::query()->visibleTo($user);
+
+        $activeCount = $visible()->active()->count();
+
+        $events = $visible()
+            ->active()
+            ->with('organization')
+            ->withCount(['members', 'committees'])
+            ->orderByRaw('start_date IS NULL')
+            ->orderBy('start_date')
+            ->limit(5)
+            ->get();
+
+        $nextEvent = $visible()
+            ->active()
+            ->whereDate('start_date', '>=', now('Asia/Tehran')->toDateString())
+            ->orderBy('start_date')
+            ->first();
+
+        $committeeCount = Committee::query()
+            ->whereIn('event_id', $visible()->active()->select('events.id'))
+            ->count();
+
+        // سقف رویداد فعال: همان منطق EventIndex
+        $eventLimit = $this->limits['active_events'] ?? null;
+        $usedEvents = Event::query()->where('created_by', $user->id)->active()->count();
+        $canCreate = $eventLimit === null || $usedEvents < $eventLimit;
+
+        // چک‌لیست شروع (کاملاً از داده‌ی واقعی)
+        $hasEvent = $visible()->exists();
+        $hasInvitedMember = $visible()
+            ->whereHas('members', fn ($q) => $q->where('users.id', '!=', $user->id))
+            ->exists();
+        $hasCommittee = $visible()->whereHas('committees')->exists();
+
+        $checklist = [
+            ['t' => 'تکمیل نام در حساب', 'done' => filled($user->name), 'href' => route('account.index'), 'cta' => 'تکمیل'],
+            ['t' => 'ساخت اولین رویداد', 'done' => $hasEvent, 'href' => $canCreate ? route('events.create') : route('events.index'), 'cta' => 'ساخت'],
+            ['t' => 'دعوت یک همکار به رویداد', 'done' => $hasInvitedMember, 'href' => route('events.index'), 'cta' => 'دعوت'],
+            ['t' => 'ساخت اولین کمیته', 'done' => $hasCommittee, 'href' => route('events.index'), 'cta' => 'ساخت'],
+        ];
+        $doneCount = collect($checklist)->where('done', true)->count();
+
+        return view('livewire.app.dashboard', [
+            'events' => $events,
+            'nextEvent' => $nextEvent,
+            'activeCount' => $activeCount,
+            'committeeCount' => $committeeCount,
+            'eventLimit' => $eventLimit,
+            'usedEvents' => $usedEvents,
+            'canCreate' => $canCreate,
+            'checklist' => $checklist,
+            'doneCount' => $doneCount,
+        ])->title(__('ui.dashboard'));
     }
 }
