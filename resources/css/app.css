@@ -33,112 +33,241 @@
     font-display: swap;
 }
 
+/* ==========================================================================
+   Design tokens — "Lane lines"
+   pool  = آبی استخر (رنگ اصلی، دکمه‌ها، لینک‌ها)
+   flag  = زرد پرچم/تابلو (فقط برای نقطه‌ی توجه: مرحله‌ی فعلی، CTA روی آبی، ارقام LED)
+   ink   = سرمه‌ای خنثی (متن، خطوط، سطوح)
+   signal= قرمز سیگنال (فقط خطا/هشدار)
+   ========================================================================== */
 @theme {
     --font-sans: 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
 
-    --color-primary-50: #eff6ff;
-    --color-primary-100: #dbeafe;
-    --color-primary-200: #bfdbfe;
-    --color-primary-300: #93c5fd;
-    --color-primary-400: #60a5fa;
-    --color-primary-500: #3b82f6;
-    --color-primary-600: #2563eb;
-    --color-primary-700: #1d4ed8;
-    --color-primary-800: #1e40af;
-    --color-primary-900: #1e3a8a;
+    --color-pool-50: #eef6ff;
+    --color-pool-100: #d9eaff;
+    --color-pool-200: #b9d7ff;
+    --color-pool-300: #86bbff;
+    --color-pool-400: #4c98f5;
+    --color-pool-500: #1f78e0;
+    --color-pool-600: #0b5fc0;
+    --color-pool-700: #0a4ba0;
+    --color-pool-800: #0b3b7e;
+    --color-pool-900: #0b2e62;
+    --color-pool-950: #071c3d;
+
+    --color-flag-300: #ffd95e;
+    --color-flag-400: #ffc93a;
+    --color-flag-500: #ffb800;
+    --color-flag-600: #d99a00;
+
+    --color-signal-50: #fff1ee;
+    --color-signal-500: #f0482f;
+    --color-signal-600: #d7361f;
+
+    --color-ink-50: #f3f6fb;
+    --color-ink-100: #e6ebf3;
+    --color-ink-200: #cfd7e5;
+    --color-ink-300: #a7b3c9;
+    --color-ink-400: #7b89a4;
+    --color-ink-500: #58667f;
+    --color-ink-600: #414d65;
+    --color-ink-700: #2d374c;
+    --color-ink-800: #1c2536;
+    --color-ink-900: #101827;
+    --color-ink-950: #0a101c;
 
     --color-success-500: #22c55e;
     --color-warning-500: #f59e0b;
     --color-danger-500: #ef4444;
+
+    /* ---- Legacy aliases ----
+       صفحه‌های قدیمی (سازمان‌ها، فرم رویداد، کمیته‌ها، ادمین، ورود) هنوز کلاس‌های
+       indigo/violet/fuchsia دارند. تا بازطراحی‌شان، به پالت جدید نگاشت می‌شوند.
+       TODO: هنگام بازطراحی هر صفحه، با pool-* جایگزین و این بلوک را حذف کنید. */
+    --color-indigo-50: #eef6ff;
+    --color-indigo-100: #d9eaff;
+    --color-indigo-200: #b9d7ff;
+    --color-indigo-300: #86bbff;
+    --color-indigo-400: #4c98f5;
+    --color-indigo-500: #1f78e0;
+    --color-indigo-600: #0b5fc0;
+    --color-indigo-700: #0a4ba0;
+    --color-indigo-800: #0b3b7e;
+    --color-indigo-900: #0b2e62;
+    --color-indigo-950: #071c3d;
+
+    --color-violet-50: #eef6ff;
+    --color-violet-100: #d9eaff;
+    --color-violet-200: #b9d7ff;
+    --color-violet-300: #86bbff;
+    --color-violet-400: #4c98f5;
+    --color-violet-500: #1f78e0;
+    --color-violet-600: #0b5fc0;
+    --color-violet-700: #0a4ba0;
+    --color-violet-800: #0b3b7e;
+    --color-violet-900: #0b2e62;
+    --color-violet-950: #071c3d;
+
+    --color-fuchsia-50: #d9eaff;
+    --color-fuchsia-100: #b9d7ff;
+    --color-fuchsia-200: #86bbff;
+    --color-fuchsia-300: #4c98f5;
+    --color-fuchsia-400: #1f78e0;
+    --color-fuchsia-500: #0a4ba0;
+    --color-fuchsia-600: #0b3b7e;
+    --color-fuchsia-700: #0b2e62;
+    --color-fuchsia-800: #071c3d;
+    --color-fuchsia-900: #071c3d;
+    --color-fuchsia-950: #050f24;
 }
 
-html { direction: rtl; }
+html {
+    direction: rtl;
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+}
 
 body {
     font-family: var(--font-sans);
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-ink-50 text-ink-900 antialiased;
 }
 
+:focus-visible {
+    outline: 2px solid var(--color-pool-500);
+    outline-offset: 2px;
+}
+
+[x-cloak] { display: none !important; }
 .fa-num { font-feature-settings: "ss01"; }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
 
-/* ===== Motion system ===== */
-@keyframes float-y {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-12px); }
+/* ==========================================================================
+   Surfaces
+   ========================================================================== */
+.bg-pool-field {
+    background-color: var(--color-pool-700);
+    background-image:
+        radial-gradient(70% 60% at 85% 0%, rgba(76, 152, 245, 0.55), transparent 65%),
+        linear-gradient(165deg, var(--color-pool-600) 0%, var(--color-pool-800) 100%);
 }
-@keyframes float-slow {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(24px, -18px) scale(1.04); }
-    66% { transform: translate(-18px, 12px) scale(0.96); }
+
+.bg-pool-deep {
+    background-color: var(--color-pool-950);
+    background-image: radial-gradient(60% 80% at 10% 0%, rgba(31, 120, 224, 0.35), transparent 70%);
 }
-@keyframes pulse-soft {
-    0%, 100% { opacity: 0.45; }
-    50% { opacity: 0.85; }
+
+/* تابلوی LED (امتیاز/شمارش معکوس) */
+.led-panel {
+    background: var(--color-ink-950);
+    color: var(--color-flag-400);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
 }
+
+/* ==========================================================================
+   Motion
+   ========================================================================== */
 @keyframes shimmer {
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
 }
-@keyframes rise {
-    from { opacity: 0; transform: translateY(18px); }
+@keyframes page-enter {
+    from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
-@keyframes scale-in {
-    from { opacity: 0; transform: scale(0.94); }
-    to { opacity: 1; transform: scale(1); }
+@keyframes progress-grow {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
 }
-@keyframes slide-in-end {
-    from { opacity: 0; transform: translateX(-16px); }
-    to { opacity: 1; transform: translateX(0); }
+@keyframes parallax-slow {
+    from { transform: translateY(0); }
+    to { transform: translateY(-40px); }
 }
-@keyframes gradient-shift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+@keyframes parallax-fast {
+    from { transform: translateY(0); }
+    to { transform: translateY(-80px); }
+}
+@keyframes float-y {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
 }
 
 .animate-float-y { animation: float-y 5s ease-in-out infinite; }
-.animate-float-slow { animation: float-slow 16s ease-in-out infinite; }
-.animate-pulse-soft { animation: pulse-soft 3.5s ease-in-out infinite; }
-.animate-rise { animation: rise 0.55s ease-out both; }
-.animate-scale-in { animation: scale-in 0.45s ease-out both; }
-.animate-slide-in-end { animation: slide-in-end 0.5s ease-out both; }
+.animate-rise { animation: page-enter 0.55s ease-out both; }
+.stagger-1 { animation-delay: var(--d, 0ms); }
 
-.bg-mesh {
-    background-image:
-        radial-gradient(at 20% 20%, rgba(99, 102, 241, 0.18) 0px, transparent 50%),
-        radial-gradient(at 80% 10%, rgba(168, 85, 247, 0.14) 0px, transparent 45%),
-        radial-gradient(at 50% 80%, rgba(34, 211, 238, 0.12) 0px, transparent 50%),
-        radial-gradient(at 90% 70%, rgba(244, 114, 182, 0.1) 0px, transparent 40%);
+/* ورود یک‌باره با اسکرول (با x-reveal) */
+.reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms),
+                transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms);
+}
+.reveal.is-in { opacity: 1; transform: none; }
+
+/* نوار پیشرفت و حلقه‌ها: با x-reveal پر می‌شوند */
+.bar-fill { width: 0; transition: width 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0.2s); }
+.bar-fill.is-in { width: var(--w, 100%); }
+.ring-fill { stroke-dashoffset: var(--full, 163); transition: stroke-dashoffset 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0.2s); }
+.ring-fill.is-in { stroke-dashoffset: var(--off, 0); }
+
+/* گذار بین صفحه‌های پنل */
+.page-enter { animation: page-enter 0.35s ease-out both; }
+
+/* اسکلت بارگذاری */
+.skeleton {
+    background: linear-gradient(90deg, rgba(16, 24, 39, 0.06) 25%, rgba(16, 24, 39, 0.12) 37%, rgba(16, 24, 39, 0.06) 63%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
 }
 
-.glass {
-    @apply border border-white/60 bg-white/70 shadow-xl shadow-slate-200/40 backdrop-blur-xl;
+/* نوار پیشرفت اسکرول بالای صفحه */
+.scroll-progress {
+    position: fixed;
+    inset-inline: 0;
+    top: 0;
+    z-index: 60;
+    height: 3px;
+    transform: scaleX(0);
+    transform-origin: right;
+    background: var(--color-flag-500);
 }
 
-.glass-dark {
-    @apply border border-white/10 bg-slate-900/80 shadow-2xl backdrop-blur-xl;
+/* حرکت وابسته به اسکرول (CSS خالص؛ در مرورگر بدون پشتیبانی غیرفعال می‌ماند) */
+@supports (animation-timeline: scroll()) {
+    .scroll-progress {
+        animation: progress-grow linear both;
+        animation-timeline: scroll(root block);
+    }
+    .parallax-slow {
+        animation: parallax-slow linear both;
+        animation-timeline: scroll(root block);
+        animation-range: 0 90vh;
+    }
+    .parallax-fast {
+        animation: parallax-fast linear both;
+        animation-timeline: scroll(root block);
+        animation-range: 0 90vh;
+    }
 }
 
-.gradient-text {
-    @apply bg-gradient-to-l from-indigo-600 via-violet-600 to-fuchsia-500 bg-clip-text text-transparent;
+/* بدون JavaScript محتوا باید دیده شود */
+@media (scripting: none) {
+    .reveal { opacity: 1; transform: none; }
+    .bar-fill { width: var(--w, 100%); }
+    .ring-fill { stroke-dashoffset: var(--off, 0); }
 }
 
-.btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-500/30 active:translate-y-0;
+/* احترام به تنظیم «کاهش حرکت» */
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.01ms !important;
+        transition-delay: 0ms !important;
+    }
+    .reveal { opacity: 1; transform: none; }
+    .scroll-progress { display: none; }
 }
-
-.btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700;
-}
-
-.card-hover {
-    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10;
-}
-
-.stagger-1 { animation-delay: 0.05s; }
-.stagger-2 { animation-delay: 0.1s; }
-.stagger-3 { animation-delay: 0.15s; }
-.stagger-4 { animation-delay: 0.2s; }
-.stagger-5 { animation-delay: 0.25s; }
-.stagger-6 { animation-delay: 0.3s; }
