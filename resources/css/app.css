@@ -33,13 +33,7 @@
     font-display: swap;
 }
 
-/* ==========================================================================
-   Design tokens — "Lane lines"
-   pool  = آبی استخر (رنگ اصلی، دکمه‌ها، لینک‌ها)
-   flag  = زرد پرچم/تابلو (فقط برای نقطه‌ی توجه: مرحله‌ی فعلی، CTA روی آبی، ارقام LED)
-   ink   = سرمه‌ای خنثی (متن، خطوط، سطوح)
-   signal= قرمز سیگنال (فقط خطا/هشدار)
-   ========================================================================== */
+/* Design tokens — Lane lines */
 @theme {
     --font-sans: 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
 
@@ -80,10 +74,7 @@
     --color-warning-500: #f59e0b;
     --color-danger-500: #ef4444;
 
-    /* ---- Legacy aliases ----
-       صفحه‌های قدیمی (سازمان‌ها، فرم رویداد، کمیته‌ها، ادمین، ورود) هنوز کلاس‌های
-       indigo/violet/fuchsia دارند. تا بازطراحی‌شان، به پالت جدید نگاشت می‌شوند.
-       TODO: هنگام بازطراحی هر صفحه، با pool-* جایگزین و این بلوک را حذف کنید. */
+    /* Legacy aliases for old pages */
     --color-indigo-50: #eef6ff;
     --color-indigo-100: #d9eaff;
     --color-indigo-200: #b9d7ff;
@@ -141,32 +132,61 @@ body {
 .fa-num { font-feature-settings: "ss01"; }
 .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
 
-/* ==========================================================================
-   Surfaces
-   ========================================================================== */
+/* Surfaces */
 .bg-pool-field {
     background-color: var(--color-pool-700);
     background-image:
         radial-gradient(70% 60% at 85% 0%, rgba(76, 152, 245, 0.55), transparent 65%),
         linear-gradient(165deg, var(--color-pool-600) 0%, var(--color-pool-800) 100%);
 }
-
 .bg-pool-deep {
     background-color: var(--color-pool-950);
     background-image: radial-gradient(60% 80% at 10% 0%, rgba(31, 120, 224, 0.35), transparent 70%);
 }
-
-/* تابلوی LED (امتیاز/شمارش معکوس) */
 .led-panel {
     background: var(--color-ink-950);
-    color: var(--color-flag-400);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07), 0 24px 48px -24px rgba(7, 28, 61, 0.6);
+}
+.led-digit {
+    color: var(--color-flag-500);
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.04em;
+    text-shadow: 0 0 14px rgba(255, 184, 0, 0.4);
 }
 
-/* ==========================================================================
-   Motion
-   ========================================================================== */
+/* Buttons */
+.btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-pool-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-pool-900/20 transition-colors duration-200 hover:bg-pool-700 active:bg-pool-800;
+}
+.btn-flag {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-flag-500 px-5 py-2.5 text-sm font-bold text-ink-950 shadow-sm shadow-black/20 transition-colors duration-200 hover:bg-flag-400 active:bg-flag-600;
+}
+.btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-ink-200 bg-white px-5 py-2.5 text-sm font-semibold text-ink-700 transition-colors duration-200 hover:border-pool-300 hover:bg-pool-50 hover:text-pool-700;
+}
+.btn-ghost-light {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/35 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-white/15;
+}
+
+/* Legacy helpers */
+.glass {
+    @apply border border-ink-100 bg-white shadow-sm shadow-ink-900/5;
+}
+.glass-dark {
+    @apply border border-white/10 bg-ink-950/90 shadow-2xl backdrop-blur-xl;
+}
+.gradient-text {
+    @apply bg-gradient-to-l from-pool-700 to-pool-500 bg-clip-text text-transparent;
+}
+.card-hover {
+    @apply transition-colors duration-200 hover:border-pool-200;
+}
+.bg-mesh {
+    background-image:
+        radial-gradient(at 20% 20%, rgba(31, 120, 224, 0.14) 0px, transparent 50%),
+        radial-gradient(at 80% 10%, rgba(76, 152, 245, 0.12) 0px, transparent 45%);
+}
+
+/* Motion */
 @keyframes shimmer {
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
@@ -191,12 +211,19 @@ body {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
 }
+@keyframes lanes-in {
+    from { clip-path: inset(0 0 0 100%); }
+    to   { clip-path: inset(0 0 0 0); }
+}
+@keyframes roll-in {
+    from { opacity: 0; transform: translateY(-45%); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 
 .animate-float-y { animation: float-y 5s ease-in-out infinite; }
 .animate-rise { animation: page-enter 0.55s ease-out both; }
 .stagger-1 { animation-delay: var(--d, 0ms); }
 
-/* ورود یک‌باره با اسکرول (با x-reveal) */
 .reveal {
     opacity: 0;
     transform: translateY(18px);
@@ -205,23 +232,19 @@ body {
 }
 .reveal.is-in { opacity: 1; transform: none; }
 
-/* نوار پیشرفت و حلقه‌ها: با x-reveal پر می‌شوند */
 .bar-fill { width: 0; transition: width 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0.2s); }
 .bar-fill.is-in { width: var(--w, 100%); }
 .ring-fill { stroke-dashoffset: var(--full, 163); transition: stroke-dashoffset 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0.2s); }
 .ring-fill.is-in { stroke-dashoffset: var(--off, 0); }
 
-/* گذار بین صفحه‌های پنل */
 .page-enter { animation: page-enter 0.35s ease-out both; }
 
-/* اسکلت بارگذاری */
 .skeleton {
     background: linear-gradient(90deg, rgba(16, 24, 39, 0.06) 25%, rgba(16, 24, 39, 0.12) 37%, rgba(16, 24, 39, 0.06) 63%);
     background-size: 200% 100%;
     animation: shimmer 1.6s linear infinite;
 }
 
-/* نوار پیشرفت اسکرول بالای صفحه */
 .scroll-progress {
     position: fixed;
     inset-inline: 0;
@@ -233,7 +256,6 @@ body {
     background: var(--color-flag-500);
 }
 
-/* حرکت وابسته به اسکرول (CSS خالص؛ در مرورگر بدون پشتیبانی غیرفعال می‌ماند) */
 @supports (animation-timeline: scroll()) {
     .scroll-progress {
         animation: progress-grow linear both;
@@ -251,14 +273,12 @@ body {
     }
 }
 
-/* بدون JavaScript محتوا باید دیده شود */
 @media (scripting: none) {
     .reveal { opacity: 1; transform: none; }
     .bar-fill { width: var(--w, 100%); }
     .ring-fill { stroke-dashoffset: var(--off, 0); }
 }
 
-/* احترام به تنظیم «کاهش حرکت» */
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     *, *::before, *::after {
