@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Committee;
 use App\Models\Event;
 use App\Models\Organization;
+use App\Models\User;
 use App\Policies\CommitteePolicy;
 use App\Policies\EventPolicy;
 use App\Policies\OrganizationPolicy;
@@ -36,6 +37,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Organization::class, OrganizationPolicy::class);
         Gate::policy(Event::class, EventPolicy::class);
         Gate::policy(Committee::class, CommitteePolicy::class);
+
+        // لایه‌ی چهارم دسترسی: ادمین سیستم (/admin و /system)
+        Gate::define('access-admin', fn (User $user): bool => $user->isSuperAdmin() && $user->isActive());
 
         Blade::if('feature', function (string $feature) {
             $user = Auth::user();

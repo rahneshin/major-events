@@ -61,4 +61,5 @@ return [
     'type_municipality' => 'شهرداری',
     'type_company' => 'شرکت',
     'type_other' => 'سایر',
+    'invite_rate_limited' => 'تعداد دعوت‌های ارسالی بیش از حد مجاز است. بعداً دوباره تلاش کنید.',
 ];

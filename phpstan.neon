@@ -1,5 +1,6 @@
 includes:
     - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
 
 parameters:
     paths:
@@ -13,5 +14,3 @@ parameters:
     ignoreErrors:
         # موقتاً تا مراحل بعدی
         - '#Unsafe usage of new static#'
-
-    checkMissingIterableValueType: false

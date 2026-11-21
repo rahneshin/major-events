@@ -11,12 +11,15 @@ use App\Models\User;
 use App\Support\LogsActivity;
 use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class EventMemberService
 {
     use LogsActivity;
+
+    public const INVITES_PER_HOUR = 20;
 
     public function __construct(
         private EntitlementService $entitlement,
@@ -96,6 +99,8 @@ class EventMemberService
 
     public function inviteByPhone(Event $event, User $actor, string $phone, EventRole $role = EventRole::Member): EventInvitation
     {
+        $this->throttleInvites($actor);
+
         $normalized = PhoneNumber::normalize($phone);
         if (! $normalized) {
             throw new InvalidArgumentException(__('auth.invalid_phone'));
@@ -112,31 +117,14 @@ class EventMemberService
         if ($existing && ! $event->hasMember($existing)) {
             $this->addMember($event, $actor, $existing, $role);
 
-            return EventInvitation::query()->create([
-                'event_id' => $event->id,
-                'phone' => $normalized,
-                'role' => $role,
-                'token' => Str::random(40),
-                'invited_by' => $actor->id,
-                'expires_at' => now()->addDays(7),
-                'accepted_at' => now(),
-                'status' => 'accepted',
-            ]);
+            return $this->createInvitation($event, $actor, $normalized, $role, 'accepted', now());
         }
 
         if ($existing && $event->hasMember($existing)) {
             throw new InvalidArgumentException(__('event.member_already'));
         }
 
-        $invitation = EventInvitation::query()->create([
-            'event_id' => $event->id,
-            'phone' => $normalized,
-            'role' => $role,
-            'token' => Str::random(40),
-            'invited_by' => $actor->id,
-            'expires_at' => now()->addDays(7),
-            'status' => 'pending',
-        ]);
+        $invitation = $this->createInvitation($event, $actor, $normalized, $role, 'pending');
 
         self::logActivity('event.member_invited', $invitation, $event->id, [
             'phone' => $normalized,
@@ -144,6 +132,46 @@ class EventMemberService
         ]);
 
         return $invitation;
+    }
+
+    private function createInvitation(
+        Event $event,
+        User $actor,
+        string $phone,
+        EventRole $role,
+        string $status,
+        ?\DateTimeInterface $acceptedAt = null,
+    ): EventInvitation {
+        $plain = Str::random(40);
+
+        $invitation = EventInvitation::query()->create([
+            'event_id' => $event->id,
+            'phone' => $phone,
+            'role' => $role,
+            'token_hash' => EventInvitation::hashToken($plain),
+            'invited_by' => $actor->id,
+            'expires_at' => now()->addDays(7),
+            'accepted_at' => $acceptedAt,
+            'status' => $status,
+        ]);
+
+        $invitation->plainToken = $plain;
+
+        return $invitation;
+    }
+
+    /**
+     * سقف دعوت برای هر کاربر (جلوگیری از اسپم پیامک و شمارش وجود/عدم وجود شماره).
+     */
+    private function throttleInvites(User $actor): void
+    {
+        $key = 'event-invite:'.$actor->id;
+
+        if (RateLimiter::tooManyAttempts($key, self::INVITES_PER_HOUR)) {
+            throw new InvalidArgumentException(__('event.invite_rate_limited'));
+        }
+
+        RateLimiter::hit($key, 3600);
     }
 
     public function acceptInvitation(EventInvitation $invitation, User $user): void

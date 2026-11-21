@@ -48,6 +48,13 @@ class UserFactory extends Factory
         ]);
     }
 
+    public function superAdmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_super_admin' => true,
+        ]);
+    }
+
     public function individual(): static
     {
         return $this->state(fn (array $attributes) => [

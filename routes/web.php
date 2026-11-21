@@ -13,6 +13,7 @@ use App\Livewire\Events\EventShow;
 use App\Livewire\Orgs\OrganizationForm;
 use App\Livewire\Orgs\OrganizationIndex;
 use App\Livewire\Orgs\OrganizationShow;
+use App\Livewire\System\SystemDashboard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -72,6 +73,10 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('events.show', ['event' => $event, 'tab' => 'committees']);
         })->name('events.committees');
 
-        Route::get('/admin', AdminDashboard::class)->name('admin.dashboard');
+        // ادمین سیستم: Gate `access-admin` (غیرادمین ← ۴۰۳)
+        Route::middleware('can:access-admin')->group(function () {
+            Route::get('/admin', AdminDashboard::class)->name('admin.dashboard');
+            Route::get('/system', SystemDashboard::class)->name('system.dashboard');
+        });
     });
 });

@@ -41,6 +41,7 @@ class User extends Authenticatable
             'phone_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
             'account_type' => AccountType::class,
+            'is_super_admin' => 'boolean',
         ];
     }
 
@@ -107,6 +108,15 @@ class User extends Authenticatable
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    /**
+     * ادمین سیستم (لایه‌ی چهارم دسترسی). فقط با `php artisan user:make-admin` تنظیم می‌شود؛
+     * عمداً در $fillable نیست تا با mass-assignment قابل تغییر نباشد.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return (bool) $this->is_super_admin;
     }
 
     public function isIndividual(): bool

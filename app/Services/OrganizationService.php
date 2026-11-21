@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -87,6 +88,16 @@ class OrganizationService
 
     public function invite(Organization $org, User $actor, string $phone, OrgRole $role): OrganizationInvitation
     {
+        $throttleKey = 'org-invite:'.$actor->id;
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 20)) {
+            throw ValidationException::withMessages([
+                'phone' => __('org.invite_rate_limited'),
+            ]);
+        }
+
+        RateLimiter::hit($throttleKey, 3600);
+
         if ($role === OrgRole::Owner) {
             throw ValidationException::withMessages([
                 'role' => __('org.cannot_invite_owner'),

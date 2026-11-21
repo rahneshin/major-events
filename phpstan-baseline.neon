@@ -1,0 +1,4 @@
+# خطاهای قدیمی Larastan اگر لازم شد با این دستور ساخته شوند:
+#   ./vendor/bin/phpstan analyse --generate-baseline phpstan-baseline.neon
+parameters:
+    ignoreErrors: []

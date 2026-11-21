@@ -23,6 +23,8 @@ class Dashboard extends Component
 
     public function mount(): void
     {
+        $this->authorize('access-admin');
+
         // Simple platform-wide stats for the system owner.
         // Full Filament admin comes in Step 20.
         $this->users = User::query()->count();

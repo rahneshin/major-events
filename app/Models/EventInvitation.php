@@ -14,12 +14,36 @@ class EventInvitation extends Model
         'event_id',
         'phone',
         'role',
-        'token',
+        'token_hash',
         'invited_by',
         'expires_at',
         'accepted_at',
         'status',
     ];
+
+    /** @var list<string> */
+    protected $hidden = ['token_hash'];
+
+    /**
+     * توکن خام فقط در همان درخواستِ ساخت در حافظه است (برای ساخت لینک/پیامک)؛ در DB ذخیره نمی‌شود.
+     */
+    public ?string $plainToken = null;
+
+    public static function hashToken(string $plain): string
+    {
+        return hash('sha256', $plain);
+    }
+
+    public static function findByToken(string $plain): ?self
+    {
+        $hash = self::hashToken($plain);
+
+        $invitation = self::query()->where('token_hash', $hash)->first();
+
+        return $invitation !== null && hash_equals($invitation->token_hash, $hash)
+            ? $invitation
+            : null;
+    }
 
     protected function casts(): array
     {

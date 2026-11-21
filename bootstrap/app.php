@@ -13,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // route با نام `login` وجود ندارد؛ بدون این خط، مهمان روی صفحات auth خطای ۵۰۰ می‌گرفت
+        $middleware->redirectGuestsTo(fn () => route('auth.login'));
+
         $middleware->alias([
             'account.type' => EnsureAccountTypeSelected::class,
         ]);

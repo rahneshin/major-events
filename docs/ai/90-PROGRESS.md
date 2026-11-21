@@ -15,11 +15,11 @@
 | Pest / Larastan / Pint | 5.3.7 / 3.15.0 / 1.32.3 (قفل‌شده) |
 | دیتابیس | SQLite (تا Step 16) |
 | مخزن Git | https://github.com/rahneshin/major-events |
-| شاخه‌ی کاری فعلی | `step/08-dashboard-site-template` (شامل زنجیره‌ی کامل 01 تا 07 + UI-2) |
+| شاخه‌ی کاری فعلی | `step/06b-hardening` (از سر `step/08-dashboard-site-template`؛ شامل 01 تا 07 + UI-2 + 06B) |
 | شاخه‌ی اصلی | `main` — هنوز فقط Step 00؛ **مرج نشده** (مشکل ۴) |
-| آخرین مرحله‌ی DONE | **07** (کمیته‌ها؛ طبق اعلام امیر) و **UI-2** (قالب) |
-| مرحله‌ی بعدی | **06B** (تثبیت و امنیت) ← سپس **08a** (وظایف: دیتابیس و منطق) |
-| تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۸/۳۰ |
+| آخرین مرحله‌ی DONE | **06B** (کد و تست نوشته شد؛ **اجرای تست‌ها و مرج توسط امیر**)، 07، UI-2 |
+| مرحله‌ی بعدی | **08a** (وظایف: دیتابیس و منطق) — شاخه‌ی `step/08-tasks` |
+| تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۸/۳۰ (06B) |
 
 ### توپولوژی شاخه‌ها (بررسی‌شده با `git merge-base --is-ancestor`)
 
@@ -53,8 +53,8 @@
 | 06 | اعضا و نقش‌های رویداد | ✅ | step/06-event-members | دستی | event_user، دعوت، activity_logs |
 | 07 | کمیته‌ها | ✅ | step/07-committees | Pest نوشته شده | طبق اعلام امیر انجام‌شده؛ **نتیجه‌ی `php artisan test` در PROGRESS ثبت نشده — امیر ثبت کند** |
 | UI-2 | بازطراحی قالب «Lane lines» | ✅ | step/08-dashboard-site-template | دستی | توکن‌های pool/ink/flag/signal، لندینگ، داشبورد، لیست رویدادها |
-| **06B** | **تثبیت و امنیت پایه** | ⬜ **بعدی** | (پیشنهاد) step/06b-hardening | | gate ادمین، تست ۴۰۳/نشت، توکن دعوت، CI، lock، مرج |
-| 08a | وظایف: دیتابیس و منطق | ⬜ | | | بعد از 06B |
+| **06B** | **تثبیت و امنیت پایه** | ✅ (پچ آماده؛ تست‌ها را امیر اجرا کند) | step/06b-hardening | Pest نوشته شد | gate ادمین، `/system`، توکن دعوت هش، rate-limit، تست امنیت/نشت، Larastan در CI، pin PHP، seeder |
+| 08a | وظایف: دیتابیس و منطق | ⬜ **بعدی** | (پیشنهاد) step/08-tasks | | |
 | 08b | وظایف: تب رابط | ⬜ | | | |
 | 08c | Kanban، تقویم، وظایف من، یادآور | ⬜ | | | |
 | 09 | بودجه و درآمد | ⬜ | | | |
@@ -111,6 +111,12 @@
 | ۱۴۰۵/۰۸/۳۰ | بازطراحی قالب = مرحله‌ی **UI-2** (نه Step 08) | شماره‌ی 08 برای «وظایف» می‌ماند | تغییر شماره‌ی همه‌ی مراحل | UI-2 |
 | ۱۴۰۵/۰۸/۳۰ | alias های `indigo/violet/fuchsia` → پالت `pool` در CSS | صفحات قدیمی نشکنند | بازنویسی همه‌ی صفحات | UI-2 |
 | ۱۴۰۵/۰۸/۳۰ | ترتیب اجرا: 07 ← **06B** ← 08 | امنیت قبل از ماژول‌های جدید (دستور امیر) | 08 مستقیم | 06B |
+| ۱۴۰۵/۰۸/۳۰ | ادمین سیستم = `users.is_super_admin` + Gate `access-admin` (middleware `can:`)؛ فقط با `php artisan user:make-admin`؛ در `$fillable` نیست؛ کاربر suspended رد می‌شود | حداقل سطح حمله | نقش از UI | 06B |
+| ۱۴۰۵/۰۸/۳۰ | `/system` با cherry-pick فایل‌های `step/04-system-dashboard` + همان Gate (گزینه‌ی الف) | پیش‌فرض سند | ادغام در /admin | 06B |
+| ۱۴۰۵/۰۸/۳۰ | توکن دعوت رویداد = SHA-256 در `token_hash` (قابل جست‌وجو با `findByToken` + `hash_equals`)؛ توکن خام فقط در `$invitation->plainToken` همان درخواست | یکسان‌سازی با دعوت سازمان و امکان لینک در Step 13 | bcrypt (غیرقابل جست‌وجو) | 06B |
+| ۱۴۰۵/۰۸/۳۰ | rate-limit دعوت: ۲۰ دعوت در ساعت برای هر کاربر (رویداد و سازمان) | جلوگیری از اسپم و شمارش شماره‌ها | بدون محدودیت | 06B |
+| ۱۴۰۵/۰۸/۳۰ | قفل نسخه‌ی PHP با `config.platform.php = 8.3.0` در composer.json (CI روی 8.3 می‌ماند) | حل ناسازگاری lock با 8.3 | ارتقای CI به 8.4 | 06B |
+| ۱۴۰۵/۰۸/۳۰ | `redirectGuestsTo(auth.login)` در bootstrap/app.php | route با نام `login` نداریم؛ مهمان خطای ۵۰۰ می‌گرفت | تعریف alias `login` | 06B |
 | ۱۴۰۵/۰۸/۳۰ | `tasks.competition_id` در 12F اضافه شود، نه 08 | جدول competitions هنوز نیست | ستون بدون FK در 08 | 08 |
 | ۱۴۰۵/۰۸/۳۰ | `tasks.ai_recommendation_id` بدون FK تا Step 18 | جدول هنوز نیست | — | 08 |
 | ۱۴۰۵/۰۸/۳۰ | ساب‌تسک فقط یک سطح؛ فقط `done` پیش‌نیاز را آزاد می‌کند | سادگی و پیش‌بینی‌پذیری | عمق نامحدود | 08 |
@@ -119,8 +125,8 @@
 - [ ] سرویس پیامک ایرانی (Step 02/13)
 - [ ] RAG داخل Laravel یا FastAPI (Step 15)
 - [ ] کتابخانه PDF فارسی (Step 14)
-- [ ] **06B:** `/system` — cherry-pick با Gate یا ادغام در `/admin`؟ (پیش‌فرض: cherry-pick + Gate)
-- [ ] **06B:** ناسازگاری PHP: ارتقای CI/محیط به 8.4 یا قفل `platform.php=8.3`؟
+- [x] **06B:** `/system` — cherry-pick + Gate (انجام شد)
+- [x] **06B:** ناسازگاری PHP — قفل `platform.php=8.3.0` (انجام شد؛ بعد از اعمال پچ باید `composer update` اجرا و `composer.lock` کامیت شود)
 - [ ] **08c:** Kanban با SortableJS (پکیج جدید) یا دکمه‌های انتقال؟ (پیشنهاد: SortableJS، دلیل: UX موبایل)
 - [ ] **08a:** سقف حجم پیوست وظایف (پیشنهاد: ۵MB هر فایل؛ ۲۰MB کل رویداد برای حساب عادی)
 
@@ -156,6 +162,14 @@
 - Migrations: `2026_11_20_000006_create_committees_tables`, `2026_11_21_000007_alter_committees_add_soft_deletes`, `2026_11_21_000008_create_notifications_table`
 - `lang/fa/committee.php`؛ تست: `tests/Feature/Committees/CommitteeTest.php`
 
+### Security (06B)
+- Migrations: `2026_11_22_000009_add_is_super_admin_to_users_table`, `2026_11_22_000010_hash_event_invitation_tokens`
+- Gate `access-admin` (AppServiceProvider)؛ `User::isSuperAdmin()`؛ `UserFactory::superAdmin()`
+- Command: `app/Console/Commands/MakeAdmin.php` (`user:make-admin {phone} {--revoke}`)
+- Livewire: `System\SystemDashboard` + `livewire/system/system-dashboard.blade.php`
+- `EventInvitation::hashToken()/findByToken()`، `EventMemberService::INVITES_PER_HOUR`
+- `phpstan-baseline.neon` (خالی؛ در صورت خطای Larastan با `--generate-baseline` پر شود)
+
 ### UI (UI و UI-2)
 - layouts: public, app, admin, guest (**public و app = قالب جدید UI-2**؛ admin/guest قدیمی)
 - Blade components: button, input, textarea, select, card, badge, modal, toast, empty-state, pagination, confirm-dialog, page-header, date-picker + **UI-2:** brand-mark, lane-rope, lanes, event-row
@@ -165,8 +179,9 @@
 
 ### تست‌های موجود
 - Feature: Account/EntitlementTest, Auth/OtpLoginTest, Committees/CommitteeTest, Orgs/OrganizationTest, ExampleTest
+- **06B:** Security/RouteAccessTest, Security/TenantIsolationTest, Security/MakeAdminCommandTest, Security/InviteRateLimitTest, Events/EventCoreTest, Events/EventMemberTest
 - Unit: JalaliTest, PhoneNumberTest, ExampleTest
-- **ندارد:** تست Events/Members، تست امنیتی route، تست نشت tenant (در 06B)
+- نتیجه‌ی اجرای تست‌های 06B هنوز ثبت نشده — امیر ثبت کند.
 
 ### مستندات (`docs/`)
 - `docs/ai/`: 00-MASTER-CONTEXT, 01-DOMAIN-MODEL, 02-COMPETITIONS, 03-KNOWLEDGE-AND-AI, 10-STEPS-PART1, 11-STEPS-PART2, 90-PROGRESS, PROJECT-OVERVIEW
@@ -193,8 +208,8 @@
 | `/events/{event}` (uuid) | events.show | " | `view` (+ اکشن‌ها: transition/manageMembers/delete) | ✅ |
 | `/events/{event}/edit` | events.edit | " | `update` | ✅ |
 | `/events/{event}/committees` | events.committees | " | `view` (redirect به `?tab=committees`) | ✅ |
-| `/admin` | admin.dashboard | auth, account.type | ⚠️ **ندارد — هر کاربر واردشده می‌بیند** | 🟥 در 06B |
-| `/system` | — | — | ⚠️ فقط روی `step/04-system-dashboard`؛ Gate ندارد | 🟥 در 06B |
+| `/admin` | admin.dashboard | auth, account.type, `can:access-admin` | Gate `access-admin` (+ `authorize` در mount) | ✅ 06B |
+| `/system` | system.dashboard | auth, account.type, `can:access-admin` | Gate `access-admin` (+ `authorize` در mount) | ✅ 06B |
 
 ---
 
@@ -205,20 +220,36 @@
 | 1 | فونت Vazirmatn ممکن است woff2 کامل نباشد | پایین | باز |
 | 2 | SMS واقعی انتخاب نشده (driver=log) | متوسط | باز |
 | 3 | پذیرش دعوت رویداد از لینک عمومی UI جدا ندارد | پایین | باز |
-| 4 | `main` هنوز Step 00 است؛ کار روی زنجیره‌ی step/* است | متوسط | باز — مرج در 06B |
-| 5 | تست‌های Pest برای Events/Members کامل نیست | متوسط | باز — 06B |
-| 6 | `/admin` (و `/system`) بدون gate؛ `users.is_super_admin` وجود ندارد | **بالا (امنیتی)** | باز — 06B |
-| 7 | `composer.lock` با `composer.json` هم‌خوان نیست (`hekmatinasser/verta` فقط در json) و بسته‌هایی با نیاز PHP ≥ 8.4 دارد، در حالی که `composer.json`/CI روی 8.3 است → `composer install` در CI احتمالاً خطا می‌دهد | **بالا (CI)** | باز — 06B |
-| 8 | `event_invitations.token` خام است ولی `organization_invitations.token_hash` هش | متوسط | باز — 06B |
-| 9 | CI: Larastan اجرا نمی‌شود | پایین | باز — 06B |
+| 4 | `main` هنوز Step 00 است؛ کار روی زنجیره‌ی step/* است | متوسط | باز — **مرج با PR توسط امیر** (06B-3) |
+| 5 | تست‌های Pest برای Events/Members کامل نیست | متوسط | ✅ نوشته شد (06B)؛ اجرا با امیر |
+| 6 | `/admin` (و `/system`) بدون gate؛ `users.is_super_admin` وجود ندارد | **بالا (امنیتی)** | ✅ حل شد (06B) |
+| 7 | `composer.lock` با `composer.json` هم‌خوان نیست (`hekmatinasser/verta` فقط در json) و بسته‌هایی با نیاز PHP ≥ 8.4 دارد، در حالی که `composer.json`/CI روی 8.3 است → `composer install` در CI احتمالاً خطا می‌دهد | **بالا (CI)** | ✅ pin شد؛ **امیر باید `composer update` بزند و lock را کامیت کند** |
+| 8 | `event_invitations.token` خام است ولی `organization_invitations.token_hash` هش | متوسط | ✅ حل شد (06B) |
+| 9 | CI: Larastan اجرا نمی‌شود | پایین | ✅ گام اضافه شد؛ اگر خطا داد baseline بسازید |
 | 10 | صفحات هاب رویداد/کمیته/سازمان هنوز با قالب قدیمی (alias های indigo/slate)؛ لایوت admin/guest قدیمی | پایین | باز — تدریجی |
 | 11 | `committees` ستون `uuid` ندارد (docs قدیمی داشت) | پایین | ثبت‌شده؛ در صورت نیاز |
 | 12 | نمایش اعلان‌ها در UI نیست (فقط ذخیره) | پایین | Step 13 |
 | 13 | بعد از pull: `composer install`، `npm run build`، `php artisan migrate` | — | یادآوری |
+| 14 | دعوت‌های pending رویداد لینک/پیامک ندارند (توکن خام هیچ‌جا ارسال نمی‌شود) | متوسط | Step 13 |
+| 15 | `organization_invitations` توکن خام را دور می‌ریزد (فقط هش bcrypt) و `findByToken` ندارد | پایین | Step 13 |
 
 ---
 
 ## ۷. Changelog
+
+## UPDATE — Step 06B — تثبیت و امنیت پایه — ۱۴۰۵/۰۸/۳۰
+Status: DONE (کد و تست نوشته شد؛ **اجرای تست‌ها و مرج توسط امیر**)
+Branch: step/06b-hardening (از سر step/08-dashboard-site-template)
+Commit: feat(auth): super admin gate, hashed event invitation tokens, security tests and CI hardening
+Files created: [MakeAdmin command، System\\SystemDashboard + view، phpstan-baseline.neon، tests/Feature/Security/{RouteAccessTest,TenantIsolationTest,MakeAdminCommandTest,InviteRateLimitTest}.php، tests/Feature/Events/{EventCoreTest,EventMemberTest}.php]
+Files modified: [User، UserFactory، EventInvitation، EventMemberService، OrganizationService، AppServiceProvider، Admin\\Dashboard، routes/web.php، bootstrap/app.php، DatabaseSeeder، lang/fa/event.php، lang/fa/org.php، phpstan.neon، composer.json، .github/workflows/ci.yml، docs/ai/90-PROGRESS.md]
+Migrations: [2026_11_22_000009_add_is_super_admin_to_users_table، 2026_11_22_000010_hash_event_invitation_tokens]
+Routes added: [/system (system.dashboard)؛ /admin حالا با can:access-admin]
+Decisions: [Gate access-admin؛ /system با cherry-pick؛ SHA-256 برای توکن دعوت؛ rate-limit ۲۰ در ساعت؛ pin PHP 8.3.0؛ redirectGuestsTo]
+Fixes: [مهمان روی صفحات auth خطای ۵۰۰ (نبودن route login)؛ DatabaseSeeder به ستون email اشاره می‌کرد و `migrate:fresh --seed` خطا می‌داد]
+Known issues / TODO: [امیر: `composer update` و کامیت lock؛ اجرای `php artisan migrate && php artisan test && ./vendor/bin/pint --test && ./vendor/bin/phpstan analyse`؛ ساخت ادمین با `php artisan user:make-admin 09...`؛ مرج PR و تگ v0.07.0 (06B-3)؛ در `step/04-system-dashboard` دیگر کاری نمانده و می‌توان حذفش کرد]
+Tests: اجرا نشد (طبق دستور امیر)
+Next suggested step: 08a
 
 ## UPDATE — Docs — سازماندهی مستندات و ثبت UI-2 / 06B — ۱۴۰۵/۰۸/۳۰
 Status: DONE (فقط مستندات؛ کد دست نخورد)
