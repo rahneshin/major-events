@@ -31,6 +31,11 @@ class EventShow extends Component
     {
         $this->authorize('view', $event);
         $this->event = $event->load(['goals', 'organization', 'creator', 'members']);
+
+        $requested = request()->query('tab');
+        if (is_string($requested) && in_array($requested, ['overview', 'members', 'committees', 'tasks', 'budget', 'risk'], true)) {
+            $this->tab = $requested;
+        }
     }
 
     public function setTab(string $tab): void

@@ -14,10 +14,10 @@
 | نسخه‌ی Livewire | نصب شده |
 | دیتابیس | SQLite (تا Step 16) |
 | مخزن Git | https://github.com/rahneshin/major-events |
-| شاخه‌ی کاری فعلی | `step/06-event-members` |
+| شاخه‌ی کاری فعلی | `step/07-committees` |
 | شاخه‌ی اصلی | main (هنوز فقط Step 00 — مرج نشده) |
 | آخرین مرحله‌ی DONE | **06** |
-| مرحله‌ی بعدی پیشنهادی | 07 — کمیته‌ها |
+| مرحله‌ی بعدی پیشنهادی | 07 را تأیید کن (تست + دستی) ← سپس 08 — وظایف |
 | تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۸/۲۹ |
 
 ---
@@ -36,7 +36,7 @@
 | UI | فرانت + پنل کاربر + شل ادمین | ✅ | feat/modern-panels-frontend | دستی | landing، /app، /admin، motion |
 | 05 | رویداد (هسته) | ✅ | step/05-events-core | دستی | CRUD، اهداف، وضعیت، هاب |
 | 06 | اعضا و نقش‌های رویداد | ✅ | step/06-event-members | دستی | event_user، دعوت، activity_logs |
-| 07 | کمیته‌ها | ⬜ | | | |
+| 07 | کمیته‌ها | 🟨 | step/07-committees | Pest نوشته شد، اجرا نشده | کد و UI کامل؛ منتظر `php artisan test` و تست دستی |
 | 08 | وظایف و زمان‌بندی | ⬜ | | | |
 | 09 | بودجه و درآمد | ⬜ | | | |
 | 10 | ریسک | ⬜ | | | |
@@ -146,6 +146,24 @@
 ---
 
 ## ۷. Changelog
+
+## UPDATE — Step 07 — کمیته‌ها — ۱۴۰۵/۰۸/۳۰
+Status: CODE COMPLETE — تست‌ها نوشته شده ولی **هنوز اجرا نشده** (محیط توسعه‌ی چت‌بات PHP/vendor نداشت). قبل از DONE: `composer install && php artisan migrate && php artisan test && ./vendor/bin/pint --test`
+Branch: step/07-committees (ادغام کامیت `b49446b` «first develope from step 07» + تکمیل)
+Files created: [CommitteeService, CommitteePolicy, AddedToCommittee notification, Committee model, CommitteeType/CommitteeRole enums, EventCommittees (Livewire), event-committees.blade, lang/fa/committee.php, tests/Feature/Committees/CommitteeTest.php]
+Files modified: [Event.php (committees، roleOf مشتق‌شده، hook انتقال مالکیت)، User.php (committees/events)، EventMemberService (حذف عضو ← خروج از کمیته‌ها)، EventShow (?tab=)، AppServiceProvider (policy)، routes/web.php]
+Migrations: [2026_11_20_000006_create_committees_tables (از کامیت b49446b؛ دست‌نخورده)، 2026_11_21_000007_alter_committees_add_soft_deletes (softDeletes + حذف unique(event_id,name))، 2026_11_21_000008_create_notifications_table]
+Routes: [/events/{event}/committees ← redirect به تب کمیته‌ها در Hub (۴۰۳ برای غیرعضو)]
+Decisions:
+  - نقش رویداد رئیس کمیته **مشتق‌شده** است (Event::roleOf): عضو معمولی که رئیس یک کمیته است = committee_head؛ در pivot چیزی نوشته/برگردانده نمی‌شود.
+  - کلیدهای CommitteeType همان b49446b است (marketing/technical/medical/volunteers)، نه نام‌های PROJECT-OVERVIEW.
+  - یکتایی نام کمیته در سرویس (نادیده‌گرفتن حذف‌شده‌ها)، نه در DB، چون softDeletes.
+  - حذف کمیته‌ای که وظیفه دارد ممنوع است (Committee::hasTasks؛ تا Step 08 همیشه false؛ در Step 08 باید تست واقعی اضافه شود).
+  - ساخت/ویرایش/حذف/ترتیب کمیته = EventPolicy@update؛ رئیس همان کمیته فقط شرح وظایف و اعضا را مدیریت می‌کند.
+  - قالب پیشنهادی هنگام پر شدن سقف متوقف می‌شود (کمیته‌های ساخته‌شده حفظ می‌شوند).
+  - اعلان درون‌برنامه با جدول notifications (database channel)؛ پیامک در Step 13.
+Known issues: [composer.lock با composer.json هم‌خوان نیست (hekmatinasser/verta فقط در json) ← `composer update hekmatinasser/verta`؛ نمایش اعلان‌ها در UI هنوز نیست (Step 13)]
+Next suggested step: 08 — وظایف
 
 ## UPDATE — Step 06 — اعضا و نقش‌های رویداد — ۱۴۰۵/۰۸/۲۹
 Status: DONE (کد + UI تب اعضا؛ تست دستی)

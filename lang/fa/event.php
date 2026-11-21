@@ -39,7 +39,7 @@ return [
     'tab_budget' => 'بودجه',
     'tab_risk' => 'ریسک',
     'tab_coming_soon' => 'این بخش در مراحل بعدی فعال می‌شود',
-    'tab_coming_soon_hint' => 'کمیته، وظیفه، بودجه و ریسک به‌ترتیب در Steps 07–10 می‌آیند.',
+    'tab_coming_soon_hint' => 'وظیفه، بودجه و ریسک به‌ترتیب در Steps 08–10 می‌آیند.',
     'change_status' => 'تغییر وضعیت',
     'status_changed' => 'وضعیت به «:status» تغییر کرد.',
     'invalid_transition' => 'گذار از «:from» به «:to» مجاز نیست.',

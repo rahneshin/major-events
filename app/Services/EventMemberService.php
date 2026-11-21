@@ -77,7 +77,17 @@ class EventMemberService
             throw new InvalidArgumentException(__('event.cannot_remove_owner'));
         }
 
-        $event->members()->detach($member->id);
+        DB::transaction(function () use ($event, $member) {
+            // A removed event member must leave all committees of this event.
+            $committeeIds = $event->committees()->pluck('id');
+            DB::table('committee_user')
+                ->whereIn('committee_id', $committeeIds)
+                ->where('user_id', $member->id)
+                ->delete();
+            $event->committees()->where('head_user_id', $member->id)->update(['head_user_id' => null]);
+
+            $event->members()->detach($member->id);
+        });
 
         self::logActivity('event.member_removed', $member, $event->id, [
             'role' => $role?->value,

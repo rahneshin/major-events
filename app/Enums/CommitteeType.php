@@ -22,6 +22,11 @@ enum CommitteeType: string
         return __('committee.types.'.$this->value);
     }
 
+    public function description(): string
+    {
+        return $this === self::Custom ? '' : __('committee.type_descriptions.'.$this->value);
+    }
+
     public function color(): string
     {
         return match ($this) {
@@ -40,27 +45,30 @@ enum CommitteeType: string
 
     /**
      * Suggested committee set per event type (deterministic; AI enriches later).
+     * Finance is part of every template because budget (Step 09) is committee-aware.
      *
      * @return list<self>
      */
-    public static function templateFor(EventType $eventType): array
+    public static function templateFor(?EventType $eventType): array
     {
+        $core = [self::Executive, self::Finance, self::Technical, self::Logistics];
+
         return match ($eventType) {
-            EventType::Mega, EventType::MultiSport, EventType::Tournament, EventType::League => [
-                self::Executive, self::Technical, self::Medical, self::Logistics, self::Security,
+            EventType::Mega, EventType::MultiSport => [
+                self::Executive, self::Finance, self::Marketing, self::Technical,
+                self::Medical, self::Logistics, self::Volunteers, self::Security, self::Protocol,
             ],
-            EventType::Para => [
-                self::Executive, self::Technical, self::Medical, self::Volunteers,
+            EventType::Regional => [
+                self::Executive, self::Finance, self::Marketing, self::Technical,
+                self::Medical, self::Logistics, self::Volunteers,
             ],
+            EventType::Tournament, EventType::League => [...$core, self::Medical, self::Security],
+            EventType::Youth, EventType::Para => [...$core, self::Medical, self::Volunteers],
             EventType::Festival, EventType::Community => [
-                self::Executive, self::Marketing, self::Volunteers,
+                self::Executive, self::Finance, self::Marketing, self::Volunteers, self::Logistics,
             ],
-            EventType::Youth => [
-                self::Executive, self::Technical, self::Medical,
-            ],
-            EventType::Regional, EventType::Local, EventType::Other => [
-                self::Executive, self::Technical,
-            ],
+            EventType::Local => $core,
+            default => [self::Executive, self::Finance, self::Logistics],
         };
     }
 }

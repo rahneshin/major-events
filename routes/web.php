@@ -7,7 +7,6 @@ use App\Livewire\Auth\CompleteProfile;
 use App\Livewire\Auth\PhoneLogin;
 use App\Livewire\Auth\SelectAccountType;
 use App\Livewire\Auth\VerifyOtp;
-use App\Livewire\Events\EventCommittees;
 use App\Livewire\Events\EventForm;
 use App\Livewire\Events\EventIndex;
 use App\Livewire\Events\EventShow;
@@ -67,7 +66,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/events/create', EventForm::class)->name('events.create');
         Route::get('/events/{event}', EventShow::class)->name('events.show');
         Route::get('/events/{event}/edit', EventForm::class)->name('events.edit');
-        Route::get('/events/{event}/committees', EventCommittees::class)->name('events.committees');
+        Route::get('/events/{event}/committees', function (\App\Models\Event $event) {
+            abort_unless(auth()->user()->can('view', $event), 403);
+
+            return redirect()->route('events.show', ['event' => $event, 'tab' => 'committees']);
+        })->name('events.committees');
 
         Route::get('/admin', AdminDashboard::class)->name('admin.dashboard');
     });

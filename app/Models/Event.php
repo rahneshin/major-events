@@ -140,7 +140,7 @@ class Event extends Model
 
     public function committees(): HasMany
     {
-        return $this->hasMany(Committee::class)->orderBy('position');
+        return $this->hasMany(Committee::class)->orderBy('position')->orderBy('id');
     }
 
     public function invitations(): HasMany
