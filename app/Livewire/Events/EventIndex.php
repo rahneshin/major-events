@@ -36,7 +36,8 @@ class EventIndex extends Component
 
         $query = Event::query()
             ->visibleTo($user)
-            ->with(['organization', 'creator'])
+            ->with(['organization'])
+            ->withCount(['members', 'committees'])
             ->latest();
 
         if ($this->filter === 'active') {
