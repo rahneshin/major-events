@@ -18,6 +18,7 @@
         $nav = [
             ['route' => 'app.dashboard', 'match' => 'app.dashboard', 'label' => 'داشبورد', 'short' => 'داشبورد', 'icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
             ['route' => 'events.index', 'match' => 'events.*', 'label' => 'رویدادها', 'short' => 'رویدادها', 'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],
+            ['route' => 'tasks.mine', 'match' => 'tasks.*', 'label' => 'وظایف من', 'short' => 'وظایف', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
             ['route' => 'orgs.index', 'match' => 'orgs.*', 'label' => 'سازمان‌ها', 'short' => 'سازمان‌ها', 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5'],
             ['route' => 'account.index', 'match' => 'account.*', 'label' => 'حساب من', 'short' => 'حساب', 'icon' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'],
         ];
@@ -58,7 +59,7 @@
 
             <div class="my-3 border-t border-ink-100"></div>
             <p class="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-400">به‌زودی</p>
-            @foreach (['وظایف من', 'اعلان‌ها'] as $soon)
+            @foreach (['اعلان‌ها'] as $soon)
                 <span class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-ink-400">
                     <span class="h-5 w-5 rounded-md bg-ink-100"></span>
                     {{ $soon }}
@@ -117,7 +118,7 @@
 
     {{-- ناوبری پایین (موبایل) --}}
     <nav class="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-ink-200/80 bg-white/95 backdrop-blur-xl lg:hidden" aria-label="ناوبری سریع">
-        <ul class="mx-auto grid max-w-md grid-cols-4 px-2 py-1.5">
+        <ul class="mx-auto grid max-w-md grid-cols-5 px-1 py-1.5">
             @foreach ($nav as $item)
                 @php $active = request()->routeIs($item['match']); @endphp
                 <li>

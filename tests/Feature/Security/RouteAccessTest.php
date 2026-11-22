@@ -9,6 +9,7 @@ $authRoutes = [
     'orgs.index' => '/organizations',
     'events.index' => '/events',
     'events.create' => '/events/create',
+    'tasks.mine' => '/tasks',
     'admin.dashboard' => '/admin',
     'system.dashboard' => '/system',
 ];

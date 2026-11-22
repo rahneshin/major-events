@@ -15,6 +15,7 @@ use App\Livewire\Orgs\OrganizationForm;
 use App\Livewire\Orgs\OrganizationIndex;
 use App\Livewire\Orgs\OrganizationShow;
 use App\Livewire\System\SystemDashboard;
+use App\Livewire\Tasks\MyTasks;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -73,6 +74,9 @@ Route::middleware('auth')->group(function () {
 
             return redirect()->route('events.show', ['event' => $event, 'tab' => 'committees']);
         })->name('events.committees');
+
+        // «وظایف من»: فقط وظایف خود کاربر (همه‌ی رویدادهای قابل‌مشاهده)
+        Route::get('/tasks', MyTasks::class)->name('tasks.mine');
 
         // دانلود خصوصی پیوست وظیفه: Policy `TaskPolicy@view` + scoped bindings (رویداد ← وظیفه ← پیوست)
         Route::get('/events/{event}/tasks/{task}/attachments/{attachment}', TaskAttachmentController::class)

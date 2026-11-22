@@ -210,6 +210,9 @@
             </div>
         </div>
 
+    @elseif ($tab === 'tasks')
+        <livewire:events.event-tasks :event="$event" :key="'tasks-'.$event->id" />
+
     @elseif ($tab === 'budget')
         <livewire:events.event-budget :event="$event" :key="'budget-'.$event->id" />
 

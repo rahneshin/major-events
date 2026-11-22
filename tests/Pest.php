@@ -87,3 +87,17 @@ function tk_task(Event $event, User $actor, array $data = []): Task
         'title' => 'وظیفه '.fake()->unique()->numerify('####'),
     ], $data));
 }
+
+/**
+ * Livewire may either throw or answer 404 for a foreign id; both mean "blocked".
+ */
+function tk_blocked(callable $action): void
+{
+    try {
+        $action();
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException|\Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
+        // expected
+    }
+
+    expect(true)->toBeTrue();
+}

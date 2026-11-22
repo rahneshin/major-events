@@ -15,11 +15,11 @@
 | Pest / Larastan / Pint | 5.3.7 / 3.15.0 / 1.32.3 (قفل‌شده) |
 | دیتابیس | SQLite (تا Step 16) |
 | مخزن Git | https://github.com/rahneshin/major-events |
-| شاخه‌ی کاری فعلی | `step/08-tasks` (از سر `step/08-dashboard-site-template` @ `d2d65ea`؛ شامل 01 تا 07 + UI-2 + 06B + 08a) |
+| شاخه‌ی کاری فعلی | `step/08b-08c-tasks-ui` (از سر `step/09-budget` @ `3381cf3`؛ شامل 01 تا 07 + UI-2 + 06B + 08a + 09 + 08b/08c) |
 | شاخه‌ی اصلی | `main` — هنوز فقط Step 00؛ **مرج نشده** (مشکل ۴) |
-| آخرین مرحله‌ی DONE | **09** (شاخه‌ی `step/09-budget`)، **08a**، 06B، 07، UI-2 — اجرای مایگریشن/تست‌ها توسط امیر |
-| مرحله‌ی بعدی | **08b** (روی `step/08-tasks`)؛ سپس **10** (ریسک) |
-| تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۹/۰۱ (09) |
+| آخرین مرحله‌ی DONE | **08b + 08c** (کد و تست نوشته شد؛ **اجرای تست‌ها توسط امیر**)، 09، 08a، 06B، 07، UI-2 |
+| مرحله‌ی بعدی | **10** (ریسک) |
+| تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۹/۰۱ (08b/08c) |
 
 ### توپولوژی شاخه‌ها (بررسی‌شده با `git merge-base --is-ancestor`)
 
@@ -55,8 +55,8 @@
 | UI-2 | بازطراحی قالب «Lane lines» | ✅ | step/08-dashboard-site-template | دستی | توکن‌های pool/ink/flag/signal، لندینگ، داشبورد، لیست رویدادها |
 | **06B** | **تثبیت و امنیت پایه** | ✅ (پچ آماده؛ تست‌ها را امیر اجرا کند) | step/06b-hardening | Pest نوشته شد | gate ادمین، `/system`، توکن دعوت هش، rate-limit، تست امنیت/نشت، Larastan در CI، pin PHP، seeder |
 | 08a | وظایف: دیتابیس و منطق | ✅ (پچ آماده؛ اجرا با امیر) | step/08-tasks | Pest نوشته شد | tasks، وابستگی (DFS)، blocked خودکار، Policy، پیوست خصوصی، Milestone، پیشرفت |
-| 08b | وظایف: تب رابط | ⬜ **بعدی** | step/08-tasks | | |
-| 08c | Kanban، تقویم، وظایف من، یادآور | ⬜ | | | |
+| 08b | وظایف: تب رابط | ✅ (کد و تست نوشته شد؛ اجرا با امیر) | step/08b-08c-tasks-ui | Pest (Livewire) نوشته شد | تب «وظایف»: لیست+فیلتر، فرم، پنل جزئیات (زیروظیفه، پیش‌نیاز، کامنت، پیوست)، نقاط عطف، پیشرفت |
+| 08c | Kanban، تقویم، وظایف من، یادآور | ✅ (کد و تست نوشته شد؛ اجرا با امیر) | step/08b-08c-tasks-ui | Pest نوشته شد | کانبان (drag بومی + منوی وضعیت)، تقویم شمسی، صفحه‌ی «وظایف من»، `tasks:remind` + اعلان |
 | 09 | بودجه و درآمد | ✅ (کد و تست نوشته شد؛ اجرای تست‌ها و migration با امیر) | step/09-budget | Pest نوشته شد | خطوط، تراکنش، رسید، نسخه‌ی مصوب/قفل، هشدار اضافه‌هزینه، سربه‌سر؛ تب «بودجه» در هاب رویداد |
 | 10 | ریسک | ⬜ | | | |
 | 11 | اسپانسرینگ و بازاریابی | ⬜ | | | |
@@ -142,16 +142,25 @@
 | ۱۴۰۵/۰۹/۰۱ | پیوست‌ها روی دیسک خصوصی با نام تصادفی؛ دانلود فقط از route با `TaskPolicy@view` + scoped bindings + `nosniff` | جلوگیری از نشت/XSS | دیسک public | 08a |
 | ۱۴۰۵/۰۹/۰۱ | ستون‌های افزوده نسبت به سند: `tasks.created_by`، `task_attachments.uuid`، `milestones.description/reached_at`؛ `priority`=low/medium/high/urgent؛ `milestones.status`=pending/reached/cancelled | سند مقدار نداده بود | — | 08a |
 
+| ۱۴۰۵/۰۹/۰۱ | کانبان **بدون پکیج جدید**: کشیدن-رهای بومی HTML5 با Alpine (دسکتاپ) + منوی «انتقال به» روی هر کارت (موبایل/لمسی)؛ ستون «منتظر پیش‌نیاز» قابل‌رها نیست (خودکار) | قانون «کم‌وابستگی»؛ بدون تغییر `package.json/lock`؛ موبایل با منو پوشش داده می‌شود | SortableJS | 08c |
+| ۱۴۰۵/۰۹/۰۱ | لیست/کانبان/تقویم سه «نما» از **یک** کامپوننت `EventTasks` با فیلتر مشترک؛ پنل جزئیات یک drawer؛ پیوند مستقیم `?tab=tasks&task=<uuid>` | کمترین پیچیدگی ارتباط بین کامپوننت‌ها | کامپوننت جدا برای هر نما | 08b/08c |
+| ۱۴۰۵/۰۹/۰۱ | موعد وارد‌شده (شمسی، فقط تاریخ) = **پایان همان روز** (۲۳:۵۹) تا وظیفه‌ی «امروز» از ۰۰:۰۱ تأخیردار نشود؛ شروع = ابتدای روز | تجربه‌ی درست | ساعت ۰۰:۰۰ | 08b |
+| ۱۴۰۵/۰۹/۰۱ | تقویم شمسی با `JalaliCalendar` (فقط `Jalali::parse/format`؛ کبیسه با رفت‌وبرگشت parse/format) و شروع هفته شنبه؛ نقاط عطف هم روی تقویم می‌آیند | بدون فرض API ناشناخته‌ی Verta | الگوریتم کبیسه‌ی دستی | 08c |
+| ۱۴۰۵/۰۹/۰۱ | «وظایف من» = صفحه‌ی `/tasks` (route `tasks.mine`)؛ فقط وظایف assignee=خود کاربر در رویدادهای `visibleTo`؛ لینک در منوی اصلی (نوار پایین موبایل ۵ ستون شد) | سند 08c | تب در داشبورد | 08c |
+| ۱۴۰۵/۰۹/۰۱ | یادآور: دستور `tasks:remind` (روزانه ۰۸:۰۰) — فقط `todo/doing` با assignee فعال و رویداد فعال؛ «نزدیک موعد» یک‌بار برای هر موعد، «دارای تأخیر» هر ۳ روز؛ ضد-تکرار با `Cache::add` (بدون migration)؛ کانال فقط `database` تا Step 13 | بدون ستون جدید؛ SMS در Step 13 | ستون `reminded_at` | 08c |
+| ۱۴۰۵/۰۹/۰۱ | محدودیت‌های لیست: حداکثر ۳۰۰ ردیف (`config/tasks.php` ← `list_limit`) با پیام؛ رویداد بایگانی/لغوشده فقط‌خواندنی (UI + اکشن‌ها) | کارایی و قانون وضعیت رویداد | pagination | 08b |
+| ۱۴۰۵/۰۹/۰۱ | کانبان/تقویم/«وظایف من» برای همه‌ی پلن‌ها (بدون گیت ویژگی) | سند محدودیتی ننوشته | گیت `tasks_full` | 08c |
+
 ### تصمیم‌های باز
 - [ ] سرویس پیامک ایرانی (Step 02/13)
 - [ ] RAG داخل Laravel یا FastAPI (Step 15)
 - [ ] کتابخانه PDF فارسی (Step 14)
 - [x] **06B:** `/system` — cherry-pick + Gate (انجام شد)
 - [x] **06B:** ناسازگاری PHP — قفل `platform.php=8.3.0` (انجام شد؛ بعد از اعمال پچ باید `composer update` اجرا و `composer.lock` کامیت شود)
-- [ ] **08c:** Kanban با SortableJS (پکیج جدید) یا دکمه‌های انتقال؟ (پیشنهاد: SortableJS، دلیل: UX موبایل)
+- [x] **08c:** Kanban — بدون پکیج (drag بومی + منوی وضعیت)؛ اگر UX لمسی کافی نبود، SortableJS بعداً اضافه شود
 - [x] **08a:** سقف حجم پیوست وظایف — با پیشنهاد سند پیاده شد (۵MB / ۲۰MB)؛ قابل تغییر در `config/tasks.php` و `config/plans.php`
 - [ ] **08a:** آیا `viewer` اجازه‌ی کامنت داشته باشد؟ (فعلاً نه)
-- [ ] **08b/13:** اعلان «به شما وظیفه سپرده شد» (فعلاً ساخته نشده)
+- [ ] **13:** اعلان «به شما وظیفه سپرده شد» + ارسال SMS یادآورها (فعلاً فقط اعلان درون‌برنامه‌ای برای یادآور)
 
 ---
 
@@ -197,6 +206,14 @@
 - `lang/fa/task.php`؛ `Committee::hasTasks()` به جدول واقعی وصل شد؛ `EventMemberService::removeMember` وظایف عضو را unassign می‌کند
 - تست‌ها: `tests/Feature/Tasks/{TaskCoreTest,TaskDependencyTest,TaskPolicyTest,TaskAttachmentTest,MilestoneTest}.php`، `tests/Unit/DependencyGraphTest.php`؛ کمک‌تابع‌های `tk_*` در `tests/Pest.php`
 
+### Tasks UI (08b/08c)
+- Livewire: `Events/EventTasks` (لیست/کانبان/تقویم، فرم، drawer جزئیات، نقاط عطف)، `Tasks/MyTasks`
+- Views: `livewire/events/event-tasks.blade.php`، `livewire/tasks/my-tasks.blade.php`؛ تب `tasks` در `event-show.blade.php`؛ لینک «وظایف من» در `layouts/app.blade.php`
+- Support: `JalaliCalendar`
+- Console/Notifications: `tasks:remind` (`app/Console/Commands/RemindTasks.php`)، `TaskDueReminder`؛ زمان‌بندی در `routes/console.php`
+- Config: `tasks.php` ← `reminder_days`، `list_limit`؛ متن‌ها: `lang/fa/task.php` ← `ui.*`
+- تست‌ها: `Tasks/EventTasksComponentTest`، `Tasks/MyTasksTest`، `Tasks/RemindTasksTest`، `Unit/JalaliCalendarTest`؛ `tk_blocked` در `tests/Pest.php`
+
 ### Security (06B)
 - Migrations: `2026_11_22_000009_add_is_super_admin_to_users_table`, `2026_11_22_000010_hash_event_invitation_tokens`
 - Gate `access-admin` (AppServiceProvider)؛ `User::isSuperAdmin()`؛ `UserFactory::superAdmin()`
@@ -223,6 +240,7 @@
 
 ### تست‌های موجود
 - Feature: Account/EntitlementTest, Auth/OtpLoginTest, Committees/CommitteeTest, Orgs/OrganizationTest, ExampleTest
+- **08b/08c:** Tasks/EventTasksComponentTest, Tasks/MyTasksTest, Tasks/RemindTasksTest, Unit/JalaliCalendarTest؛ `Security/RouteAccessTest` ← `tasks.mine`
 - **08a:** Tasks/* (5 فایل) + Unit/DependencyGraphTest؛ تست `CommitteeTest` («حذف کمیته‌ی دارای وظیفه») با جدول واقعی بازنویسی شد
 - **06B:** Security/RouteAccessTest, Security/TenantIsolationTest, Security/MakeAdminCommandTest, Security/InviteRateLimitTest, Events/EventCoreTest, Events/EventMemberTest
 - Unit: JalaliTest, PhoneNumberTest, ExampleTest
@@ -254,6 +272,8 @@
 | `/events/{event}/edit` | events.edit | " | `update` | ✅ |
 | `/events/{event}/committees` | events.committees | " | `view` (redirect به `?tab=committees`) | ✅ |
 | `/events/{event}?tab=budget` | events.show (تب) | " | `view` برای ورود؛ داخل `EventBudget`: `viewSummary` (مجموع) / `manage` و `approve` (جزئیات و اکشن‌ها) از `BudgetLinePolicy`؛ هر اکشن Livewire جداگانه authorize و شناسه‌ها فقط داخل همین رویداد | ✅ 09 |
+| `/tasks` | tasks.mine | auth, account.type | فقط وظایف خود کاربر؛ `TaskPolicy@transition` برای تغییر وضعیت | ✅ 08c |
+| `/events/{event}?tab=tasks[&task=uuid]` | events.show (تب) | " | `view` برای ورود؛ داخل `EventTasks`: هر اکشن با `TaskPolicy`/`MilestonePolicy` | ✅ 08b |
 | `/events/{event}/tasks/{task}/attachments/{attachment}` | tasks.attachments.download | auth, account.type (+ scoped bindings) | `TaskPolicy@view` (۴۰۳ بیرونی‌ها؛ ۴۰۴ ترکیب نادرست رویداد/وظیفه/پیوست) | ✅ 08a |
 | `/admin` | admin.dashboard | auth, account.type, `can:access-admin` | Gate `access-admin` (+ `authorize` در mount) | ✅ 06B |
 | `/system` | system.dashboard | auth, account.type, `can:access-admin` | Gate `access-admin` (+ `authorize` در mount) | ✅ 06B |
@@ -283,6 +303,20 @@
 ---
 
 ## ۷. Changelog
+
+## UPDATE — Step 08b + 08c — رابط وظایف، کانبان، تقویم، وظایف من، یادآور — ۱۴۰۵/۰۹/۰۱
+Status: DONE (کد و تست نوشته شد؛ **اجرای تست‌ها توسط امیر**)
+Branch: step/08b-08c-tasks-ui (از سر step/09-budget @ 3381cf3)
+Commit: feat(tasks): tasks UI, kanban, calendar, my tasks and reminders
+Files created: [Livewire/Events/EventTasks، Livewire/Tasks/MyTasks، دو view، JalaliCalendar، RemindTasks، TaskDueReminder، تست‌های Tasks/EventTasksComponentTest + MyTasksTest + RemindTasksTest، Unit/JalaliCalendarTest]
+Files modified: [event-show.blade.php (تب tasks)، layouts/app.blade.php (منو)، routes/web.php (tasks.mine)، routes/console.php (schedule)، config/tasks.php، lang/fa/task.php، lang/fa/event.php، tests/Pest.php (tk_blocked)، Security/RouteAccessTest، docs/ai/90-PROGRESS.md]
+Migrations: [— (هیچ migration جدیدی لازم نبود)]
+Routes added: [tasks.mine — `/tasks`]
+Decisions: [ردیف‌های 08b/08c در Decision Log]
+Known issues / TODO: [اعلان assignment و SMS در Step 13؛ کانبان لمسی با منوی وضعیت (SortableJS در صورت نیاز)؛ `pint`/`phpstan`/تست اجرا نشد؛ ویوهای Blade کامپایل/اجرا نشد (فقط توازن دستورها بررسی شد)؛ تست‌های Livewire فایل‌آپلود حساس به تشخیص MIME‌اند]
+Tests: اجرا نشد (طبق دستور امیر)؛ lint سینتکس PHP همه‌ی فایل‌ها انجام شد
+Next suggested step: 10 — ریسک
+
 
 ## UPDATE — Step 09 — بودجه و درآمد — ۱۴۰۵/۰۹/۰۱
 Status: DONE (کد و تست نوشته شد؛ **اجرای migration، تست‌ها و Pint/Larastan توسط امیر**)
