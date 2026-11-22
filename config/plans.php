@@ -25,6 +25,7 @@ return [
         'features' => [
             'tasks_basic',
             'budget_basic',
+            'risk_basic',
             'export_pdf',
         ],
     ],

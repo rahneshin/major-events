@@ -15,11 +15,11 @@
 | Pest / Larastan / Pint | 5.3.7 / 3.15.0 / 1.32.3 (قفل‌شده) |
 | دیتابیس | SQLite (تا Step 16) |
 | مخزن Git | https://github.com/rahneshin/major-events |
-| شاخه‌ی کاری فعلی | `step/08b-08c-tasks-ui` (از سر `step/09-budget` @ `3381cf3`؛ شامل 01 تا 07 + UI-2 + 06B + 08a + 09 + 08b/08c) |
+| شاخه‌ی کاری فعلی | `step/10-risk` (از سر `feat/hr-invite` @ `e775e53`؛ شامل 01 تا 07 + UI-2 + 06B + 08a + 09 + 08b/08c + منابع انسانی + 10) |
 | شاخه‌ی اصلی | `main` — هنوز فقط Step 00؛ **مرج نشده** (مشکل ۴) |
-| آخرین مرحله‌ی DONE | **08b + 08c** (کد و تست نوشته شد؛ **اجرای تست‌ها توسط امیر**)، 09، 08a، 06B، 07، UI-2 |
-| مرحله‌ی بعدی | **10** (ریسک) |
-| تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۹/۰۱ (08b/08c) |
+| آخرین مرحله‌ی DONE | **10** (ریسک؛ کد و تست نوشته شد، **اجرا توسط امیر**)، **منابع انسانی** (`feat/hr-invite`)، **08b + 08c**، 09، 08a، 06B، 07، UI-2 |
+| مرحله‌ی بعدی | **11** (اسپانسرینگ و بازاریابی) |
+| تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۹/۰۲ (10) |
 
 ### توپولوژی شاخه‌ها (بررسی‌شده با `git merge-base --is-ancestor`)
 
@@ -58,7 +58,7 @@
 | 08b | وظایف: تب رابط | ✅ (کد و تست نوشته شد؛ اجرا با امیر) | step/08b-08c-tasks-ui | Pest (Livewire) نوشته شد | تب «وظایف»: لیست+فیلتر، فرم، پنل جزئیات (زیروظیفه، پیش‌نیاز، کامنت، پیوست)، نقاط عطف، پیشرفت |
 | 08c | Kanban، تقویم، وظایف من، یادآور | ✅ (کد و تست نوشته شد؛ اجرا با امیر) | step/08b-08c-tasks-ui | Pest نوشته شد | کانبان (drag بومی + منوی وضعیت)، تقویم شمسی، صفحه‌ی «وظایف من»، `tasks:remind` + اعلان |
 | 09 | بودجه و درآمد | ✅ (کد و تست نوشته شد؛ اجرای تست‌ها و migration با امیر) | step/09-budget | Pest نوشته شد | خطوط، تراکنش، رسید، نسخه‌ی مصوب/قفل، هشدار اضافه‌هزینه، سربه‌سر؛ تب «بودجه» در هاب رویداد |
-| 10 | ریسک | ⬜ | | | |
+| 10 | ریسک و حادثه | ✅ (کد و تست نوشته شد؛ اجرای تست‌ها و migration با امیر) | step/10-risk | Pest نوشته شد | ثبت ریسک با امتیاز احتمال×اثر، ماتریس ۵×۵ (سازمانی)، چک‌لیست‌های پیشنهادی (پزشکی/آب‌وهوا/جمعیت/تخلیه)، وظیفه‌ی کنترلی، ثبت حادثه؛ تب «ریسک» در هاب رویداد |
 | 11 | اسپانسرینگ و بازاریابی | ⬜ | | | |
 | 12 | مسابقات (12A–12F) | ⬜ | | | `competition_id` روی tasks در 12F اضافه می‌شود |
 | 13 | داشبورد و اعلان | ⬜ | | | |
@@ -130,6 +130,15 @@
 | ۱۴۰۵/۰۹/۰۱ | `budget_lines` و `transactions` softDelete؛ حذف خط دارای تراکنش ممنوع؛ دسته‌ی `other_revenue` به ۱۲ دسته‌ی سند اضافه شد | قانون ۱۱ و نیاز به دسته‌ی عمومی درآمد | حذف سخت | 09 |
 | ۱۴۰۵/۰۹/۰۱ | شماره‌ی migration بودجه ۲۰ (`2026_11_25_000020`) | هم‌پیشوند نشدن با Step 08 که هم‌زمان توسط مدل دیگر نوشته می‌شود | ۱۱ | 09 |
 | ۱۴۰۵/۰۹/۰۲ | تب «اعضا» → «منابع انسانی» (`EventHumanResources`): دعوت با موبایل (+ کمیته و «پست») ← پیامکِ لینک `/invite/{token}` ← با کلیک و ورود OTP خودکار عضو رویداد + کمیته/پست می‌شود (`HumanResourceService::enroll/accept`)؛ دعوت‌شده به «انتخاب نوع حساب» نمی‌رسد (حساب عادی خودکار، `AccountUpgrade.reason=event_invitation`) و اگر نام را دعوت‌کننده وارد کرده باشد، به «تکمیل پروفایل» هم نمی‌رسد؛ توکن در session می‌ماند و بعد از OTP برمی‌گردد؛ ورود همچنان فقط OTP (لینک جادویی بدون OTP عمداً نیست)؛ یک دعوت pending برای هر (رویداد، شماره) و دعوت/ارسال مجدد توکن را عوض می‌کند؛ عضو فعلی لینک نمی‌گیرد و مستقیم پست می‌گیرد؛ پست = `committee_user.post`؛ `committee_head` قابل‌انتخاب نیست؛ بیننده پست نمی‌گیرد؛ پنل کاربر `MyAssignments` | دعوت پذیرفته‌نشدنی قبلی (بدون route) و تداخل سه‌گانه‌ی رئیس کمیته | ساخت کاربر قبل از پذیرش، لینک جادویی | HR |
+| ۱۴۰۵/۰۹/۰۲ | Step 10 روی سر `feat/hr-invite` (@ `e775e53`، شامل 08b/08c و منابع انسانی) ساخته شد. تنها تماس با فایل‌های مشترک: یک بلوک `@elseif ($tab === 'risk')` در `event-show.blade.php` و یک خط `risk_basic` در `config/plans.php` | کمینه‌کردن تداخل مرج | تغییر `Event.php`/lang رویداد | 10 |
+| ۱۴۰۵/۰۹/۰۲ | کلید feature: `risk_basic` (به plan عادی اضافه شد) و `risk_full` (فقط سازمانی با `*`). عادی = ثبت ساده‌ی فهرست + وظیفه‌ی کنترلی؛ سازمانی = ماتریس ۵×۵، چک‌لیست‌ها، حادثه | سند: «ثبت ساده بدون ماتریس پیشرفته» (بخش اختیاری سند؛ تفکیک دقیق، فرض ماست) | حادثه هم برای عادی | 10 |
+| ۱۴۰۵/۰۹/۰۲ | `score = likelihood × impact` در `saving` مدل محاسبه می‌شود (ذخیره‌ی مقدار ناسازگار ممکن نیست). سطح: ۱–۴ کم، ۵–۹ متوسط، ۱۰–۱۴ زیاد، ۱۵–۲۵ بحرانی (`RiskLevel`) | ساده و تست‌پذیر | آستانه‌ی قابل‌تنظیم | 10 |
+| ۱۴۰۵/۰۹/۰۲ | `RiskStatus`: open / mitigating / closed / occurred. «فعال» = open و mitigating (ماتریس، خلاصه و فیلتر پیش‌فرض)؛ ثبت حادثه وضعیت ریسک را خودکار تغییر نمی‌دهد | سند وضعیت را مشخص نکرده؛ فرض ماست (⚠️ امیر تأیید کند) | تغییر خودکار به occurred | 10 |
+| ۱۴۰۵/۰۹/۰۲ | دسترسی ریسک در `RiskPolicy` (کشف خودکار): `viewRegister` = هر کسی که رویداد را می‌بیند (شفافیت برای کل تیم، حتی viewer)؛ `manage` = `EventPolicy@update`؛ `reportIncident` = سطح مدیریت + رئیس کمیته + عضو (viewer نه). ویرایش/حل/حذف حادثه فقط `manage` | ماتریس 01-DOMAIN §10 ریسک را پوشش نمی‌دهد؛ فرض صریح (⚠️ امیر تأیید کند) | مخفی‌بودن ریسک از viewer مثل بودجه | 10 |
+| ۱۴۰۵/۰۹/۰۲ | مسئول ریسک فقط عضو غیر-viewer همین رویداد؛ وظیفه/ریسک مرتبط حادثه فقط داخل همین رویداد؛ پیوند وظیفه با جدول واسط `risk_task` (cascade)؛ حذف ریسک فقط پیوند را برمی‌دارد و وظیفه می‌ماند | امنیت tenant و بی‌اثر نبودن حذف | حذف وظیفه همراه ریسک | 10 |
+| ۱۴۰۵/۰۹/۰۲ | «ساخت وظیفه‌ی کنترلی» از `TaskService::create` با `module=risk` استفاده می‌کند (محدودیت طرح اعمال می‌شود)؛ اولویت از سطح ریسک: بحرانی=فوری، زیاد=بالا، بقیه=متوسط؛ شرح وظیفه = اقدام‌های کنترلی ریسک | استفاده‌ی مجدد از منطق 08a | سرویس جدا برای وظیفه | 10 |
+| ۱۴۰۵/۰۹/۰۲ | چک‌لیست‌های پیشنهادی در `config/risk.php` (ثابت، ۴ قالب × ۳ مورد)؛ فقط «قالب» با برچسب «پیشنهاد؛ نیازمند تأیید متخصص»؛ هر مورد با `template_key` یکتا فقط یک‌بار به هر رویداد اضافه می‌شود | قانون: ادعای تخصصی قطعی نداریم | جدول قالب در DB | 10 |
+| ۱۴۰۵/۰۹/۰۲ | شماره‌ی migration ریسک ۴۰ (`2026_11_26_000040`) | هم‌پیشوند نشدن با migrationهای منابع انسانی (۳۰ و ۳۱) | ۱۲ | 10 |
 
 | ۱۴۰۵/۰۹/۰۱ | `blocked` فقط خودکار؛ دستی قابل‌انتخاب نیست؛ هنگام وجود پیش‌نیاز ناتمام فقط `cancelled` مجاز است | قاعده‌ی «blocked خودکار» سند | blocked دستی با دلیل | 08a |
 | ۱۴۰۵/۰۹/۰۱ | آزادشدن blocked ← `todo` (وضعیت قبلی `doing` ذخیره نمی‌شود) | سادگی | ستون وضعیت قبلی | 08a |
@@ -232,6 +241,16 @@
 - Migration: `2026_11_25_000020_create_budget_tables`
 - تست: `tests/Feature/Budget/{BudgetServiceTest,BudgetAccessTest}.php`، `tests/Unit/MoneyTest.php`
 
+### Risk (10)
+- Migration: `2026_11_26_000030_create_risk_tables` (`risks`, `risk_task`, `incidents`)
+- Models: `Risk` (score در `saving`)، `Incident`
+- Enums: `RiskCategory`, `RiskResponse`, `RiskStatus`, `RiskLevel`, `IncidentSeverity`
+- Service: `RiskService` (CRUD، register/matrix/summary، چک‌لیست‌ها، وظیفه‌ی کنترلی، حادثه)
+- Policy: `RiskPolicy` (`viewRegister`, `manage`, `reportIncident`)
+- Livewire/View: `Events/EventRisk` + `livewire/events/event-risk.blade.php`؛ تب `risk` در `event-show.blade.php`
+- Config/Lang: `config/risk.php` (چک‌لیست‌ها)، `lang/fa/risk.php`؛ `risk_basic` در `config/plans.php`
+- Tests: `tests/Unit/RiskLevelTest.php`, `tests/Feature/Risk/{RiskServiceTest,RiskAccessTest}.php`
+
 ### UI (UI و UI-2)
 - layouts: public, app, admin, guest (**public و app = قالب جدید UI-2**؛ admin/guest قدیمی)
 - Blade components: button, input, textarea, select, card, badge, modal, toast, empty-state, pagination, confirm-dialog, page-header, date-picker + **UI-2:** brand-mark, lane-rope, lanes, event-row
@@ -275,6 +294,7 @@
 | `/events/{event}?tab=budget` | events.show (تب) | " | `view` برای ورود؛ داخل `EventBudget`: `viewSummary` (مجموع) / `manage` و `approve` (جزئیات و اکشن‌ها) از `BudgetLinePolicy`؛ هر اکشن Livewire جداگانه authorize و شناسه‌ها فقط داخل همین رویداد | ✅ 09 |
 | `/tasks` | tasks.mine | auth, account.type | فقط وظایف خود کاربر؛ `TaskPolicy@transition` برای تغییر وضعیت | ✅ 08c |
 | `/events/{event}?tab=tasks[&task=uuid]` | events.show (تب) | " | `view` برای ورود؛ داخل `EventTasks`: هر اکشن با `TaskPolicy`/`MilestonePolicy` | ✅ 08b |
+| `/events/{event}?tab=risk` | events.show (تب) | " | `view` برای ورود؛ داخل `EventRisk`: `viewRegister` / `manage` / `reportIncident` از `RiskPolicy`؛ هر اکشن Livewire جداگانه authorize و شناسه‌ها فقط داخل همین رویداد؛ ماتریس/چک‌لیست/حادثه فقط طرح سازمانی | ✅ 10 |
 | `/events/{event}/tasks/{task}/attachments/{attachment}` | tasks.attachments.download | auth, account.type (+ scoped bindings) | `TaskPolicy@view` (۴۰۳ بیرونی‌ها؛ ۴۰۴ ترکیب نادرست رویداد/وظیفه/پیوست) | ✅ 08a |
 | `/admin` | admin.dashboard | auth, account.type, `can:access-admin` | Gate `access-admin` (+ `authorize` در mount) | ✅ 06B |
 | `/system` | system.dashboard | auth, account.type, `can:access-admin` | Gate `access-admin` (+ `authorize` در mount) | ✅ 06B |
@@ -305,6 +325,14 @@
 
 ## ۷. Changelog
 
+## UPDATE — Step 10 — ریسک و حادثه — ۱۴۰۵/۰۹/۰۲
+
+Branch: step/10-risk (روی سر `feat/hr-invite` @ `e775e53`؛ فقط بخش ریسک)
+Created/Changed: [ثبت ریسک با امتیاز احتمال×اثر؛ ماتریس ۵×۵ با فیلتر خانه؛ خلاصه (سطح‌ها، بازبینی عقب‌افتاده/نزدیک)؛ ۴ چک‌لیست پیشنهادی؛ وظیفه‌ی کنترلی (ساخت/پیوند/جداسازی)؛ ثبت حادثه با شدت/زمان/اقدام و نتیجه؛ تب «ریسک» در هاب رویداد؛ Policy؛ lang فارسی]
+Migrations: [2026_11_26_000040_create_risk_tables — اجرا نشده؛ توسط امیر]
+Tests: [Unit: RiskLevel؛ Feature: RiskService (امتیاز، اعتبارسنجی، مسئول، طرح، ماتریس/خلاصه، قالب‌ها، وظیفه، حادثه، رویداد بسته)، RiskAccess (ماتریس مجوز، Livewire، tenant، طرح عادی)] — نوشته شد، اجرا نشد
+Known issues / TODO: [امیر: `php artisan migrate && php artisan test && ./vendor/bin/pint --test && ./vendor/bin/phpstan analyse`؛ تأیید فرض‌های ⚠️ (viewer ریسک را ببیند؛ وضعیت‌های ریسک؛ حادثه فقط سازمانی)؛ lock فعلی به میرور `mirror.abrha.net` اشاره می‌کند و `hekmatinasser/verta` در lock نیست ← `composer update` و کامیت lock]
+Next suggested step: 11 (طبق نقشه) و ادامه‌ی 08b/08c
 ## UPDATE — Step 08b + 08c — رابط وظایف، کانبان، تقویم، وظایف من، یادآور — ۱۴۰۵/۰۹/۰۱
 Status: DONE (کد و تست نوشته شد؛ **اجرای تست‌ها توسط امیر**)
 Branch: step/08b-08c-tasks-ui (از سر step/09-budget @ 3381cf3)

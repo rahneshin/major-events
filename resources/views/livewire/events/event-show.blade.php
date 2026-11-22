@@ -143,6 +143,9 @@
     @elseif ($tab === 'budget')
         <livewire:events.event-budget :event="$event" :key="'budget-'.$event->id" />
 
+    @elseif ($tab === 'risk')
+        <livewire:events.event-risk :event="$event" :key="'risk-'.$event->id" />
+
     @elseif ($tab === 'committees')
         <livewire:events.event-committees :event="$event" :key="'committees-'.$event->id" />
 
