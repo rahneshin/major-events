@@ -17,9 +17,9 @@
 | مخزن Git | https://github.com/rahneshin/major-events |
 | شاخه‌ی کاری فعلی | `step/08-tasks` (از سر `step/08-dashboard-site-template` @ `d2d65ea`؛ شامل 01 تا 07 + UI-2 + 06B + 08a) |
 | شاخه‌ی اصلی | `main` — هنوز فقط Step 00؛ **مرج نشده** (مشکل ۴) |
-| آخرین مرحله‌ی DONE | **08a** (کد و تست نوشته شد؛ **اجرای مایگریشن/تست‌ها توسط امیر**)، 06B، 07، UI-2 |
-| مرحله‌ی بعدی | **08b** (وظایف: تب رابط) — روی همان شاخه‌ی `step/08-tasks` |
-| تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۹/۰۱ (08a) |
+| آخرین مرحله‌ی DONE | **09** (شاخه‌ی `step/09-budget`)، **08a**، 06B، 07، UI-2 — اجرای مایگریشن/تست‌ها توسط امیر |
+| مرحله‌ی بعدی | **08b** (روی `step/08-tasks`)؛ سپس **10** (ریسک) |
+| تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۹/۰۱ (09) |
 
 ### توپولوژی شاخه‌ها (بررسی‌شده با `git merge-base --is-ancestor`)
 
@@ -57,7 +57,7 @@
 | 08a | وظایف: دیتابیس و منطق | ✅ (پچ آماده؛ اجرا با امیر) | step/08-tasks | Pest نوشته شد | tasks، وابستگی (DFS)، blocked خودکار، Policy، پیوست خصوصی، Milestone، پیشرفت |
 | 08b | وظایف: تب رابط | ⬜ **بعدی** | step/08-tasks | | |
 | 08c | Kanban، تقویم، وظایف من، یادآور | ⬜ | | | |
-| 09 | بودجه و درآمد | ⬜ | | | |
+| 09 | بودجه و درآمد | ✅ (کد و تست نوشته شد؛ اجرای تست‌ها و migration با امیر) | step/09-budget | Pest نوشته شد | خطوط، تراکنش، رسید، نسخه‌ی مصوب/قفل، هشدار اضافه‌هزینه، سربه‌سر؛ تب «بودجه» در هاب رویداد |
 | 10 | ریسک | ⬜ | | | |
 | 11 | اسپانسرینگ و بازاریابی | ⬜ | | | |
 | 12 | مسابقات (12A–12F) | ⬜ | | | `competition_id` روی tasks در 12F اضافه می‌شود |
@@ -120,6 +120,15 @@
 | ۱۴۰۵/۰۸/۳۰ | `tasks.competition_id` در 12F اضافه شود، نه 08 | جدول competitions هنوز نیست | ستون بدون FK در 08 | 08 |
 | ۱۴۰۵/۰۸/۳۰ | `tasks.ai_recommendation_id` بدون FK تا Step 18 | جدول هنوز نیست | — | 08 |
 | ۱۴۰۵/۰۸/۳۰ | ساب‌تسک فقط یک سطح؛ فقط `done` پیش‌نیاز را آزاد می‌کند | سادگی و پیش‌بینی‌پذیری | عمق نامحدود | 08 |
+| ۱۴۰۵/۰۹/۰۱ | دسترسی بودجه در `BudgetLinePolicy` (کشف خودکار با قرارداد نام؛ بدون تغییر AppServiceProvider): `manage`/`approve` = `EventPolicy@update`؛ `viewSummary` فقط مجموع برای `committee_head` و `member`؛ `viewer` و غیرعضو هیچ | ماتریس MASTER: ویرایش بودجه فقط مالک/مدیر؛ مشاهده‌ی مجموع یا هیچ | رئیس کمیته با ویرایش کمیته‌ای | 09 |
+| ۱۴۰۵/۰۹/۰۱ | «کارشناس مالی» نقش جدا نشد؛ فعلاً با مدیر رویداد یکی است | نقش جدید = تغییر `EventRole` و ماتریس (خارج از دامنه‌ی 09) | نقش `finance` | 09 |
+| ۱۴۰۵/۰۹/۰۱ | کلید feature جدید `budget_full` (حساب سازمانی با `*` دارد؛ عادی ندارد)؛ `budget_basic` همان قبلی | بدون تغییر `config/plans.php` | افزودن به plans | 09 |
+| ۱۴۰۵/۰۹/۰۱ | نسخه‌ی مصوب: بدون ردیف نسخه = مقدماتی ۱؛ تأیید = snapshot + قفل خطوط؛ `startRevision` یک ردیف `draft` می‌سازد؛ تراکنش واقعی هرگز قفل نمی‌شود؛ `budget_lines.version` = نسخه‌ی کاری هنگام آخرین تغییر | ساده، بدون ستون قفل روی `events` | ستون `locked` روی رویداد | 09 |
+| ۱۴۰۵/۰۹/۰۱ | هشدار اضافه‌هزینه: واقعی > برنامه + آستانه٪ (دقیقاً ۱۰٪ هشدار نیست)؛ پیش‌فرض `config/budget.php`، override هر رویداد در `events.metadata.budget.overrun_threshold_percent` | «قابل تنظیم» بدون migration روی events | ستون جدید | 09 |
+| ۱۴۰۵/۰۹/۰۱ | سربه‌سر = ceil((هزینه‌ی ثابت − درآمد ثابت) × N ÷ (درآمد متغیر − هزینه‌ی متغیر)) با N = `expected_participants`؛ فقط وقتی داده کافی است، وگرنه «داده کافی نیست» | سند: سربه‌سر فقط با داده کافی | حدس/پیش‌فرض | 09 |
+| ۱۴۰۵/۰۹/۰۱ | رسید روی دیسک خصوصی `local` (حداکثر ۵MB؛ pdf/jpg/png؛ فقط حساب سازمانی)؛ دانلود با اکشن Livewire دارای `authorize` (route جدید نداریم) | بدون تغییر `routes/web.php` | route دانلود | 09 |
+| ۱۴۰۵/۰۹/۰۱ | `budget_lines` و `transactions` softDelete؛ حذف خط دارای تراکنش ممنوع؛ دسته‌ی `other_revenue` به ۱۲ دسته‌ی سند اضافه شد | قانون ۱۱ و نیاز به دسته‌ی عمومی درآمد | حذف سخت | 09 |
+| ۱۴۰۵/۰۹/۰۱ | شماره‌ی migration بودجه ۲۰ (`2026_11_25_000020`) | هم‌پیشوند نشدن با Step 08 که هم‌زمان توسط مدل دیگر نوشته می‌شود | ۱۱ | 09 |
 
 | ۱۴۰۵/۰۹/۰۱ | `blocked` فقط خودکار؛ دستی قابل‌انتخاب نیست؛ هنگام وجود پیش‌نیاز ناتمام فقط `cancelled` مجاز است | قاعده‌ی «blocked خودکار» سند | blocked دستی با دلیل | 08a |
 | ۱۴۰۵/۰۹/۰۱ | آزادشدن blocked ← `todo` (وضعیت قبلی `doing` ذخیره نمی‌شود) | سادگی | ستون وضعیت قبلی | 08a |
@@ -196,6 +205,15 @@
 - `EventInvitation::hashToken()/findByToken()`، `EventMemberService::INVITES_PER_HOUR`
 - `phpstan-baseline.neon` (خالی؛ در صورت خطای Larastan با `--generate-baseline` پر شود)
 
+### Budget (09)
+- Enums: BudgetLineType, BudgetCategory, CostBehavior, BudgetVersionStatus
+- Models: BudgetLine (softDeletes، uuid)، Transaction (softDeletes، uuid)، BudgetVersion
+- Service: BudgetService؛ Policy: BudgetLinePolicy (کشف خودکار)؛ Support: `App\Support\Money`
+- Livewire: `Events\EventBudget` + `livewire/events/event-budget.blade.php` (تب «بودجه» در `event-show.blade.php`)
+- `config/budget.php`؛ `lang/fa/budget.php`
+- Migration: `2026_11_25_000020_create_budget_tables`
+- تست: `tests/Feature/Budget/{BudgetServiceTest,BudgetAccessTest}.php`، `tests/Unit/MoneyTest.php`
+
 ### UI (UI و UI-2)
 - layouts: public, app, admin, guest (**public و app = قالب جدید UI-2**؛ admin/guest قدیمی)
 - Blade components: button, input, textarea, select, card, badge, modal, toast, empty-state, pagination, confirm-dialog, page-header, date-picker + **UI-2:** brand-mark, lane-rope, lanes, event-row
@@ -235,6 +253,7 @@
 | `/events/{event}` (uuid) | events.show | " | `view` (+ اکشن‌ها: transition/manageMembers/delete) | ✅ |
 | `/events/{event}/edit` | events.edit | " | `update` | ✅ |
 | `/events/{event}/committees` | events.committees | " | `view` (redirect به `?tab=committees`) | ✅ |
+| `/events/{event}?tab=budget` | events.show (تب) | " | `view` برای ورود؛ داخل `EventBudget`: `viewSummary` (مجموع) / `manage` و `approve` (جزئیات و اکشن‌ها) از `BudgetLinePolicy`؛ هر اکشن Livewire جداگانه authorize و شناسه‌ها فقط داخل همین رویداد | ✅ 09 |
 | `/events/{event}/tasks/{task}/attachments/{attachment}` | tasks.attachments.download | auth, account.type (+ scoped bindings) | `TaskPolicy@view` (۴۰۳ بیرونی‌ها؛ ۴۰۴ ترکیب نادرست رویداد/وظیفه/پیوست) | ✅ 08a |
 | `/admin` | admin.dashboard | auth, account.type, `can:access-admin` | Gate `access-admin` (+ `authorize` در mount) | ✅ 06B |
 | `/system` | system.dashboard | auth, account.type, `can:access-admin` | Gate `access-admin` (+ `authorize` در mount) | ✅ 06B |
@@ -265,6 +284,20 @@
 
 ## ۷. Changelog
 
+## UPDATE — Step 09 — بودجه و درآمد — ۱۴۰۵/۰۹/۰۱
+Status: DONE (کد و تست نوشته شد؛ **اجرای migration، تست‌ها و Pint/Larastan توسط امیر**)
+Branch: step/09-budget (روی سر `step/08-stadium-landing` @ d30f43d؛ شامل 01 تا 07 + UI-2 + 06B + 08a + قالب stadium)
+Commit: feat(budget): budget lines, transactions and versions
+Files created: [config/budget.php، lang/fa/budget.php، app/Enums/{BudgetLineType,BudgetCategory,CostBehavior,BudgetVersionStatus}.php، app/Models/{BudgetLine,Transaction,BudgetVersion}.php، app/Policies/BudgetLinePolicy.php، app/Services/BudgetService.php، app/Support/Money.php، app/Livewire/Events/EventBudget.php، resources/views/livewire/events/event-budget.blade.php، tests/Feature/Budget/{BudgetServiceTest,BudgetAccessTest}.php، tests/Unit/MoneyTest.php]
+Files modified: [resources/views/livewire/events/event-show.blade.php (یک @elseif برای تب budget)، docs/ai/90-PROGRESS.md]
+Migrations: [2026_11_25_000020_create_budget_tables (budget_lines، transactions، budget_versions)]
+New env keys: []
+New packages: []
+Routes added: [] (تب داخل هاب رویداد؛ دانلود رسید = اکشن Livewire)
+Decisions: [BudgetLinePolicy؛ نسخه/قفل؛ آستانه‌ی هشدار؛ سربه‌سر؛ رسید خصوصی؛ بدون نقش «کارشناس مالی»؛ feature `budget_full` — جزئیات در Decision Log]
+Known issues / TODO: [«کارشناس مالی» نقش جدا ندارد؛ رسید حذف‌شده‌ی تراکنش برای ممیزی روی دیسک می‌ماند؛ هاب/لایوت قدیمی هنوز alias رنگ‌هاست (تب بودجه با توکن‌های UI-2 نوشته شده)؛ خروجی PDF/Excel بودجه در Step 14؛ ایمپورت اکسل بودجه انجام نشد؛ AI→BudgetLine در Step 18]
+Tests: اجرا نشد (طبق دستور امیر)
+Next suggested step: 10 — ریسک (و 08b/08c توسط مدل دیگر)
 ## UPDATE — Step 08a — وظایف: دیتابیس و منطق — ۱۴۰۵/۰۹/۰۱
 Status: DONE (کد و تست نوشته شد؛ **اجرای مایگریشن و تست‌ها توسط امیر**)
 Branch: step/08-tasks (از سر step/08-dashboard-site-template @ d2d65ea)
