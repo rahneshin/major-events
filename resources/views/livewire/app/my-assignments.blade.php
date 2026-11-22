@@ -53,9 +53,9 @@
                             </li>
                         @endforeach
                     </ul>
-                    @if ($moreTasks > 0)
-                        <p class="mt-2 text-xs text-ink-400">{{ __('hr.my_tasks_more', ['count' => fa_num($moreTasks)]) }}</p>
-                    @endif
+                    <a href="{{ route('tasks.mine') }}" wire:navigate class="mt-2 inline-block text-xs font-semibold text-ink-600 hover:underline">
+                        @if ($moreTasks > 0){{ __('hr.my_tasks_more', ['count' => fa_num($moreTasks)]) }} · @endif{{ __('hr.my_all_tasks') }}
+                    </a>
                 @endif
             </div>
         </div>

@@ -96,10 +96,10 @@ class EventHumanResources extends Component
             return;
         }
 
-        $this->notice = match (true) {
-            $result['created'] => __('hr.enrolled_new'),
-            $result['joined_event'] || $result['joined_committee'] => __('hr.enrolled_existing'),
-            default => __('hr.enrolled_already'),
+        $this->notice = match ($result['status']) {
+            'invited' => $result['sms_sent'] ? __('hr.invited_notice') : __('hr.invited_notice_sms_failed'),
+            'assigned' => __('hr.assigned_notice'),
+            default => __('hr.unchanged_notice'),
         };
 
         $this->reset(['phone', 'name', 'committeeId', 'post', 'asHead']);
@@ -210,6 +210,46 @@ class EventHumanResources extends Component
         $this->afterChange();
     }
 
+    public function resendInvitation(int $invitationId, HumanResourceService $hr): void
+    {
+        $this->authorize('manageMembers', $this->event);
+        $this->reset(['error', 'notice']);
+
+        try {
+            $sent = $hr->resend($this->event->invitations()->findOrFail($invitationId), Auth::user());
+        } catch (ModelNotFoundException) {
+            $this->error = __('hr.invite_invalid');
+
+            return;
+        } catch (\InvalidArgumentException $e) {
+            $this->error = $e->getMessage();
+
+            return;
+        }
+
+        $this->notice = $sent ? __('hr.resent') : __('hr.invited_notice_sms_failed');
+    }
+
+    public function revokeInvitation(int $invitationId, HumanResourceService $hr): void
+    {
+        $this->authorize('manageMembers', $this->event);
+        $this->reset(['error', 'notice']);
+
+        try {
+            $hr->revoke($this->event->invitations()->findOrFail($invitationId));
+        } catch (ModelNotFoundException) {
+            $this->error = __('hr.invite_invalid');
+
+            return;
+        } catch (\InvalidArgumentException $e) {
+            $this->error = $e->getMessage();
+
+            return;
+        }
+
+        $this->notice = __('hr.revoked');
+    }
+
     public function changeRole(int $userId, string $role, EventMemberService $members): void
     {
         $this->authorize('manageMembers', $this->event);
@@ -275,6 +315,11 @@ class EventHumanResources extends Component
             'members' => $members,
             'committees' => $committees,
             'assignments' => $assignments,
+            'pendingInvitations' => $this->event->invitations()
+                ->with('committee')
+                ->where('status', 'pending')
+                ->where('expires_at', '>', now())
+                ->get(),
             'canManage' => Auth::user()->can('manageMembers', $this->event),
             'assignableRoles' => \App\Services\HumanResourceService::ASSIGNABLE_ROLES,
         ]);

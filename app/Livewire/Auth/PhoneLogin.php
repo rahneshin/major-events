@@ -14,6 +14,12 @@ class PhoneLogin extends Component
 {
     public string $phone = '';
 
+    public function mount(): void
+    {
+        // لینک دعوت: شماره‌ی دعوت‌شده از قبل پر می‌شود
+        $this->phone = (string) session('invite_phone', '');
+    }
+
     public function sendCode(OtpService $otp): void
     {
         $this->validate([

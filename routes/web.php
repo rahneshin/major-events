@@ -8,6 +8,7 @@ use App\Livewire\Auth\CompleteProfile;
 use App\Livewire\Auth\PhoneLogin;
 use App\Livewire\Auth\SelectAccountType;
 use App\Livewire\Auth\VerifyOtp;
+use App\Livewire\Events\AcceptInvitation;
 use App\Livewire\Events\EventForm;
 use App\Livewire\Events\EventIndex;
 use App\Livewire\Events\EventShow;
@@ -39,6 +40,11 @@ if (app()->environment('local')) {
 | Authentication
 |--------------------------------------------------------------------------
 */
+// لینک دعوت رویداد (عمومی: مهمان به ورود می‌رود و بعد از OTP برمی‌گردد)
+Route::get('/invite/{token}', AcceptInvitation::class)
+    ->middleware('throttle:30,1')
+    ->name('events.invitation');
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', PhoneLogin::class)->name('auth.login');
     Route::get('/verify', VerifyOtp::class)->name('auth.verify');

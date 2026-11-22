@@ -1,9 +1,13 @@
 <?php
 
+use App\Enums\AccountType;
 use App\Enums\EventRole;
+use App\Exceptions\LimitExceededException;
 use App\Livewire\App\MyAssignments;
+use App\Livewire\Events\AcceptInvitation;
 use App\Livewire\Events\EventHumanResources;
 use App\Models\Event;
+use App\Models\EventInvitation;
 use App\Models\User;
 use App\Services\CommitteeService;
 use App\Services\HumanResourceService;
@@ -43,7 +47,17 @@ function hr_event(User $owner): Event
     ]);
 }
 
-it('registers an unknown phone, adds it to the event and committee with a post, and sends an SMS', function () {
+/** کاربری که تازه با OTP وارد شده: بدون نام و بدون نوع حساب. */
+function hr_freshUser(string $phone): User
+{
+    return User::query()->create([
+        'phone' => PhoneNumber::normalize($phone),
+        'status' => 'active',
+        'phone_verified_at' => now(),
+    ]);
+}
+
+it('invites an unknown phone with a committee and post, texts a link, and creates no user yet', function () {
     $sms = hr_fakeSms();
     $owner = User::factory()->organizational()->create();
     $event = hr_event($owner);
@@ -53,32 +67,117 @@ it('registers an unknown phone, adds it to the event and committee with a post, 
         $event, $owner, '09121234567', 'علی رضایی', EventRole::Member, $committee, 'مسئول پذیرایی',
     );
 
-    $user = User::query()->where('phone', PhoneNumber::normalize('09121234567'))->first();
+    $invitation = $result['invitation'];
 
-    expect($result['created'])->toBeTrue()
-        ->and($user)->not->toBeNull()
-        ->and($user->name)->toBe('علی رضایی')
-        ->and($event->hasMember($user))->toBeTrue()
-        ->and($committee->fresh()->members()->where('users.id', $user->id)->first()->pivot->post)->toBe('مسئول پذیرایی')
+    expect($result['status'])->toBe('invited')
+        ->and(User::query()->where('phone', PhoneNumber::normalize('09121234567'))->exists())->toBeFalse()
+        ->and($invitation->status)->toBe('pending')
+        ->and($invitation->committee_id)->toBe($committee->id)
+        ->and($invitation->post)->toBe('مسئول پذیرایی')
         ->and($sms->sent)->toHaveCount(1)
-        ->and($sms->sent[0]['phone'])->toBe($user->phone)
-        ->and($sms->sent[0]['message'])->toContain($event->title)->toContain('پذیرایی')->toContain('مسئول پذیرایی');
+        ->and($sms->sent[0]['message'])
+        ->toContain($event->title)
+        ->toContain('پذیرایی')
+        ->toContain(route('events.invitation', ['token' => $invitation->plainToken]));
 });
 
-it('is idempotent for someone already in the event and committee: updates the post, sends no new SMS', function () {
+it('re-inviting the same phone keeps one pending row and invalidates the old link', function () {
+    hr_fakeSms();
+    $owner = User::factory()->organizational()->create();
+    $event = hr_event($owner);
+    $svc = app(HumanResourceService::class);
+
+    $first = $svc->enroll($event, $owner, '09121234567')['invitation'];
+    $oldToken = $first->plainToken;
+    $second = $svc->enroll($event, $owner, '09121234567')['invitation'];
+
+    expect(EventInvitation::query()->where('event_id', $event->id)->where('status', 'pending')->count())->toBe(1)
+        ->and($second->id)->toBe($first->id)
+        ->and(EventInvitation::findByToken($oldToken))->toBeNull()
+        ->and(EventInvitation::findByToken($second->plainToken)?->id)->toBe($first->id);
+});
+
+it('makes the person a member with post and default account type when they click the link', function () {
+    hr_fakeSms();
+    $owner = User::factory()->organizational()->create();
+    $event = hr_event($owner);
+    $committee = app(CommitteeService::class)->create($event, $owner, ['name' => 'پذیرایی']);
+
+    $token = app(HumanResourceService::class)->enroll(
+        $event, $owner, '09127778888', 'نیما', EventRole::Member, $committee, 'مسئول پذیرایی',
+    )['invitation']->plainToken;
+
+    $user = hr_freshUser('09127778888');
+
+    Livewire::actingAs($user)
+        ->test(AcceptInvitation::class, ['token' => $token])
+        ->assertRedirect(route('app.dashboard'));
+
+    $user->refresh();
+
+    expect($event->hasMember($user))->toBeTrue()
+        ->and($user->name)->toBe('نیما')
+        ->and($user->account_type)->toBe(AccountType::Individual)
+        ->and($user->isOnboarded())->toBeTrue()
+        ->and($committee->fresh()->members()->where('users.id', $user->id)->first()->pivot->post)->toBe('مسئول پذیرایی')
+        ->and(EventInvitation::findByToken($token)->status)->toBe('accepted');
+});
+
+it('sends a guest to login and remembers the invitation', function () {
+    hr_fakeSms();
+    $owner = User::factory()->organizational()->create();
+    $event = hr_event($owner);
+
+    $token = app(HumanResourceService::class)->enroll($event, $owner, '09127778888')['invitation']->plainToken;
+
+    Livewire::test(AcceptInvitation::class, ['token' => $token])
+        ->assertRedirect(route('auth.login'));
+
+    expect(session('pending_invite_token'))->toBe($token)
+        ->and(session('invite_phone'))->toBe(PhoneNumber::normalize('09127778888'));
+});
+
+it('refuses a different phone, a used link and a revoked link', function () {
+    hr_fakeSms();
+    $owner = User::factory()->organizational()->create();
+    $event = hr_event($owner);
+    $svc = app(HumanResourceService::class);
+
+    $invitation = $svc->enroll($event, $owner, '09127778888')['invitation'];
+    $token = $invitation->plainToken;
+
+    $other = hr_freshUser('09120000000');
+    Livewire::actingAs($other)->test(AcceptInvitation::class, ['token' => $token])
+        ->assertSee(__('hr.invite_phone_mismatch'));
+    expect($event->hasMember($other))->toBeFalse();
+
+    $right = hr_freshUser('09127778888');
+    Livewire::actingAs($right)->test(AcceptInvitation::class, ['token' => $token]);
+    Livewire::actingAs($right)->test(AcceptInvitation::class, ['token' => $token])
+        ->assertSee(__('hr.invite_invalid'));
+
+    $second = $svc->enroll($event, $owner, '09125550000')['invitation'];
+    $svc->revoke($second);
+    Livewire::actingAs(hr_freshUser('09125550000'))->test(AcceptInvitation::class, ['token' => $second->plainToken])
+        ->assertSee(__('hr.invite_invalid'));
+});
+
+it('assigns an existing event member directly, without a link', function () {
     $sms = hr_fakeSms();
     $owner = User::factory()->organizational()->create();
     $event = hr_event($owner);
     $committee = app(CommitteeService::class)->create($event, $owner, ['name' => 'فنی']);
-    $svc = app(HumanResourceService::class);
 
-    $svc->enroll($event, $owner, '09121234567', null, EventRole::Member, $committee, 'کمک‌فنی');
-    $svc->enroll($event, $owner, '09121234567', null, EventRole::Member, $committee, 'مسئول فنی');
+    $member = hr_freshUser('09127778888');
+    $event->members()->attach($member->id, ['role' => 'member', 'added_by' => $owner->id, 'joined_at' => now()]);
 
-    $user = User::query()->where('phone', PhoneNumber::normalize('09121234567'))->first();
+    $result = app(HumanResourceService::class)->enroll(
+        $event, $owner, '09127778888', null, EventRole::Member, $committee, 'مسئول فنی',
+    );
 
-    expect($event->members()->where('users.id', $user->id)->count())->toBe(1)
-        ->and($committee->fresh()->members()->where('users.id', $user->id)->first()->pivot->post)->toBe('مسئول فنی')
+    expect($result['status'])->toBe('assigned')
+        ->and($result['invitation'])->toBeNull()
+        ->and($committee->fresh()->members()->where('users.id', $member->id)->first()->pivot->post)->toBe('مسئول فنی')
         ->and($sms->sent)->toHaveCount(1);
 });
 
@@ -93,26 +192,20 @@ it('does not let a viewer hold a committee post', function () {
     );
 })->throws(InvalidArgumentException::class);
 
-it('does not leave an orphan user behind when the member limit is hit', function () {
+it('refuses to invite beyond the plan member limit', function () {
     hr_fakeSms();
-    $owner = User::factory()->individual()->create(); // members_per_event = 10
+    $owner = User::factory()->individual()->create(); // members_per_event = 10 (مالک هم شمرده می‌شود)
     $event = hr_event($owner);
 
     foreach (range(1, 9) as $i) {
-        app(HumanResourceService::class)->enroll($event, $owner, '0912000000'.$i);
+        $u = hr_freshUser('0912000000'.$i);
+        $event->members()->attach($u->id, ['role' => 'member', 'added_by' => $owner->id, 'joined_at' => now()]);
     }
 
-    $before = User::query()->count();
+    app(HumanResourceService::class)->enroll($event, $owner, '09129999999');
+})->throws(LimitExceededException::class);
 
-    try {
-        app(HumanResourceService::class)->enroll($event, $owner, '09129999999');
-    } catch (\Throwable) {
-    }
-
-    expect(User::query()->count())->toBe($before);
-});
-
-it('lets an event owner enroll from the HR tab and blocks plain members', function () {
+it('lets an event owner invite from the HR tab and blocks plain members', function () {
     hr_fakeSms();
     $owner = User::factory()->organizational()->create();
     $event = hr_event($owner);
@@ -129,6 +222,8 @@ it('lets an event owner enroll from the HR tab and blocks plain members', functi
         ->assertSee('سارا')
         ->assertSee('هماهنگ‌کننده');
 
+    expect($event->invitations()->where('status', 'pending')->count())->toBe(1);
+
     $member = User::factory()->individual()->create();
     $event->members()->attach($member->id, ['role' => 'member', 'added_by' => $owner->id, 'joined_at' => now()]);
 
@@ -139,23 +234,26 @@ it('lets an event owner enroll from the HR tab and blocks plain members', functi
         ->assertForbidden();
 });
 
-it('shows a member their post and open tasks on the panel', function () {
+it('shows a member their post and open tasks on the panel after accepting', function () {
     hr_fakeSms();
     $owner = User::factory()->organizational()->create();
     $event = hr_event($owner);
     $committee = app(CommitteeService::class)->create($event, $owner, ['name' => 'پذیرایی']);
 
-    $result = app(HumanResourceService::class)->enroll(
+    $token = app(HumanResourceService::class)->enroll(
         $event, $owner, '09127778888', 'نیما', EventRole::Member, $committee, 'مسئول پذیرایی',
-    );
+    )['invitation']->plainToken;
+
+    $user = hr_freshUser('09127778888');
+    Livewire::actingAs($user)->test(AcceptInvitation::class, ['token' => $token]);
 
     tk_task($event, $owner, [
         'title' => 'سفارش غذا',
         'committee_id' => $committee->id,
-        'assignee_id' => $result['user']->id,
+        'assignee_id' => $user->id,
     ]);
 
-    Livewire::actingAs($result['user'])
+    Livewire::actingAs($user->fresh())
         ->test(MyAssignments::class)
         ->assertSee('مسئول پذیرایی')
         ->assertSee('سفارش غذا');

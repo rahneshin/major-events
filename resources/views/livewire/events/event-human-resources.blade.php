@@ -54,6 +54,38 @@
         </div>
     @endif
 
+    @if ($canManage && $pendingInvitations->isNotEmpty())
+        <div class="glass rounded-2xl p-5">
+            <h3 class="mb-3 text-sm font-bold text-slate-900">
+                {{ __('hr.pending_title') }}
+                <span class="ms-1 text-slate-400">({{ fa_num($pendingInvitations->count()) }})</span>
+            </h3>
+            <ul class="divide-y divide-slate-100">
+                @foreach ($pendingInvitations as $inv)
+                    <li class="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between" wire:key="hr-inv-{{ $inv->id }}">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-900">
+                                {{ $inv->invitee_name ?: phone($inv->phone) }}
+                                <span class="ms-1 text-xs font-normal text-slate-400" dir="ltr">{{ phone($inv->phone) }}</span>
+                            </p>
+                            <p class="text-xs text-slate-500">
+                                {{ $inv->role->label() }}
+                                @if ($inv->committee) · {{ $inv->committee->name }}@if ($inv->post) · {{ $inv->post }}@endif @endif
+                                · {{ __('hr.pending_expires', ['date' => jalali($inv->expires_at)]) }}
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" wire:click="resendInvitation({{ $inv->id }})"
+                                class="rounded-lg bg-indigo-600 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-indigo-700">{{ __('hr.resend') }}</button>
+                            <button type="button" wire:click="revokeInvitation({{ $inv->id }})" wire:confirm="{{ __('hr.confirm_revoke') }}"
+                                class="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-100">{{ __('hr.revoke') }}</button>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="glass rounded-2xl p-5">
         <h3 class="mb-4 text-sm font-bold text-slate-900">
             {{ __('hr.list_title') }}

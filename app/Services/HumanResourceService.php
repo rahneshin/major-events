@@ -4,25 +4,32 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\AccountType;
 use App\Enums\CommitteeRole;
 use App\Enums\EventRole;
+use App\Models\AccountUpgrade;
 use App\Models\Committee;
 use App\Models\Event;
+use App\Models\EventInvitation;
 use App\Models\User;
 use App\Services\Sms\SmsGateway;
 use App\Support\LogsActivity;
 use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Throwable;
 
 /**
- * «منابع انسانی» رویداد: یک نقطه‌ی ورود برای
- *   ثبت‌نام فرد (اگر کاربر نبود) ← عضو رویداد ← عضو کمیته با «پست» ← پیامک خبر.
+ * «منابع انسانی» رویداد.
  *
- * منطق عضویت همچنان در EventMemberService و CommitteeService است؛ این سرویس فقط
- * آن‌ها را به‌هم وصل می‌کند و تکرار قانون ایجاد نمی‌کند.
+ * جریان دعوت:
+ *   enroll()  ← دعوت با موبایل (+ کمیته/پست) ← پیامکِ لینک /invite/{token}
+ *   accept()  ← با کلیک روی لینک و ورود (OTP): عضو رویداد + کمیته/پست + نوع حساب پیش‌فرض
+ *
+ * کسی که از قبل عضو رویداد است لینک نمی‌خواهد؛ کمیته/پستش مستقیم ثبت می‌شود.
+ * منطق عضویت در EventMemberService و CommitteeService می‌ماند.
  */
 class HumanResourceService
 {
@@ -30,9 +37,10 @@ class HumanResourceService
 
     public const ENROLLS_PER_HOUR = 30;
 
+    public const INVITE_DAYS = 7;
+
     /**
-     * نقش‌های قابل‌انتخاب هنگام ثبت. «رئیس کمیته» انتخابی نیست چون از روی
-     * رئیس‌بودن در کمیته مشتق می‌شود (Event::roleOf).
+     * «رئیس کمیته» انتخابی نیست؛ از روی ریاست کمیته مشتق می‌شود (Event::roleOf).
      *
      * @var list<EventRole>
      */
@@ -41,15 +49,12 @@ class HumanResourceService
     public function __construct(
         private EventMemberService $eventMembers,
         private CommitteeService $committees,
+        private EntitlementService $entitlement,
         private SmsGateway $sms,
     ) {}
 
     /**
-     * ثبت یک نفر با شماره موبایل. اگر کاربر وجود نداشت ساخته می‌شود؛ اگر عضو رویداد
-     * نبود عضو می‌شود؛ اگر کمیته داده شده باشد با «پست» به آن اضافه می‌شود.
-     * هر مرحله idempotent است (تکراری‌بودن خطا نیست).
-     *
-     * @return array{user: User, created: bool, joined_event: bool, joined_committee: bool, sms_sent: bool}
+     * @return array{status: 'invited'|'assigned'|'unchanged', invitation: ?EventInvitation, user: ?User, sms_sent: bool}
      *
      * @throws \App\Exceptions\LimitExceededException
      * @throws InvalidArgumentException
@@ -76,87 +81,142 @@ class HumanResourceService
         }
 
         if ($committee !== null) {
-            $this->assertCommitteeOfEvent($event, $committee);
-
+            if ((int) $committee->event_id !== (int) $event->id) {
+                throw new InvalidArgumentException(__('hr.committee_not_in_event'));
+            }
             if ($role === EventRole::Viewer) {
                 throw new InvalidArgumentException(__('hr.viewer_cannot_hold_post'));
             }
         }
 
-        $name = $this->cleanName($name);
-
         $user = User::withTrashed()->where('phone', $normalized)->first();
-
-        if ($user?->trashed() || ($user && ! $user->isActive())) {
+        if ($user && ($user->trashed() || ! $user->isActive())) {
             throw new InvalidArgumentException(__('hr.user_unavailable'));
         }
 
-        $created = false;
-        $joinedEvent = false;
-        $joinedCommittee = false;
-
-        DB::transaction(function () use (
-            $event, $actor, $normalized, $name, $role, $committee, $post, $head,
-            &$user, &$created, &$joinedEvent, &$joinedCommittee,
-        ) {
-            if ($user === null) {
-                $user = User::query()->create([
-                    'phone' => $normalized,
-                    'name' => $name,
-                    'status' => 'active',
-                ]);
-                $created = true;
-            } elseif (blank($user->name) && $name !== null) {
-                $user->forceFill(['name' => $name])->save();
-            }
-
-            if (! $event->hasMember($user)) {
-                $this->eventMembers->addMember($event, $actor, $user, $role);
-                $joinedEvent = true;
-            }
-
-            if ($committee !== null) {
-                if ($committee->hasMember($user)) {
-                    $this->committees->setPost($committee, $user, $post);
-                    if ($head) {
-                        $this->committees->setHead($committee, $user);
-                    }
-                } else {
-                    $this->committees->addMember(
-                        $committee,
-                        $actor,
-                        $user,
-                        $head ? CommitteeRole::Head : CommitteeRole::Member,
-                        false,
-                        $post,
-                    );
-                    $joinedCommittee = true;
-                }
-            }
-
-            if ($created) {
-                self::logActivity('hr.user_registered', $user, $event->id, ['phone' => $normalized]);
-            }
-        });
-
-        $smsSent = false;
-        if ($joinedEvent || $joinedCommittee) {
-            $smsSent = $this->sendSms($event, $user, $committee, $post);
+        // از قبل عضو رویداد: مستقیم کمیته/پست
+        if ($user && $event->hasMember($user)) {
+            return $this->assignExistingMember($event, $actor, $user, $committee, $post, $head);
         }
 
+        $this->entitlement->assertWithinLimit($actor, 'members_per_event', $this->eventMembers->memberCount($event));
+
+        $invitation = $this->issueInvitation($event, $actor, $normalized, [
+            'role' => $role,
+            'committee_id' => $committee?->id,
+            'post' => $this->cleanText($post),
+            'is_head' => $head && $committee !== null,
+            'invitee_name' => $this->cleanText($name),
+        ]);
+
+        self::logActivity('hr.invited', $invitation, $event->id, [
+            'phone' => $normalized,
+            'committee_id' => $committee?->id,
+        ]);
+
         return [
+            'status' => 'invited',
+            'invitation' => $invitation,
             'user' => $user,
-            'created' => $created,
-            'joined_event' => $joinedEvent,
-            'joined_committee' => $joinedCommittee,
-            'sms_sent' => $smsSent,
+            'sms_sent' => $this->sendInviteSms($invitation),
         ];
     }
 
     /**
-     * افزودن عضو فعلی رویداد به یک کمیته‌ی دیگر (با پست).
+     * ارسال مجدد: توکن جدید (توکن خام ذخیره نمی‌شود) و تمدید ۷ روزه.
+     */
+    public function resend(EventInvitation $invitation, User $actor): bool
+    {
+        if (! in_array($invitation->status, ['pending', 'expired'], true)) {
+            throw new InvalidArgumentException(__('hr.invite_invalid'));
+        }
+
+        $this->throttle($actor);
+
+        $this->rotate($invitation, $actor);
+
+        return $this->sendInviteSms($invitation);
+    }
+
+    public function revoke(EventInvitation $invitation): void
+    {
+        if ($invitation->status !== 'pending') {
+            throw new InvalidArgumentException(__('hr.invite_invalid'));
+        }
+
+        $invitation->update(['status' => 'cancelled']);
+        self::logActivity('hr.invite_revoked', $invitation, $invitation->event_id);
+    }
+
+    /**
+     * پذیرش دعوت توسط کاربرِ واردشده.
      *
      * @throws InvalidArgumentException
+     * @throws \App\Exceptions\LimitExceededException
+     */
+    public function accept(EventInvitation $invitation, User $user): Event
+    {
+        if (! $invitation->isPending()) {
+            throw new InvalidArgumentException(__('hr.invite_invalid'));
+        }
+
+        if ($user->phone !== $invitation->phone) {
+            throw new InvalidArgumentException(__('hr.invite_phone_mismatch'));
+        }
+
+        return DB::transaction(function () use ($invitation, $user) {
+            // دوبار کلیک هم‌زمان نباید دوبار پردازش شود
+            $fresh = EventInvitation::query()->whereKey($invitation->id)->lockForUpdate()->first();
+            if ($fresh === null || ! $fresh->isPending()) {
+                throw new InvalidArgumentException(__('hr.invite_invalid'));
+            }
+
+            $event = $fresh->event;
+            $inviter = $fresh->inviter ?? $event->creator;
+
+            if (blank($user->name) && filled($fresh->invitee_name)) {
+                $user->forceFill(['name' => $fresh->invitee_name])->save();
+            }
+
+            // دعوت‌شده به «انتخاب نوع حساب» نمی‌رسد؛ حساب عادی؛ بعداً از «حساب من» قابل ارتقاست
+            if ($user->account_type === null) {
+                $user->forceFill(['account_type' => AccountType::Individual])->save();
+
+                AccountUpgrade::query()->create([
+                    'user_id' => $user->id,
+                    'from_type' => null,
+                    'to_type' => AccountType::Individual,
+                    'reason' => 'event_invitation',
+                    'performed_by' => $user->id,
+                ]);
+            }
+
+            if (! $event->hasMember($user)) {
+                // سقف عضو رویداد مربوط به دعوت‌کننده/صاحب رویداد است، نه کاربر جدید
+                $this->eventMembers->addMember($event, $inviter, $user, $fresh->role);
+            }
+
+            $committee = $fresh->committee_id ? Committee::query()->where('event_id', $event->id)->find($fresh->committee_id) : null;
+            if ($committee !== null && ! $committee->hasMember($user)) {
+                $this->committees->addMember(
+                    $committee,
+                    $inviter,
+                    $user,
+                    $fresh->is_head ? CommitteeRole::Head : CommitteeRole::Member,
+                    false,
+                    $fresh->post,
+                );
+            }
+
+            $fresh->update(['status' => 'accepted', 'accepted_at' => now()]);
+            self::logActivity('hr.invite_accepted', $fresh, $event->id, ['user_id' => $user->id]);
+
+            return $event;
+        });
+    }
+
+    /**
+     * عضو فعلی رویداد را به کمیته‌ی دیگری اضافه می‌کند (همراه پست).
      */
     public function assignToCommittee(
         Committee $committee,
@@ -184,21 +244,75 @@ class HumanResourceService
             $post,
         );
 
-        return $this->sendSms($event, $user, $committee, $post);
+        return $this->sendAssignedSms($event, $user, $committee, $post);
     }
 
-    private function assertCommitteeOfEvent(Event $event, Committee $committee): void
+    /**
+     * @return array{status: 'assigned'|'unchanged', invitation: null, user: User, sms_sent: bool}
+     */
+    private function assignExistingMember(Event $event, User $actor, User $user, ?Committee $committee, ?string $post, bool $head): array
     {
-        if ((int) $committee->event_id !== (int) $event->id) {
-            throw new InvalidArgumentException(__('hr.committee_not_in_event'));
+        $smsSent = false;
+        $status = 'unchanged';
+
+        if ($committee !== null) {
+            if ($committee->hasMember($user)) {
+                $this->committees->setPost($committee, $user, $post);
+                if ($head) {
+                    $this->committees->setHead($committee, $user);
+                }
+                $status = 'assigned';
+            } else {
+                $smsSent = $this->assignToCommittee($committee, $actor, $user, $post, $head);
+                $status = 'assigned';
+            }
         }
+
+        return ['status' => $status, 'invitation' => null, 'user' => $user, 'sms_sent' => $smsSent];
     }
 
-    private function cleanName(?string $name): ?string
+    /**
+     * یک دعوت pending برای هر (رویداد، شماره)؛ دعوت مجدد همان را به‌روز و توکن را عوض می‌کند.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function issueInvitation(Event $event, User $actor, string $phone, array $attributes): EventInvitation
     {
-        $name = trim((string) $name);
+        $invitation = EventInvitation::query()
+            ->where('event_id', $event->id)
+            ->where('phone', $phone)
+            ->where('status', 'pending')
+            ->first();
 
-        return $name === '' ? null : mb_substr($name, 0, 120);
+        if ($invitation === null) {
+            $invitation = new EventInvitation(['event_id' => $event->id, 'phone' => $phone]);
+        }
+
+        $invitation->fill($attributes);
+        $this->rotate($invitation, $actor);
+
+        return $invitation;
+    }
+
+    private function rotate(EventInvitation $invitation, User $actor): void
+    {
+        $plain = Str::random(40);
+
+        $invitation->fill([
+            'token_hash' => EventInvitation::hashToken($plain),
+            'invited_by' => $actor->id,
+            'expires_at' => now()->addDays(self::INVITE_DAYS),
+            'status' => 'pending',
+        ])->save();
+
+        $invitation->plainToken = $plain;
+    }
+
+    private function cleanText(?string $value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : mb_substr($value, 0, 120);
     }
 
     private function throttle(User $actor): void
@@ -212,25 +326,45 @@ class HumanResourceService
         RateLimiter::hit($key, 3600);
     }
 
+    private function assignmentText(?Committee $committee, ?string $post): string
+    {
+        if ($committee === null) {
+            return '';
+        }
+
+        $text = __('hr.sms_assignment', ['committee' => $committee->name]);
+        $post = trim((string) $post);
+
+        return $post !== '' ? $text.__('hr.sms_post', ['post' => $post]) : $text.'. ';
+    }
+
     /**
-     * پیامک خبر. تا زمان وصل‌شدن پنل پیامکی، درایور `log` فقط در لاگ می‌نویسد.
-     * خطای ارسال هرگز ثبت‌نام را خراب نمی‌کند.
+     * پیامک لینک دعوت. تا وصل‌شدن پنل پیامکی، درایور `log` فقط در لاگ می‌نویسد.
+     * خطای ارسال هرگز دعوت را خراب نمی‌کند (ارسال مجدد از تب منابع انسانی ممکن است).
      */
-    private function sendSms(Event $event, User $user, ?Committee $committee, ?string $post): bool
+    private function sendInviteSms(EventInvitation $invitation): bool
     {
         try {
-            $assignment = '';
-            if ($committee !== null) {
-                $assignment = __('hr.sms_assignment', ['committee' => $committee->name]);
-                $post = trim((string) $post);
-                if ($post !== '') {
-                    $assignment .= __('hr.sms_post', ['post' => $post]);
-                }
-            }
+            $invitation->loadMissing(['event', 'committee']);
 
-            return $this->sms->send($user->phone, __('hr.sms_enrolled', [
+            return $this->sms->send($invitation->phone, __('hr.sms_invite', [
+                'event' => $invitation->event->title,
+                'assignment' => $this->assignmentText($invitation->committee, $invitation->post),
+                'url' => route('events.invitation', ['token' => $invitation->plainToken]),
+            ]));
+        } catch (Throwable $e) {
+            report($e);
+
+            return false;
+        }
+    }
+
+    private function sendAssignedSms(Event $event, User $user, ?Committee $committee, ?string $post): bool
+    {
+        try {
+            return $this->sms->send($user->phone, __('hr.sms_assigned', [
                 'event' => $event->title,
-                'assignment' => $assignment,
+                'assignment' => $this->assignmentText($committee, $post),
                 'url' => route('auth.login'),
             ]));
         } catch (Throwable $e) {

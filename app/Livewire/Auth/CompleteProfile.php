@@ -52,7 +52,7 @@ class CompleteProfile extends Component
             'name' => trim($validated['name']),
         ])->save();
 
-        $this->redirect(route('auth.select-account-type'));
+        $this->redirect(route($user->hasSelectedAccountType() ? 'app.dashboard' : 'auth.select-account-type'));
     }
 
     public function render()

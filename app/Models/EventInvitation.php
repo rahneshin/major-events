@@ -19,6 +19,10 @@ class EventInvitation extends Model
         'expires_at',
         'accepted_at',
         'status',
+        'committee_id',
+        'post',
+        'is_head',
+        'invitee_name',
     ];
 
     /** @var list<string> */
@@ -51,12 +55,18 @@ class EventInvitation extends Model
             'role' => EventRole::class,
             'expires_at' => 'datetime',
             'accepted_at' => 'datetime',
+            'is_head' => 'boolean',
         ];
     }
 
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
+    }
+
+    public function committee(): BelongsTo
+    {
+        return $this->belongsTo(Committee::class);
     }
 
     public function inviter(): BelongsTo

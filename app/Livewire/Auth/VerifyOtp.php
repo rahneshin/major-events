@@ -53,6 +53,13 @@ class VerifyOtp extends Component
 
         session()->forget(['otp_phone', 'otp_debug_code']);
 
+        // دعوت در انتظار: اول پذیرش دعوت (عضویت + نوع حساب پیش‌فرض)، نه مراحل onboarding
+        if ($token = session('pending_invite_token')) {
+            $this->redirect(route('events.invitation', ['token' => $token]), navigate: true);
+
+            return;
+        }
+
         if (! $user->isProfileComplete()) {
             $this->redirect(route('auth.complete-profile'), navigate: true);
 
