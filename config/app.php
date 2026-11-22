@@ -78,9 +78,12 @@ return [
     |
     */
 
-'locale' => env('APP_LOCALE', 'fa'),
+// پنل فقط فارسی است و lang/en وجود ندارد؛ اگر locale یا fallback روی en باشد
+    // کلیدهای ترجمه (مثل committee.count_label) خام نمایش داده می‌شوند.
+    // پس عمداً به .env وابسته نیستند.
+    'locale' => 'fa',
 
-    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
+    'fallback_locale' => 'fa',
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'fa_IR'),
 

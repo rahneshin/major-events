@@ -38,6 +38,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // تضمین فارسی بودن زبان برنامه، مستقل از .env یا کش کانفیگ قدیمی
+        app()->setLocale('fa');
+
         Gate::policy(Organization::class, OrganizationPolicy::class);
         Gate::policy(Event::class, EventPolicy::class);
         Gate::policy(Committee::class, CommitteePolicy::class);
