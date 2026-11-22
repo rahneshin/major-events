@@ -213,6 +213,7 @@ class CommitteeService
         User $user,
         CommitteeRole $role = CommitteeRole::Member,
         bool $addToEvent = false,
+        ?string $post = null,
     ): void {
         $event = $committee->event;
 
@@ -227,8 +228,13 @@ class CommitteeService
             throw new InvalidArgumentException(__('committee.member_already'));
         }
 
-        DB::transaction(function () use ($committee, $user, $role, $event) {
-            $committee->members()->attach($user->id, ['role' => CommitteeRole::Member->value]);
+        $post = $this->cleanPost($post);
+
+        DB::transaction(function () use ($committee, $user, $role, $event, $post) {
+            $committee->members()->attach($user->id, [
+                'role' => CommitteeRole::Member->value,
+                'post' => $post,
+            ]);
 
             self::logActivity('committee.member_added', $committee, $event->id, [
                 'member_id' => $user->id,
@@ -242,6 +248,32 @@ class CommitteeService
         if ($user->id !== $actor->id) {
             $user->notify(new AddedToCommittee($committee->fresh('event'), $role->value));
         }
+    }
+
+    /**
+     * «پست» = عنوان سازمانی آزاد فرد داخل کمیته (مثلاً «مسئول پذیرایی»).
+     * مستقل از نقش رئیس/عضو است و هر زمان قابل تغییر.
+     */
+    public function setPost(Committee $committee, User $user, ?string $post): void
+    {
+        if (! $committee->hasMember($user)) {
+            throw new InvalidArgumentException(__('committee.member_not_found'));
+        }
+
+        $post = $this->cleanPost($post);
+        $committee->members()->updateExistingPivot($user->id, ['post' => $post]);
+
+        self::logActivity('committee.post_changed', $committee, $committee->event_id, [
+            'member_id' => $user->id,
+            'post' => $post,
+        ]);
+    }
+
+    private function cleanPost(?string $post): ?string
+    {
+        $post = trim((string) $post);
+
+        return $post === '' ? null : mb_substr($post, 0, 120);
     }
 
     public function removeMember(Committee $committee, User $user): void

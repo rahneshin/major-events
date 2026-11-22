@@ -79,7 +79,7 @@ class User extends Authenticatable
     public function committees(): BelongsToMany
     {
         return $this->belongsToMany(Committee::class, 'committee_user')
-            ->withPivot('role')
+            ->withPivot(['role', 'post'])
             ->withTimestamps();
     }
 

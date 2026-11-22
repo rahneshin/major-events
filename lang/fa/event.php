@@ -33,7 +33,7 @@ return [
     'goal_unit' => 'واحد',
     'overview' => 'نمای کلی',
     'tab_overview' => 'خلاصه',
-    'tab_members' => 'اعضا',
+    'tab_members' => 'منابع انسانی',
     'tab_committees' => 'کمیته‌ها',
     'tab_tasks' => 'وظایف',
     'tab_budget' => 'بودجه',

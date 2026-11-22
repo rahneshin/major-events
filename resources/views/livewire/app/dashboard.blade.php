@@ -84,6 +84,8 @@
         </div>
     </section>
 
+    <livewire:app.my-assignments />
+
     <div class="grid gap-8 lg:grid-cols-3">
         {{-- رویدادها --}}
         <section class="lg:col-span-2">
