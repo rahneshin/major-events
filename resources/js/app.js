@@ -8,6 +8,8 @@
  *  countdown(iso)      شمارش معکوس تا یک زمان ISO-8601
  */
 
+import './stadium.js';
+
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FA_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
 const fa = (value) => String(value).replace(/\d/g, (d) => FA_DIGITS[d]);

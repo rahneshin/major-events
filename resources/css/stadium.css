@@ -1,0 +1,193 @@
+/* استادیوم مینیاتوری صفحه‌ی اصلی (.stadium-* / .sd-*)
+   از app.css با `@import './stadium.css';` وارد می‌شود. به توکن‌های --color-pool-* / flag / ink در @theme وابسته است. */
+
+/* ==========================================================================
+   Stadium scene (.sd-*) — استادیوم مینیاتوری با دوربین وابسته به اسکرول
+   متغیرهای دوربین روی .stadium-wrap توسط Alpine.data('stadium') تنظیم می‌شوند:
+   --rx --rz --s --tx --ty --night
+   ========================================================================== */
+.stadium-wrap {
+    position: relative;
+    height: 560vh;
+    --rx: 60deg;
+    --rz: -28deg;
+    --s: 0.78;
+    --tx: 0px;
+    --ty: 30px;
+    --night: 0;
+}
+.stadium-sticky {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100svh;
+    overflow: hidden;
+}
+.stadium-sky {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #0b3b7e 0%, #0a4ba0 50%, #1f78e0 100%);
+}
+.stadium-night {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(80% 60% at 50% 40%, #0b2e62 0%, #050f24 100%);
+    opacity: var(--night);
+}
+.stadium-stage {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    perspective: 1500px;
+    perspective-origin: 50% 40%;
+}
+.sd-plane {
+    position: relative;
+    width: 960px;
+    height: 600px;
+    flex: none;
+    transform-style: preserve-3d;
+    transform: translate3d(var(--tx), var(--ty), 0) scale(var(--s)) rotateX(var(--rx)) rotateZ(var(--rz));
+    will-change: transform;
+}
+.sd-plane > * { position: absolute; transform-style: preserve-3d; }
+
+.sd-plaza {
+    inset: -140px;
+    border-radius: 280px;
+    background: radial-gradient(closest-side, #134d94 0%, #0a3a74 100%);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
+    transform: translateZ(-4px);
+}
+.sd-ring {
+    box-sizing: border-box;
+    border: 26px solid var(--c);
+    border-radius: var(--r);
+    transform: translateZ(var(--z));
+}
+.sd-track {
+    left: 130px;
+    top: 130px;
+    width: 700px;
+    height: 340px;
+    transform: translateZ(4px);
+}
+.sd-pitch {
+    left: 186px;
+    top: 186px;
+    width: 588px;
+    height: 228px;
+    transform: translateZ(6px);
+}
+.sd-surface {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.5s ease;
+}
+.sd-light {
+    width: 280px;
+    height: 280px;
+    margin: -140px 0 0 -140px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(255, 236, 170, 0.95), rgba(255, 236, 170, 0));
+    mix-blend-mode: screen;
+    opacity: var(--night);
+    transform: translateZ(70px);
+    pointer-events: none;
+}
+
+/* پین‌ها: همیشه رو به دوربین و هم‌اندازه (ضدچرخش و ضدمقیاس صفحه) */
+.sd-pins {
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+.stadium-wrap[data-scene="1"] .sd-pins[data-for="1"],
+.stadium-wrap[data-scene="2"] .sd-pins[data-for="2"],
+.stadium-wrap[data-scene="3"] .sd-pins[data-for="3"] {
+    opacity: 1;
+    pointer-events: auto;
+}
+.sd-anchor {
+    position: absolute;
+    width: 0;
+    height: 0;
+    transform-style: preserve-3d;
+}
+.sd-bill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transform: translateZ(34px) rotateZ(calc(var(--rz) * -1)) rotateX(calc(var(--rx) * -1)) scale(calc(1 / var(--s))) translate(-50%, -100%);
+}
+.sd-bill-high { transform: translateZ(90px) rotateZ(calc(var(--rz) * -1)) rotateX(calc(var(--rx) * -1)) scale(calc(1 / var(--s))) translate(-50%, -100%); }
+.sd-pin {
+    display: flex;
+    height: 42px;
+    width: 42px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: #fff;
+    color: var(--color-pool-700);
+    box-shadow: 0 6px 16px rgba(7, 28, 61, 0.45), 0 0 0 3px rgba(255, 184, 0, 0.9);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+.sd-pin:hover, .sd-pin[aria-expanded="true"] { transform: scale(1.12); background: var(--color-flag-500); color: var(--color-ink-950); }
+.sd-pin-label {
+    white-space: nowrap;
+    border-radius: 9999px;
+    background: rgba(7, 28, 61, 0.88);
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+}
+.sd-bubble {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    width: 11rem;
+    border-radius: 12px;
+    background: #fff;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--color-ink-800);
+    box-shadow: 0 10px 24px rgba(7, 28, 61, 0.35);
+}
+
+/* متن صحنه‌ها: همه در یک خانه‌ی گرید، فقط یکی دیده می‌شود */
+.sd-copy {
+    grid-area: 1 / 1;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 1.25rem;
+    box-shadow: 0 20px 40px -16px rgba(7, 28, 61, 0.5);
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    transform: translateY(14px);
+    pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.sd-copy.is-on { opacity: 1; transform: none; pointer-events: auto; }
+
+/* کاهش حرکت: دوربین بین صحنه‌ها بپرد و انتقال نداشته باشد */
+.stadium-wrap.is-static .sd-pins,
+.stadium-wrap.is-static .sd-copy,
+.stadium-wrap.is-static .sd-surface { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+    .sd-pins, .sd-copy, .sd-surface { transition: none !important; }
+}
+@media (scripting: none) {
+    .stadium-wrap { height: auto; }
+    .stadium-sticky { position: relative; height: 100vh; }
+    .sd-copy:first-child { opacity: 1; transform: none; }
+}

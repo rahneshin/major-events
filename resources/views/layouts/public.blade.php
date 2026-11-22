@@ -30,7 +30,7 @@
             </a>
 
             <nav class="hidden items-center gap-1 text-sm font-medium md:flex" aria-label="بخش‌های صفحه">
-                @foreach ([['features', 'امکانات'], ['how', 'مراحل کار'], ['plans', 'نوع حساب']] as [$id, $label])
+                @foreach ([['features', 'امکانات'], ['plans', 'نوع حساب']] as [$id, $label])
                     <a href="#{{ $id }}"
                        class="relative rounded-lg px-3 py-2 opacity-80 transition hover:opacity-100"
                        :class="active === '{{ $id }}' && 'opacity-100'">
@@ -61,7 +61,6 @@
         <div x-show="navOpen" x-cloak x-transition class="border-t border-ink-100 bg-white px-4 py-4 text-ink-800 md:hidden" @click.outside="navOpen = false">
             <div class="flex flex-col gap-1 text-sm font-medium">
                 <a href="#features" @click="navOpen = false" class="rounded-lg px-3 py-2.5 hover:bg-ink-50">امکانات</a>
-                <a href="#how" @click="navOpen = false" class="rounded-lg px-3 py-2.5 hover:bg-ink-50">مراحل کار</a>
                 <a href="#plans" @click="navOpen = false" class="rounded-lg px-3 py-2.5 hover:bg-ink-50">نوع حساب</a>
                 <hr class="my-2 border-ink-100">
                 @auth
@@ -93,7 +92,6 @@
                 <p class="font-semibold text-white">در سایت</p>
                 <ul class="mt-4 space-y-2.5">
                     <li><a href="#features" class="transition hover:text-white">امکانات</a></li>
-                    <li><a href="#how" class="transition hover:text-white">مراحل کار</a></li>
                     <li><a href="#plans" class="transition hover:text-white">نوع حساب</a></li>
                 </ul>
             </nav>
