@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Schema;
 
 class Committee extends Model
 {
@@ -79,20 +79,18 @@ class Committee extends Model
         return $value ? CommitteeRole::tryFrom($value) : null;
     }
 
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
     /**
      * Decision (Step 07): a committee that still owns tasks cannot be deleted;
      * tasks must be moved to another committee first (never left orphaned).
-     * The tasks table arrives in Step 08, so this is false until then.
+     * Wired to the real tasks table in Step 08a (soft-deleted tasks do not count).
      */
     public function hasTasks(): bool
     {
-        if (! Schema::hasTable('tasks')) {
-            return false;
-        }
-
-        return \Illuminate\Support\Facades\DB::table('tasks')
-            ->where('committee_id', $this->id)
-            ->whereNull('deleted_at')
-            ->exists();
+        return $this->tasks()->exists();
     }
 }

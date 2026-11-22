@@ -13,8 +13,8 @@ use App\Models\User;
 use App\Notifications\AddedToCommittee;
 use App\Services\CommitteeService;
 use App\Services\EventMemberService;
+use App\Services\TaskService;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 
 function makeEvent(User $owner, EventType $type = EventType::Local): Event
@@ -241,27 +241,23 @@ it('reorders committees and keeps positions contiguous after delete', function (
 });
 
 it('blocks deleting a committee that still has tasks', function () {
-    // The tasks table arrives in Step 08; simulate its minimal shape here.
-    Schema::create('tasks', function ($table) {
-        $table->id();
-        $table->unsignedBigInteger('committee_id')->nullable();
-        $table->softDeletes();
-    });
-
     $owner = User::factory()->organizational()->create();
     $event = makeEvent($owner);
     $svc = app(CommitteeService::class);
+    $tasks = app(TaskService::class);
     $committee = $svc->create($event, $owner, ['name' => 'فنی']);
-    DB::table('tasks')->insert(['committee_id' => $committee->id]);
+    $task = $tasks->create($event, $owner, ['title' => 'هماهنگی داوران', 'committee_id' => $committee->id]);
 
-    expect(fn () => $svc->delete($committee))->toThrow(InvalidArgumentException::class)
+    expect($committee->hasTasks())->toBeTrue()
+        ->and(fn () => $svc->delete($committee))->toThrow(InvalidArgumentException::class)
         ->and(Committee::query()->whereKey($committee->id)->exists())->toBeTrue();
 
-    DB::table('tasks')->truncate();
-    $svc->delete($committee);
-    expect(Committee::query()->whereKey($committee->id)->exists())->toBeFalse();
+    // soft-deleted tasks no longer block the committee
+    $tasks->delete($task);
+    expect($committee->fresh()->hasTasks())->toBeFalse();
 
-    Schema::drop('tasks');
+    $svc->delete($committee->fresh());
+    expect(Committee::query()->whereKey($committee->id)->exists())->toBeFalse();
 });
 
 // --------------------------------------------------------------- policy

@@ -26,6 +26,7 @@ return [
         'committees_per_event' => 'کمیته در هر رویداد',
         'members_per_event' => 'عضو در هر رویداد',
         'tasks_per_event' => 'وظیفه در هر رویداد',
+        'attachment_mb_per_event' => 'حجم پیوست وظایف در هر رویداد (مگابایت)',
         'organizations' => 'سازمان',
         'knowledge_ai_requests_per_month' => 'درخواست هوش مصنوعی در ماه',
     ],

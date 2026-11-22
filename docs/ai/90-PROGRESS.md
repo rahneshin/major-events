@@ -15,11 +15,11 @@
 | Pest / Larastan / Pint | 5.3.7 / 3.15.0 / 1.32.3 (قفل‌شده) |
 | دیتابیس | SQLite (تا Step 16) |
 | مخزن Git | https://github.com/rahneshin/major-events |
-| شاخه‌ی کاری فعلی | `step/06b-hardening` (از سر `step/08-dashboard-site-template`؛ شامل 01 تا 07 + UI-2 + 06B) |
+| شاخه‌ی کاری فعلی | `step/08-tasks` (از سر `step/08-dashboard-site-template` @ `d2d65ea`؛ شامل 01 تا 07 + UI-2 + 06B + 08a) |
 | شاخه‌ی اصلی | `main` — هنوز فقط Step 00؛ **مرج نشده** (مشکل ۴) |
-| آخرین مرحله‌ی DONE | **06B** (کد و تست نوشته شد؛ **اجرای تست‌ها و مرج توسط امیر**)، 07، UI-2 |
-| مرحله‌ی بعدی | **08a** (وظایف: دیتابیس و منطق) — شاخه‌ی `step/08-tasks` |
-| تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۸/۳۰ (06B) |
+| آخرین مرحله‌ی DONE | **08a** (کد و تست نوشته شد؛ **اجرای مایگریشن/تست‌ها توسط امیر**)، 06B، 07، UI-2 |
+| مرحله‌ی بعدی | **08b** (وظایف: تب رابط) — روی همان شاخه‌ی `step/08-tasks` |
+| تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۹/۰۱ (08a) |
 
 ### توپولوژی شاخه‌ها (بررسی‌شده با `git merge-base --is-ancestor`)
 
@@ -54,8 +54,8 @@
 | 07 | کمیته‌ها | ✅ | step/07-committees | Pest نوشته شده | طبق اعلام امیر انجام‌شده؛ **نتیجه‌ی `php artisan test` در PROGRESS ثبت نشده — امیر ثبت کند** |
 | UI-2 | بازطراحی قالب «Lane lines» | ✅ | step/08-dashboard-site-template | دستی | توکن‌های pool/ink/flag/signal، لندینگ، داشبورد، لیست رویدادها |
 | **06B** | **تثبیت و امنیت پایه** | ✅ (پچ آماده؛ تست‌ها را امیر اجرا کند) | step/06b-hardening | Pest نوشته شد | gate ادمین، `/system`، توکن دعوت هش، rate-limit، تست امنیت/نشت، Larastan در CI، pin PHP، seeder |
-| 08a | وظایف: دیتابیس و منطق | ⬜ **بعدی** | (پیشنهاد) step/08-tasks | | |
-| 08b | وظایف: تب رابط | ⬜ | | | |
+| 08a | وظایف: دیتابیس و منطق | ✅ (پچ آماده؛ اجرا با امیر) | step/08-tasks | Pest نوشته شد | tasks، وابستگی (DFS)، blocked خودکار، Policy، پیوست خصوصی، Milestone، پیشرفت |
+| 08b | وظایف: تب رابط | ⬜ **بعدی** | step/08-tasks | | |
 | 08c | Kanban، تقویم، وظایف من، یادآور | ⬜ | | | |
 | 09 | بودجه و درآمد | ⬜ | | | |
 | 10 | ریسک | ⬜ | | | |
@@ -121,6 +121,18 @@
 | ۱۴۰۵/۰۸/۳۰ | `tasks.ai_recommendation_id` بدون FK تا Step 18 | جدول هنوز نیست | — | 08 |
 | ۱۴۰۵/۰۸/۳۰ | ساب‌تسک فقط یک سطح؛ فقط `done` پیش‌نیاز را آزاد می‌کند | سادگی و پیش‌بینی‌پذیری | عمق نامحدود | 08 |
 
+| ۱۴۰۵/۰۹/۰۱ | `blocked` فقط خودکار؛ دستی قابل‌انتخاب نیست؛ هنگام وجود پیش‌نیاز ناتمام فقط `cancelled` مجاز است | قاعده‌ی «blocked خودکار» سند | blocked دستی با دلیل | 08a |
+| ۱۴۰۵/۰۹/۰۱ | آزادشدن blocked ← `todo` (وضعیت قبلی `doing` ذخیره نمی‌شود) | سادگی | ستون وضعیت قبلی | 08a |
+| ۱۴۰۵/۰۹/۰۱ | پیش‌نیاز **حذف‌شده (soft delete)** مانع نمی‌شود؛ پیش‌نیاز **لغوشده** همچنان مانع است | حذف = برداشتن صریح؛ لغو ≠ انجام | هر دو آزاد کنند | 08a |
+| ۱۴۰۵/۰۹/۰۱ | وظیفه‌ی done/cancelled با افزودن پیش‌نیاز جدید دوباره blocked نمی‌شود | تاریخچه‌ی انجام‌شده حفظ شود | بازگشایی خودکار | 08a |
+| ۱۴۰۵/۰۹/۰۱ | حذف والد ← soft delete زیروظیفه‌ها؛ زیروظیفه کمیته‌ی والد را به ارث می‌برد | یکپارچگی | یتیم‌ماندن | 08a |
+| ۱۴۰۵/۰۹/۰۱ | درصد پیشرفت فقط از وظایف «برگ» (بدون زیروظیفه) و بدون لغوشده‌ها | شمارش دوباره نشود | شمارش همه | 08a |
+| ۱۴۰۵/۰۹/۰۱ | مجوز وظیفه: ساخت/ویرایش/وابستگی = سطح مدیریت یا رئیس همان کمیته؛ حذف فقط سطح مدیریت؛ تغییر وضعیت و پیوست = مدیریت/رئیس کمیته/assignee؛ viewer هیچ‌چیز؛ کامنت = همه‌ی اعضای غیر‌viewer | ماتریس 01-DOMAIN §10 + فرض‌های صریح (⚠️ کامنت viewer را امیر تأیید کند) | viewer هم کامنت بگذارد | 08a |
+| ۱۴۰۵/۰۹/۰۱ | به `viewer` نمی‌شود وظیفه سپرد؛ با حذف عضو از رویداد، assignee وظایفش `null` می‌شود | assignee باید عضو فعال باشد | نگه‌داشتن | 08a |
+| ۱۴۰۵/۰۹/۰۱ | سقف پیوست: ۵MB هر فایل (`config/tasks.php`)؛ ۲۰MB کل رویداد برای حساب عادی (`plans.php` ← `attachment_mb_per_event`)؛ نوع‌های مجاز لیست سفید (بدون svg/html/zip) | پیشنهاد سند، تأیید ضمنی با دستور ادامه | بدون سقف | 08a |
+| ۱۴۰۵/۰۹/۰۱ | پیوست‌ها روی دیسک خصوصی با نام تصادفی؛ دانلود فقط از route با `TaskPolicy@view` + scoped bindings + `nosniff` | جلوگیری از نشت/XSS | دیسک public | 08a |
+| ۱۴۰۵/۰۹/۰۱ | ستون‌های افزوده نسبت به سند: `tasks.created_by`، `task_attachments.uuid`، `milestones.description/reached_at`؛ `priority`=low/medium/high/urgent؛ `milestones.status`=pending/reached/cancelled | سند مقدار نداده بود | — | 08a |
+
 ### تصمیم‌های باز
 - [ ] سرویس پیامک ایرانی (Step 02/13)
 - [ ] RAG داخل Laravel یا FastAPI (Step 15)
@@ -128,7 +140,9 @@
 - [x] **06B:** `/system` — cherry-pick + Gate (انجام شد)
 - [x] **06B:** ناسازگاری PHP — قفل `platform.php=8.3.0` (انجام شد؛ بعد از اعمال پچ باید `composer update` اجرا و `composer.lock` کامیت شود)
 - [ ] **08c:** Kanban با SortableJS (پکیج جدید) یا دکمه‌های انتقال؟ (پیشنهاد: SortableJS، دلیل: UX موبایل)
-- [ ] **08a:** سقف حجم پیوست وظایف (پیشنهاد: ۵MB هر فایل؛ ۲۰MB کل رویداد برای حساب عادی)
+- [x] **08a:** سقف حجم پیوست وظایف — با پیشنهاد سند پیاده شد (۵MB / ۲۰MB)؛ قابل تغییر در `config/tasks.php` و `config/plans.php`
+- [ ] **08a:** آیا `viewer` اجازه‌ی کامنت داشته باشد؟ (فعلاً نه)
+- [ ] **08b/13:** اعلان «به شما وظیفه سپرده شد» (فعلاً ساخته نشده)
 
 ---
 
@@ -162,6 +176,18 @@
 - Migrations: `2026_11_20_000006_create_committees_tables`, `2026_11_21_000007_alter_committees_add_soft_deletes`, `2026_11_21_000008_create_notifications_table`
 - `lang/fa/committee.php`؛ تست: `tests/Feature/Committees/CommitteeTest.php`
 
+### Tasks (08a)
+- Enums: TaskStatus, TaskPhase, TaskModule, TaskPriority, TaskSource, MilestoneStatus
+- Models: Task (softDeletes، uuid)، TaskComment، TaskAttachment (uuid)، Milestone؛ روابط `Event::tasks()/milestones()`، `Committee::tasks()`
+- Services: TaskService (CRUD، transition، وابستگی، کامنت، پیوست، پیشرفت)، MilestoneService
+- Support: `DependencyGraph` (DFS خالص، بدون DB)
+- Policies: TaskPolicy، MilestonePolicy (ثبت در AppServiceProvider)
+- Controller: TaskAttachmentController (دانلود خصوصی)
+- Config: `config/tasks.php`، `plans.php` ← `attachment_mb_per_event`
+- Migration: `2026_11_23_000011_create_tasks_tables` (tasks، task_dependencies، task_comments، task_attachments، milestones)
+- `lang/fa/task.php`؛ `Committee::hasTasks()` به جدول واقعی وصل شد؛ `EventMemberService::removeMember` وظایف عضو را unassign می‌کند
+- تست‌ها: `tests/Feature/Tasks/{TaskCoreTest,TaskDependencyTest,TaskPolicyTest,TaskAttachmentTest,MilestoneTest}.php`، `tests/Unit/DependencyGraphTest.php`؛ کمک‌تابع‌های `tk_*` در `tests/Pest.php`
+
 ### Security (06B)
 - Migrations: `2026_11_22_000009_add_is_super_admin_to_users_table`, `2026_11_22_000010_hash_event_invitation_tokens`
 - Gate `access-admin` (AppServiceProvider)؛ `User::isSuperAdmin()`؛ `UserFactory::superAdmin()`
@@ -179,6 +205,7 @@
 
 ### تست‌های موجود
 - Feature: Account/EntitlementTest, Auth/OtpLoginTest, Committees/CommitteeTest, Orgs/OrganizationTest, ExampleTest
+- **08a:** Tasks/* (5 فایل) + Unit/DependencyGraphTest؛ تست `CommitteeTest` («حذف کمیته‌ی دارای وظیفه») با جدول واقعی بازنویسی شد
 - **06B:** Security/RouteAccessTest, Security/TenantIsolationTest, Security/MakeAdminCommandTest, Security/InviteRateLimitTest, Events/EventCoreTest, Events/EventMemberTest
 - Unit: JalaliTest, PhoneNumberTest, ExampleTest
 - نتیجه‌ی اجرای تست‌های 06B هنوز ثبت نشده — امیر ثبت کند.
@@ -208,6 +235,7 @@
 | `/events/{event}` (uuid) | events.show | " | `view` (+ اکشن‌ها: transition/manageMembers/delete) | ✅ |
 | `/events/{event}/edit` | events.edit | " | `update` | ✅ |
 | `/events/{event}/committees` | events.committees | " | `view` (redirect به `?tab=committees`) | ✅ |
+| `/events/{event}/tasks/{task}/attachments/{attachment}` | tasks.attachments.download | auth, account.type (+ scoped bindings) | `TaskPolicy@view` (۴۰۳ بیرونی‌ها؛ ۴۰۴ ترکیب نادرست رویداد/وظیفه/پیوست) | ✅ 08a |
 | `/admin` | admin.dashboard | auth, account.type, `can:access-admin` | Gate `access-admin` (+ `authorize` در mount) | ✅ 06B |
 | `/system` | system.dashboard | auth, account.type, `can:access-admin` | Gate `access-admin` (+ `authorize` در mount) | ✅ 06B |
 
@@ -236,6 +264,19 @@
 ---
 
 ## ۷. Changelog
+
+## UPDATE — Step 08a — وظایف: دیتابیس و منطق — ۱۴۰۵/۰۹/۰۱
+Status: DONE (کد و تست نوشته شد؛ **اجرای مایگریشن و تست‌ها توسط امیر**)
+Branch: step/08-tasks (از سر step/08-dashboard-site-template @ d2d65ea)
+Commit: feat(tasks): tasks, dependencies and policy
+Files created: [6 enum، Task/TaskComment/TaskAttachment/Milestone، TaskService، MilestoneService، DependencyGraph، TaskPolicy، MilestonePolicy، TaskAttachmentController، config/tasks.php، lang/fa/task.php، migration 000011، تست‌های Tasks/* و Unit/DependencyGraphTest]
+Files modified: [Event، Committee (hasTasks)، AppServiceProvider، EventMemberService، routes/web.php، config/plans.php، lang/fa/account.php، tests/Pest.php، tests/Feature/Committees/CommitteeTest.php، docs/ai/90-PROGRESS.md]
+Migrations: [2026_11_23_000011_create_tasks_tables]
+Routes added: [tasks.attachments.download — TaskPolicy@view]
+Decisions: [ردیف‌های 08a در Decision Log]
+Known issues / TODO: [UI در 08b؛ اعلان assignment؛ تأیید امیر درباره‌ی کامنت viewer؛ `./vendor/bin/pint` و `phpstan` اجرا نشد (فرمت import ها ممکن است نیاز به `pint` داشته باشد)]
+Tests: اجرا نشد (طبق دستور امیر) — فقط الگوریتم خالص DependencyGraph مستقل با PHP 8.3 بررسی و lint سینتکس همه‌ی فایل‌ها انجام شد
+Next suggested step: 08b
 
 ## UPDATE — Step 06B — تثبیت و امنیت پایه — ۱۴۰۵/۰۸/۳۰
 Status: DONE (کد و تست نوشته شد؛ **اجرای تست‌ها و مرج توسط امیر**)

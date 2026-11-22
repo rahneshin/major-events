@@ -143,6 +143,20 @@ class Event extends Model
         return $this->hasMany(Committee::class)->orderBy('position')->orderBy('id');
     }
 
+    /**
+     * Unordered on purpose: aggregates with ORDER BY fail on PostgreSQL.
+     * Use Task::ordered() when a list is needed.
+     */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    public function milestones(): HasMany
+    {
+        return $this->hasMany(Milestone::class);
+    }
+
     public function invitations(): HasMany
     {
         return $this->hasMany(EventInvitation::class);

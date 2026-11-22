@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\TaskAttachmentController;
 use App\Livewire\Account\AccountPage;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\App\Dashboard as AppDashboard;
@@ -72,6 +73,11 @@ Route::middleware('auth')->group(function () {
 
             return redirect()->route('events.show', ['event' => $event, 'tab' => 'committees']);
         })->name('events.committees');
+
+        // دانلود خصوصی پیوست وظیفه: Policy `TaskPolicy@view` + scoped bindings (رویداد ← وظیفه ← پیوست)
+        Route::get('/events/{event}/tasks/{task}/attachments/{attachment}', TaskAttachmentController::class)
+            ->scopeBindings()
+            ->name('tasks.attachments.download');
 
         // ادمین سیستم: Gate `access-admin` (غیرادمین ← ۴۰۳)
         Route::middleware('can:access-admin')->group(function () {

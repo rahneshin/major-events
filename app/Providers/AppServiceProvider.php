@@ -4,11 +4,15 @@ namespace App\Providers;
 
 use App\Models\Committee;
 use App\Models\Event;
+use App\Models\Milestone;
 use App\Models\Organization;
+use App\Models\Task;
 use App\Models\User;
 use App\Policies\CommitteePolicy;
 use App\Policies\EventPolicy;
+use App\Policies\MilestonePolicy;
 use App\Policies\OrganizationPolicy;
+use App\Policies\TaskPolicy;
 use App\Services\EntitlementService;
 use App\Services\Sms\LogSmsGateway;
 use App\Services\Sms\NullSmsGateway;
@@ -37,6 +41,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Organization::class, OrganizationPolicy::class);
         Gate::policy(Event::class, EventPolicy::class);
         Gate::policy(Committee::class, CommitteePolicy::class);
+        Gate::policy(Task::class, TaskPolicy::class);
+        Gate::policy(Milestone::class, MilestonePolicy::class);
 
         // لایه‌ی چهارم دسترسی: ادمین سیستم (/admin و /system)
         Gate::define('access-admin', fn (User $user): bool => $user->isSuperAdmin() && $user->isActive());

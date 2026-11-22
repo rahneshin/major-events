@@ -89,6 +89,12 @@ class EventMemberService
                 ->delete();
             $event->committees()->where('head_user_id', $member->id)->update(['head_user_id' => null]);
 
+            // Step 08a: tasks must never point at someone who is no longer a member.
+            DB::table('tasks')
+                ->where('event_id', $event->id)
+                ->where('assignee_id', $member->id)
+                ->update(['assignee_id' => null]);
+
             $event->members()->detach($member->id);
         });
 

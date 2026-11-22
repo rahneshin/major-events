@@ -1,5 +1,11 @@
 <?php
 
+use App\Enums\EventRole;
+use App\Enums\EventType;
+use App\Models\Event;
+use App\Models\Task;
+use App\Models\User;
+use App\Services\TaskService;
 use Tests\TestCase;
 
 /*
@@ -42,3 +48,42 @@ expect()->extend('toBeOne', function () {
 | global functions to help you to reduce the number of lines of code in your test files.
 |
 */
+
+/*
+|--------------------------------------------------------------------------
+| Step 08 helpers (tasks)
+|--------------------------------------------------------------------------
+|
+| Prefixed `tk_` so they never collide with helpers defined in other test files.
+|
+*/
+
+function tk_event(User $owner): Event
+{
+    return Event::query()->create([
+        'created_by' => $owner->id,
+        'title' => 'رویداد '.fake()->unique()->numerify('####'),
+        'event_type' => EventType::Local,
+        'scale' => 'small',
+        'status' => 'draft',
+    ]);
+}
+
+function tk_join(Event $event, User $user, EventRole $role = EventRole::Member): void
+{
+    $event->members()->attach($user->id, [
+        'role' => $role->value,
+        'added_by' => $event->created_by,
+        'joined_at' => now(),
+    ]);
+}
+
+/**
+ * @param  array<string, mixed>  $data
+ */
+function tk_task(Event $event, User $actor, array $data = []): Task
+{
+    return app(TaskService::class)->create($event, $actor, array_merge([
+        'title' => 'وظیفه '.fake()->unique()->numerify('####'),
+    ], $data));
+}
