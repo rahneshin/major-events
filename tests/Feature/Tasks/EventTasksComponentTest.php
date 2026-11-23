@@ -60,7 +60,7 @@ it('lets a manager create, edit and delete a task through the form', function ()
         ->set('title', 'چاپ بنر')
         ->set('priority', 'high')
         ->set('assigneeId', (string) $member->id)
-        ->set('dueAt', '۱۴۰۵/۱۲/۱۵')
+        ->set('dueAt', '2026-12-05')
         ->call('save')
         ->assertHasNoErrors();
 
@@ -70,10 +70,12 @@ it('lets a manager create, edit and delete a task through the form', function ()
         ->and($task->assignee_id)->toBe($member->id)
         ->and($task->due_at)->not->toBeNull()
         // موعد = پایان همان روز
+        ->and($task->due_at->toDateString())->toBe('2026-12-05')
         ->and($task->due_at->format('H:i'))->toBe('23:59');
 
     $component->call('openEdit', $task->id)
         ->assertSet('title', 'چاپ بنر')
+        ->assertSet('dueAt', '2026-12-05') // مقدار انتخاب‌گر: ISO میلادی
         ->set('title', 'چاپ بنر جدید')
         ->call('save');
 
@@ -93,11 +95,14 @@ it('shows validation and business errors instead of crashing', function () {
         ->call('save')
         ->assertHasErrors(['title'])
         ->set('title', 'ok')
-        ->set('startAt', '۱۴۰۵/۱۲/۱۵')
-        ->set('dueAt', '۱۴۰۵/۱۲/۰۱')
+        ->set('startAt', '2026-12-05')
+        ->set('dueAt', '2026-12-01')
         ->call('save')
         ->assertSet('error', __('task.due_before_start'))
         ->set('startAt', 'نامعتبر')
+        ->call('save')
+        ->assertHasErrors(['startAt'])
+        ->set('startAt', '2026-02-30') // روز ناموجود
         ->call('save')
         ->assertHasErrors(['startAt']);
 });
@@ -376,19 +381,84 @@ it('reports a rejected file type without storing anything', function () {
 
 // ------------------------------------------------------------------ calendar
 
-it('renders the Jalali calendar with due tasks and milestones', function () {
+it('feeds the calendar with due tasks and milestones as ISO dates', function () {
     [$owner, $event] = tkui_scene();
+    $iso = now()->toDateString();
     tk_task($event, $owner, ['title' => 'کار تقویمی', 'due_at' => now()]);
     app(\App\Services\MilestoneService::class)->create($event, ['title' => 'افتتاحیه تقویم', 'due_at' => now()]);
 
     Livewire::actingAs($owner)->test(EventTasks::class, ['event' => $event])
         ->call('setView', 'calendar')
+        ->assertSee('x-data="jalaliCalendar"', false)
         ->assertSee('کار تقویمی')
         ->assertSee('افتتاحیه تقویم')
-        ->call('nextMonth')
-        ->assertDontSee('کار تقویمی')
-        ->call('thisMonth')
-        ->assertSee('کار تقویمی');
+        ->assertSee(e('"date":"'.$iso.'"'), false)
+        ->assertSee(e('"kind":"task"'), false)
+        ->assertSee(e('"kind":"milestone"'), false);
+});
+
+it('marks overdue tasks and applies the shared filters on the calendar', function () {
+    [$owner, $event] = tkui_scene();
+    tk_task($event, $owner, ['title' => 'تقویمی دیرکرده', 'due_at' => now()->subDays(3)]);
+    tk_task($event, $owner, ['title' => 'تقویمی آینده', 'due_at' => now()->addDays(3), 'assignee_id' => $owner->id]);
+
+    $c = Livewire::actingAs($owner)->test(EventTasks::class, ['event' => $event])
+        ->call('setView', 'calendar')
+        ->assertSee(e('"overdue":true'), false)
+        ->assertSee('تقویمی دیرکرده')
+        ->assertSee('تقویمی آینده');
+
+    $c->set('fMine', true)
+        ->assertDontSee('تقویمی دیرکرده')
+        ->assertSee('تقویمی آینده');
+});
+
+it('does not put tasks without a due date on the calendar feed', function () {
+    [$owner, $event] = tkui_scene();
+    tk_task($event, $owner, ['title' => 'بدون موعد تقویم']);
+
+    $html = Livewire::actingAs($owner)->test(EventTasks::class, ['event' => $event])
+        ->call('setView', 'calendar')
+        ->html();
+
+    // فقط در بخش «وظایف بدون موعد» می‌آید، نه در data-events
+    expect($html)->toContain('بدون موعد تقویم')
+        ->and($html)->not->toContain(e('"title":"بدون موعد تقویم"'));
+});
+
+it('opens the create form from a calendar day with the due date prefilled', function () {
+    [$owner, $event] = tkui_scene();
+
+    Livewire::actingAs($owner)->test(EventTasks::class, ['event' => $event])
+        ->call('openCreateOn', '2026-12-09')
+        ->assertSet('showForm', true)
+        ->assertSet('dueAt', '2026-12-09')
+        ->set('title', 'از تقویم')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $task = Task::query()->where('title', 'از تقویم')->firstOrFail();
+
+    expect($task->due_at->toDateString())->toBe('2026-12-09');
+});
+
+it('ignores an invalid date when opening the form from the calendar', function () {
+    [$owner, $event] = tkui_scene();
+
+    Livewire::actingAs($owner)->test(EventTasks::class, ['event' => $event])
+        ->call('openCreateOn', 'garbage')
+        ->assertSet('showForm', true)
+        ->assertSet('dueAt', '');
+});
+
+it('forbids creating from the calendar for people without create rights', function () {
+    [, $event] = tkui_scene();
+    $member = User::factory()->create();
+    tk_join($event, $member);
+
+    Livewire::actingAs($member)->test(EventTasks::class, ['event' => $event])
+        ->call('openCreateOn', '2026-12-09')
+        ->assertForbidden();
 });
 
 it('lists undated tasks under the calendar', function () {
@@ -410,7 +480,7 @@ it('lets only managers manage milestones', function () {
     $c = Livewire::actingAs($owner)->test(EventTasks::class, ['event' => $event])
         ->call('openMilestoneForm')
         ->set('msTitle', 'پایان ثبت‌نام')
-        ->set('msDue', '۱۴۰۵/۱۲/۲۰')
+        ->set('msDue', '2026-12-10')
         ->call('saveMilestone')
         ->assertHasNoErrors();
 

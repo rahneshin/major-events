@@ -155,7 +155,10 @@
 | ۱۴۰۵/۰۹/۰۱ | کانبان **بدون پکیج جدید**: کشیدن-رهای بومی HTML5 با Alpine (دسکتاپ) + منوی «انتقال به» روی هر کارت (موبایل/لمسی)؛ ستون «منتظر پیش‌نیاز» قابل‌رها نیست (خودکار) | قانون «کم‌وابستگی»؛ بدون تغییر `package.json/lock`؛ موبایل با منو پوشش داده می‌شود | SortableJS | 08c |
 | ۱۴۰۵/۰۹/۰۱ | لیست/کانبان/تقویم سه «نما» از **یک** کامپوننت `EventTasks` با فیلتر مشترک؛ پنل جزئیات یک drawer؛ پیوند مستقیم `?tab=tasks&task=<uuid>` | کمترین پیچیدگی ارتباط بین کامپوننت‌ها | کامپوننت جدا برای هر نما | 08b/08c |
 | ۱۴۰۵/۰۹/۰۱ | موعد وارد‌شده (شمسی، فقط تاریخ) = **پایان همان روز** (۲۳:۵۹) تا وظیفه‌ی «امروز» از ۰۰:۰۱ تأخیردار نشود؛ شروع = ابتدای روز | تجربه‌ی درست | ساعت ۰۰:۰۰ | 08b |
-| ۱۴۰۵/۰۹/۰۱ | تقویم شمسی با `JalaliCalendar` (فقط `Jalali::parse/format`؛ کبیسه با رفت‌وبرگشت parse/format) و شروع هفته شنبه؛ نقاط عطف هم روی تقویم می‌آیند | بدون فرض API ناشناخته‌ی Verta | الگوریتم کبیسه‌ی دستی | 08c |
+| ۱۴۰۵/۰۹/۰۱ | **تقویم شمسی کاملاً سمت مرورگر** (`resources/js/jalali.js`، Alpine `jalaliCalendar`) به‌جای رندر سروری: شبکه‌ی ۶ هفته‌ای با روزهای ماه قبل/بعد، شروع هفته شنبه، جمعه و تعطیلات رسمی ثابت قرمز، تاریخ میلادی کوچک گوشه‌ی هر خانه، انتخاب ماه/سال، پنل «برنامه‌ی روز» با دکمه‌ی «وظیفه در این روز»، موبایل با نقطه‌های رنگی؛ ناوبری بدون رفت‌وبرگشت به سرور | تقویم قبلی ساده/تخمینی بود؛ UX مشابه تقویم‌های فارسی خوب | کتابخانه‌ی خارجی (وابستگی جدید) | 08c |
+| ۱۴۰۵/۰۹/۰۱ | **انتخاب‌گر تاریخ شمسی** (`<x-jalali-picker wire:model=…>`) برای شروع/موعد/نقطه‌ی عطف؛ مقدار به سرور **ISO میلادی** می‌رسد (سرور هیچ تبدیل شمسیِ ورودی ندارد) | حذف خطای تایپ تاریخ و وابستگی به پارس متنی | ورودی متنی شمسی | 08b |
+| ۱۴۰۵/۰۹/۰۱ | هسته‌ی تبدیل تاریخ JS = الگوریتم «jalaali» (جدول breaks، MIT)؛ راستی‌آزمایی: ۲۵٬۹۳۳ روز (۱۹۹۰–۲۰۶۰) با ICU **و** با الگوریتم Verta روز‌به‌روز یکسان (صفر اختلاف) | لیست‌های سروری (Verta) و تقویم (JS) هرگز اختلاف روز ندارند | — | 08c |
+| ۱۴۰۵/۰۹/۰۱ | تعطیلات قمری (عید فطر، عاشورا، …) نمایش داده نمی‌شود؛ فقط تعطیلات رسمی ثابت شمسی | تاریخ قمری رصدی است و حدس‌زدنش غلط‌انداز است | جدول سالانه‌ی دستی | 08c |
 | ۱۴۰۵/۰۹/۰۱ | «وظایف من» = صفحه‌ی `/tasks` (route `tasks.mine`)؛ فقط وظایف assignee=خود کاربر در رویدادهای `visibleTo`؛ لینک در منوی اصلی (نوار پایین موبایل ۵ ستون شد) | سند 08c | تب در داشبورد | 08c |
 | ۱۴۰۵/۰۹/۰۱ | یادآور: دستور `tasks:remind` (روزانه ۰۸:۰۰) — فقط `todo/doing` با assignee فعال و رویداد فعال؛ «نزدیک موعد» یک‌بار برای هر موعد، «دارای تأخیر» هر ۳ روز؛ ضد-تکرار با `Cache::add` (بدون migration)؛ کانال فقط `database` تا Step 13 | بدون ستون جدید؛ SMS در Step 13 | ستون `reminded_at` | 08c |
 | ۱۴۰۵/۰۹/۰۱ | محدودیت‌های لیست: حداکثر ۳۰۰ ردیف (`config/tasks.php` ← `list_limit`) با پیام؛ رویداد بایگانی/لغوشده فقط‌خواندنی (UI + اکشن‌ها) | کارایی و قانون وضعیت رویداد | pagination | 08b |
@@ -219,10 +222,10 @@
 ### Tasks UI (08b/08c)
 - Livewire: `Events/EventTasks` (لیست/کانبان/تقویم، فرم، drawer جزئیات، نقاط عطف)، `Tasks/MyTasks`
 - Views: `livewire/events/event-tasks.blade.php`، `livewire/tasks/my-tasks.blade.php`؛ تب `tasks` در `event-show.blade.php`؛ لینک «وظایف من» در `layouts/app.blade.php`
-- Support: `JalaliCalendar`
+- JS: `resources/js/jalali.js` (هسته‌ی تبدیل + `jalaliCalendar` + `jalaliPicker`)؛ Blade: `components/jalali-picker.blade.php`
 - Console/Notifications: `tasks:remind` (`app/Console/Commands/RemindTasks.php`)، `TaskDueReminder`؛ زمان‌بندی در `routes/console.php`
 - Config: `tasks.php` ← `reminder_days`، `list_limit`؛ متن‌ها: `lang/fa/task.php` ← `ui.*`
-- تست‌ها: `Tasks/EventTasksComponentTest`، `Tasks/MyTasksTest`، `Tasks/RemindTasksTest`، `Unit/JalaliCalendarTest`؛ `tk_blocked` در `tests/Pest.php`
+- تست‌ها: `Tasks/EventTasksComponentTest`، `Tasks/MyTasksTest`، `Tasks/RemindTasksTest`؛ تست JS: `npm run test:js` (`tests/js/jalali.test.mjs`، مقایسه با ICU)؛ `tk_blocked` در `tests/Pest.php`
 
 ### Security (06B)
 - Migrations: `2026_11_22_000009_add_is_super_admin_to_users_table`, `2026_11_22_000010_hash_event_invitation_tokens`
@@ -260,7 +263,7 @@
 
 ### تست‌های موجود
 - Feature: Account/EntitlementTest, Auth/OtpLoginTest, Committees/CommitteeTest, Orgs/OrganizationTest, ExampleTest
-- **08b/08c:** Tasks/EventTasksComponentTest, Tasks/MyTasksTest, Tasks/RemindTasksTest, Unit/JalaliCalendarTest؛ `Security/RouteAccessTest` ← `tasks.mine`
+- **08b/08c:** Tasks/EventTasksComponentTest, Tasks/MyTasksTest, Tasks/RemindTasksTest, JS: tests/js/jalali.test.mjs؛ `Security/RouteAccessTest` ← `tasks.mine`
 - **08a:** Tasks/* (5 فایل) + Unit/DependencyGraphTest؛ تست `CommitteeTest` («حذف کمیته‌ی دارای وظیفه») با جدول واقعی بازنویسی شد
 - **06B:** Security/RouteAccessTest, Security/TenantIsolationTest, Security/MakeAdminCommandTest, Security/InviteRateLimitTest, Events/EventCoreTest, Events/EventMemberTest
 - Unit: JalaliTest, PhoneNumberTest, ExampleTest
@@ -333,11 +336,21 @@ Migrations: [2026_11_26_000040_create_risk_tables — اجرا نشده؛ توس
 Tests: [Unit: RiskLevel؛ Feature: RiskService (امتیاز، اعتبارسنجی، مسئول، طرح، ماتریس/خلاصه، قالب‌ها، وظیفه، حادثه، رویداد بسته)، RiskAccess (ماتریس مجوز، Livewire، tenant، طرح عادی)] — نوشته شد، اجرا نشد
 Known issues / TODO: [امیر: `php artisan migrate && php artisan test && ./vendor/bin/pint --test && ./vendor/bin/phpstan analyse`؛ تأیید فرض‌های ⚠️ (viewer ریسک را ببیند؛ وضعیت‌های ریسک؛ حادثه فقط سازمانی)؛ lock فعلی به میرور `mirror.abrha.net` اشاره می‌کند و `hekmatinasser/verta` در lock نیست ← `composer update` و کامیت lock]
 Next suggested step: 11 (طبق نقشه) و ادامه‌ی 08b/08c
+
+## UPDATE — 08c-fix — تقویم شمسی حرفه‌ای و انتخاب‌گر تاریخ — ۱۴۰۵/۰۹/۰۱
+Status: DONE (کد نوشته شد؛ تست‌های PHP اجرا نشد)
+Branch: روی سر `feat/hr-invite` @ `5f42d29` (شامل 08a/08b/08c + HR + 10)
+Files created: [resources/js/jalali.js، components/jalali-picker.blade.php، tests/js/jalali.test.mjs]
+Files modified: [EventTasks (تاریخ ISO، `openCreateOn`، `calendarEvents`)، event-tasks.blade.php (تقویم جدید + انتخاب‌گر)، app.js، package.json (`test:js`)، lang/fa/task.php، EventTasksComponentTest]
+Files removed: [app/Support/JalaliCalendar.php، tests/Unit/JalaliCalendarTest.php (منطق تقویم به مرورگر رفت)]
+Verified (ابزاری، بیرون از تست‌های پروژه): `node --test tests/js/jalali.test.mjs` (۹ تست؛ ۲۵٬۹۳۳ روز با ICU)؛ مقایسه با الگوریتم Verta (صفر اختلاف)؛ اجرای مارک‌آپ واقعی با Alpine+jsdom (۳۷ بررسی)؛ `vite build` موفق و کلاس‌های Tailwind تولید شدند
+Known issues / TODO: [تست‌های Pest اجرا نشد؛ تعطیلات قمری نمایش داده نمی‌شود]
+
 ## UPDATE — Step 08b + 08c — رابط وظایف، کانبان، تقویم، وظایف من، یادآور — ۱۴۰۵/۰۹/۰۱
 Status: DONE (کد و تست نوشته شد؛ **اجرای تست‌ها توسط امیر**)
 Branch: step/08b-08c-tasks-ui (از سر step/09-budget @ 3381cf3)
 Commit: feat(tasks): tasks UI, kanban, calendar, my tasks and reminders
-Files created: [Livewire/Events/EventTasks، Livewire/Tasks/MyTasks، دو view، JalaliCalendar، RemindTasks، TaskDueReminder، تست‌های Tasks/EventTasksComponentTest + MyTasksTest + RemindTasksTest، Unit/JalaliCalendarTest]
+Files created: [Livewire/Events/EventTasks، Livewire/Tasks/MyTasks، دو view، JalaliCalendar، RemindTasks، TaskDueReminder، تست‌های Tasks/EventTasksComponentTest + MyTasksTest + RemindTasksTest، JS: tests/js/jalali.test.mjs]
 Files modified: [event-show.blade.php (تب tasks)، layouts/app.blade.php (منو)، routes/web.php (tasks.mine)، routes/console.php (schedule)، config/tasks.php، lang/fa/task.php، lang/fa/event.php، tests/Pest.php (tk_blocked)، Security/RouteAccessTest، docs/ai/90-PROGRESS.md]
 Migrations: [— (هیچ migration جدیدی لازم نبود)]
 Routes added: [tasks.mine — `/tasks`]

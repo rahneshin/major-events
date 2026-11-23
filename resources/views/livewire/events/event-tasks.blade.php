@@ -1,7 +1,6 @@
 @php
     use App\Enums\MilestoneStatus;
     use App\Enums\TaskStatus;
-    use App\Support\JalaliCalendar;
 
     $input = 'block w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900 placeholder:text-ink-300 focus:border-pool-400 focus:outline-none focus:ring-2 focus:ring-pool-100';
     $selectSm = 'rounded-lg border border-ink-200 bg-white px-2 py-1.5 text-xs font-medium text-ink-700 focus:border-pool-400 focus:outline-none';
@@ -231,13 +230,13 @@
 
                 <div>
                     <label for="t-start" class="{{ $label }}">{{ __('task.ui.f_start') }}</label>
-                    <input id="t-start" type="text" dir="ltr" wire:model="startAt" placeholder="۱۴۰۵/۰۹/۰۱" class="{{ $input }}">
+                    <x-jalali-picker id="t-start" wire:model="startAt" />
                     @error('startAt') <p class="{{ $err }}">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
                     <label for="t-due" class="{{ $label }}">{{ __('task.ui.f_due') }}</label>
-                    <input id="t-due" type="text" dir="ltr" wire:model="dueAt" placeholder="۱۴۰۵/۰۹/۱۵" class="{{ $input }}">
+                    <x-jalali-picker id="t-due" wire:model="dueAt" />
                     @error('dueAt') <p class="{{ $err }}">{{ $message }}</p> @enderror
                 </div>
             </div>
@@ -372,60 +371,126 @@
 
     {{-- ============================================================= تقویم --}}
     @else
-        <div class="rounded-2xl border border-ink-100 bg-white p-4">
-            <div class="mb-3 flex items-center justify-between gap-2">
-                <div class="flex gap-1">
-                    <button type="button" wire:click="prevMonth" class="{{ $btnGhost }} !px-3 !py-1.5" aria-label="{{ __('task.ui.prev_month') }}">›</button>
-                    <button type="button" wire:click="nextMonth" class="{{ $btnGhost }} !px-3 !py-1.5" aria-label="{{ __('task.ui.next_month') }}">‹</button>
-                    <button type="button" wire:click="thisMonth" class="{{ $btnGhost }} !px-3 !py-1.5 text-xs">{{ __('task.ui.today') }}</button>
-                </div>
-                <h3 class="text-sm font-bold text-ink-900">{{ $calendar['name'] }} {{ fa_num($calendar['year']) }}</h3>
-            </div>
+        {{-- تقویم شمسی کاملاً در مرورگر (jalali.js)؛ داده از data-events می‌آید و با هر رندر Livewire تازه می‌شود --}}
+        <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]" x-data="jalaliCalendar" wire:key="task-calendar"
+             data-events="{{ json_encode($calendarEvents, JSON_UNESCAPED_UNICODE) }}">
 
-            <div class="overflow-x-auto">
-                <div class="min-w-[640px]">
-                    <div class="grid grid-cols-7 gap-1 pb-1 text-center text-[11px] font-semibold text-ink-400">
-                        @foreach (JalaliCalendar::WEEKDAYS as $wd)
-                            <div>{{ $wd }}</div>
-                        @endforeach
+            <section class="overflow-hidden rounded-2xl border border-ink-100 bg-white" aria-label="{{ __('task.ui.view_calendar') }}">
+                <header class="flex flex-wrap items-center justify-between gap-2 border-b border-ink-100 px-4 py-3">
+                    <div class="flex items-center gap-1">
+                        <button type="button" x-on:click="prev()" class="rounded-lg border border-ink-200 p-2 text-ink-600 hover:bg-ink-50" aria-label="{{ __('task.ui.prev_month') }}">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                        <button type="button" x-on:click="next()" class="rounded-lg border border-ink-200 p-2 text-ink-600 hover:bg-ink-50" aria-label="{{ __('task.ui.next_month') }}">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <button type="button" x-on:click="goToday()" class="rounded-lg border border-ink-200 px-3 py-2 text-xs font-semibold text-ink-700 hover:bg-ink-50">{{ __('task.ui.today') }}</button>
                     </div>
 
-                    <div class="grid grid-cols-7 gap-1">
-                        @for ($i = 0; $i < $calendar['offset']; $i++)
-                            <div class="min-h-24 rounded-lg bg-ink-50/40"></div>
-                        @endfor
-
-                        @for ($d = 1; $d <= $calendar['days']; $d++)
-                            @php
-                                $dayTasks = $calendarTasks[$d] ?? [];
-                                $dayMs = $calendarMilestones[$d] ?? [];
-                                $isToday = $calendar['today'] === $d;
-                            @endphp
-                            <div @class(['min-h-24 rounded-lg border p-1.5', 'border-pool-400 bg-pool-50' => $isToday, 'border-ink-100 bg-white' => ! $isToday]) wire:key="day-{{ $d }}">
-                                <p @class(['mb-1 text-[11px] font-bold tabular-nums', 'text-pool-700' => $isToday, 'text-ink-500' => ! $isToday])>{{ fa_num($d) }}</p>
-
-                                @foreach ($dayMs as $ms)
-                                    <p class="mb-1 truncate rounded bg-flag-300/60 px-1.5 py-0.5 text-[10px] font-semibold text-ink-800" title="{{ $ms->title }}">⚑ {{ $ms->title }}</p>
-                                @endforeach
-
-                                @foreach (array_slice($dayTasks, 0, 3) as $task)
-                                    <button type="button" wire:click="openTask({{ $task->id }})" wire:key="cal-{{ $task->id }}"
-                                            @class([
-                                                'mb-1 block w-full truncate rounded px-1.5 py-0.5 text-start text-[10px] font-semibold',
-                                                'bg-signal-50 text-signal-600' => $task->isOverdue(),
-                                                'bg-success-500/15 text-success-500' => $task->status === TaskStatus::Done,
-                                                'bg-pool-50 text-pool-700' => ! $task->isOverdue() && $task->status !== TaskStatus::Done,
-                                            ])
-                                            title="{{ $task->title }}">{{ $task->title }}</button>
-                                @endforeach
-                                @if (count($dayTasks) > 3)
-                                    <p class="text-[10px] text-ink-400">+{{ fa_num(count($dayTasks) - 3) }}</p>
-                                @endif
-                            </div>
-                        @endfor
+                    <div class="flex items-center gap-2">
+                        <select x-model.number="jm" class="{{ $selectSm }} !py-2 text-sm font-bold" aria-label="{{ __('task.ui.month') }}">
+                            <template x-for="(name, i) in months" :key="i">
+                                <option :value="i + 1" x-text="name"></option>
+                            </template>
+                        </select>
+                        <select x-model.number="jy" class="{{ $selectSm }} !py-2 text-sm font-bold tabular-nums" aria-label="{{ __('task.ui.year') }}">
+                            <template x-for="y in years" :key="y">
+                                <option :value="y" x-text="fa(y)"></option>
+                            </template>
+                        </select>
                     </div>
+                </header>
+
+                <p class="border-b border-ink-100 bg-ink-50/50 px-4 py-1.5 text-[11px] text-ink-500" x-text="fa(monthCount) + ' {{ __('task.ui.cal_items_in_month') }}'"></p>
+
+                <div class="grid grid-cols-7 border-b border-ink-100 bg-ink-50/50 text-center text-[11px] font-bold">
+                    <template x-for="(w, i) in weekdays" :key="i">
+                        <div class="py-2" :class="i === 6 ? 'text-signal-500' : 'text-ink-500'">
+                            <span class="hidden sm:inline" x-text="w"></span>
+                            <span class="sm:hidden" x-text="weekdaysShort[i]"></span>
+                        </div>
+                    </template>
                 </div>
-            </div>
+
+                <div class="grid grid-cols-7">
+                    <template x-for="cell in grid" :key="cell.iso">
+                        <button type="button" x-on:click="select(cell)"
+                                class="relative flex min-h-[3.4rem] flex-col items-stretch gap-1 border-b border-s border-ink-100 p-1.5 text-start transition-colors hover:bg-pool-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-pool-400 sm:min-h-[6.75rem]"
+                                :class="[
+                                    !cell.inMonth ? 'bg-ink-50/60' : (cell.friday ? 'bg-signal-50/40' : 'bg-white'),
+                                    cell.iso === selected ? '!bg-pool-50 ring-2 ring-inset ring-pool-500' : '',
+                                ]"
+                                :aria-label="fa(cell.jd) + ' ' + months[cell.jm - 1] + (cell.items.length ? '، ' + fa(cell.items.length) + ' مورد' : '')"
+                                :aria-pressed="cell.iso === selected ? 'true' : 'false'">
+                            <span class="flex items-center justify-between">
+                                <span class="flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-xs font-bold tabular-nums"
+                                      :class="[
+                                          cell.iso === today ? 'bg-pool-600 text-white' : (cell.friday || cell.holiday ? 'text-signal-600' : 'text-ink-800'),
+                                          !cell.inMonth && cell.iso !== today ? 'opacity-40' : '',
+                                      ]" x-text="fa(cell.jd)"></span>
+                                <span class="hidden text-[10px] tabular-nums text-ink-300 sm:inline" dir="ltr" x-text="cell.gd"></span>
+                            </span>
+
+                            <span class="hidden truncate text-[10px] font-semibold text-signal-500 sm:block" x-show="cell.holiday && cell.inMonth" x-text="cell.holiday"></span>
+
+                            <span class="hidden flex-col gap-0.5 sm:flex">
+                                <template x-for="e in cell.items.slice(0, 2)" :key="e.kind + e.id">
+                                    <span class="truncate rounded px-1.5 py-0.5 text-[10px] font-semibold" :class="chipClass(e)" x-text="e.title"></span>
+                                </template>
+                                <span class="px-1 text-[10px] font-semibold text-ink-500" x-show="cell.items.length > 2" x-text="'+' + fa(cell.items.length - 2) + ' {{ __('task.ui.more') }}'"></span>
+                            </span>
+
+                            <span class="mt-auto flex flex-wrap gap-0.5 sm:hidden">
+                                <template x-for="e in cell.items.slice(0, 4)" :key="e.kind + e.id">
+                                    <span class="h-1.5 w-1.5 rounded-full" :class="dotClass(e)"></span>
+                                </template>
+                            </span>
+                        </button>
+                    </template>
+                </div>
+
+                <footer class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink-100 px-4 py-2.5 text-[11px] text-ink-500">
+                    <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-signal-500"></span>{{ __('task.ui.overdue') }}</span>
+                    <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-pool-500"></span>{{ __('task.status.doing') }}</span>
+                    <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-pool-300"></span>{{ __('task.status.todo') }}</span>
+                    <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-success-500"></span>{{ __('task.status.done') }}</span>
+                    <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-flag-500"></span>{{ __('task.ui.milestones') }}</span>
+                    <span class="text-ink-400">{{ __('task.ui.cal_holiday_note') }}</span>
+                </footer>
+            </section>
+
+            {{-- پنل روز انتخاب‌شده --}}
+            <aside class="rounded-2xl border border-ink-100 bg-white p-4 lg:sticky lg:top-4 lg:self-start" aria-live="polite">
+                <p class="text-[11px] tabular-nums text-ink-400" dir="ltr" x-text="selectedGregorian"></p>
+                <h3 class="mt-0.5 text-sm font-bold text-ink-900" x-text="selectedLabel"></h3>
+                <p class="mt-1 text-xs font-semibold text-signal-600" x-show="selectedHoliday" x-text="selectedHoliday"></p>
+
+                <ul class="mt-3 space-y-2">
+                    <template x-for="e in agenda" :key="e.kind + e.id">
+                        <li>
+                            <button type="button" class="flex w-full items-start gap-2 rounded-xl border border-ink-100 p-2.5 text-start transition-colors hover:bg-ink-50"
+                                    x-on:click="e.kind === 'task' ? $wire.openTask(e.id) : null">
+                                <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full" :class="dotClass(e)"></span>
+                                <span class="min-w-0">
+                                    <span class="block text-sm font-semibold text-ink-900" :class="e.status === 'done' || e.status === 'cancelled' ? 'line-through opacity-60' : ''" x-text="(e.kind === 'milestone' ? '⚑ ' : '') + e.title"></span>
+                                    <span class="mt-0.5 block text-[11px] text-ink-500">
+                                        <span x-text="e.statusLabel"></span>
+                                        <template x-if="e.priorityLabel"><span x-text="' · ' + e.priorityLabel"></span></template>
+                                        <template x-if="e.who"><span x-text="' · ' + e.who"></span></template>
+                                        <template x-if="e.overdue"><span class="font-semibold text-signal-600">{{ ' · '.__('task.ui.overdue') }}</span></template>
+                                    </span>
+                                </span>
+                            </button>
+                        </li>
+                    </template>
+                </ul>
+
+                <p class="mt-3 text-xs text-ink-400" x-show="agenda.length === 0">{{ __('task.ui.cal_day_empty') }}</p>
+
+                @if ($canCreate)
+                    <button type="button" x-on:click="$wire.openCreateOn(selected)" class="{{ $btnGhost }} mt-4 w-full !py-2 text-xs">+ {{ __('task.ui.cal_add_on_day') }}</button>
+                @endif
+            </aside>
         </div>
 
         @if ($undated->isNotEmpty())
@@ -458,7 +523,7 @@
                 </div>
                 <div>
                     <label for="ms-due" class="{{ $label }}">{{ __('task.ui.f_due') }}</label>
-                    <input id="ms-due" type="text" dir="ltr" wire:model="msDue" placeholder="۱۴۰۵/۰۹/۱۵" class="{{ $input }}">
+                    <x-jalali-picker id="ms-due" wire:model="msDue" />
                     @error('msDue') <p class="{{ $err }}">{{ $message }}</p> @enderror
                 </div>
                 <div class="sm:col-span-3">

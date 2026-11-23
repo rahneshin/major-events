@@ -19,9 +19,8 @@ use App\Models\Task;
 use App\Models\User;
 use App\Services\MilestoneService;
 use App\Services\TaskService;
-use App\Support\Jalali;
-use App\Support\JalaliCalendar;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use InvalidArgumentException;
 use Livewire\Component;
@@ -113,11 +112,6 @@ class EventTasks extends Component
 
     public string $msDue = '';
 
-    // ---- تقویم
-    public int $calYear = 0;
-
-    public int $calMonth = 0;
-
     public ?string $error = null;
 
     public ?string $notice = null;
@@ -126,8 +120,6 @@ class EventTasks extends Component
     {
         $this->authorize('view', $event);
         $this->event = $event;
-
-        [$this->calYear, $this->calMonth] = JalaliCalendar::today();
 
         // پیوند مستقیم: ?tab=tasks&task=<uuid> (از «وظایف من» و اعلان‌ها)
         $uuid = request()->query('task');
@@ -155,21 +147,6 @@ class EventTasks extends Component
         $this->sort = 'position';
     }
 
-    public function prevMonth(): void
-    {
-        [$this->calYear, $this->calMonth] = JalaliCalendar::month($this->calYear, $this->calMonth)['prev'];
-    }
-
-    public function nextMonth(): void
-    {
-        [$this->calYear, $this->calMonth] = JalaliCalendar::month($this->calYear, $this->calMonth)['next'];
-    }
-
-    public function thisMonth(): void
-    {
-        [$this->calYear, $this->calMonth] = JalaliCalendar::today();
-    }
-
     // ============================================================== form (08b)
 
     public function openCreate(?int $parentId = null): void
@@ -188,6 +165,18 @@ class EventTasks extends Component
         $this->showForm = true;
     }
 
+    /**
+     * از تقویم: ساخت وظیفه با موعد روزِ انتخاب‌شده ($iso = YYYY-MM-DD میلادی).
+     */
+    public function openCreateOn(string $iso): void
+    {
+        $this->openCreate();
+
+        if ($this->parseIso($iso) instanceof Carbon) {
+            $this->dueAt = $iso;
+        }
+    }
+
     public function openEdit(int $id): void
     {
         $task = $this->findTask($id);
@@ -203,8 +192,8 @@ class EventTasks extends Component
         $this->phase = $task->phase->value;
         $this->module = $task->module->value;
         $this->priority = $task->priority->value;
-        $this->startAt = $task->start_at ? fa_num((string) Jalali::format($task->start_at)) : '';
-        $this->dueAt = $task->due_at ? fa_num((string) Jalali::format($task->due_at)) : '';
+        $this->startAt = $task->start_at?->toDateString() ?? '';
+        $this->dueAt = $task->due_at?->toDateString() ?? '';
         $this->hours = $task->estimated_hours !== null ? rtrim(rtrim((string) $task->estimated_hours, '0'), '.') : '';
         $this->showForm = true;
     }
@@ -241,15 +230,15 @@ class EventTasks extends Component
             'hours' => __('task.ui.f_hours'),
         ]);
 
-        $start = Jalali::parse($this->startAt);
-        $due = Jalali::parse($this->dueAt);
+        $start = $this->parseIso($this->startAt);
+        $due = $this->parseIso($this->dueAt);
 
-        if (trim($this->startAt) !== '' && $start === null) {
+        if ($start === false) {
             $this->addError('startAt', __('task.date_invalid'));
 
             return;
         }
-        if (trim($this->dueAt) !== '' && $due === null) {
+        if ($due === false) {
             $this->addError('dueAt', __('task.date_invalid'));
 
             return;
@@ -490,7 +479,7 @@ class EventTasks extends Component
             $this->editingMilestoneId = $milestone->id;
             $this->msTitle = $milestone->title;
             $this->msDescription = (string) $milestone->description;
-            $this->msDue = $milestone->due_at ? fa_num((string) Jalali::format($milestone->due_at)) : '';
+            $this->msDue = $milestone->due_at?->toDateString() ?? '';
         }
 
         $this->showMilestoneForm = true;
@@ -511,9 +500,9 @@ class EventTasks extends Component
             'msDue' => ['nullable', 'string', 'max:20'],
         ], [], ['msTitle' => __('task.ui.f_title')]);
 
-        $due = Jalali::parse($this->msDue);
+        $due = $this->parseIso($this->msDue);
 
-        if (trim($this->msDue) !== '' && $due === null) {
+        if ($due === false) {
             $this->addError('msDue', __('task.date_invalid'));
 
             return;
@@ -623,15 +612,14 @@ class EventTasks extends Component
             'phases' => TaskPhase::cases(),
             'modules' => TaskModule::cases(),
             'priorities' => TaskPriority::cases(),
-            'calendar' => null,
-            'calendarTasks' => [],
-            'calendarMilestones' => [],
+            'calendarEvents' => [],
             'undated' => collect(),
             'open' => null,
         ];
 
         if ($this->mode === 'calendar') {
-            $data = array_merge($data, $this->calendarData());
+            $data['calendarEvents'] = $this->calendarEvents();
+            $data['undated'] = $this->filteredQuery()->whereNull('due_at')->orderBy('position')->limit(50)->get();
         }
 
         if ($this->openId !== null) {
@@ -643,40 +631,51 @@ class EventTasks extends Component
 
     // ================================================================== internals
 
-    /** @return array<string, mixed> */
-    private function calendarData(): array
+    /**
+     * رویدادهای تقویم (وظایفِ فیلترشده‌ی دارای موعد + نقاط عطف) به‌صورت آرایه‌ی ساده برای Alpine.
+     * تاریخ‌ها ISO میلادی‌اند؛ تبدیل به شمسی فقط در مرورگر (jalali.js) انجام می‌شود.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function calendarEvents(): array
     {
-        $cal = JalaliCalendar::month($this->calYear, $this->calMonth);
-        $prefix = sprintf('%04d/%02d/', $cal['year'], $cal['month']);
+        $events = [];
 
-        $byDay = [];
-        $tasksQuery = $this->filteredQuery()->whereNotNull('due_at')->with('assignee');
+        $tasks = $this->filteredQuery()
+            ->whereNotNull('due_at')
+            ->with('assignee')
+            ->orderBy('due_at')
+            ->limit(1500)
+            ->get();
 
-        foreach ($tasksQuery->limit(1000)->get() as $task) {
-            $key = (string) Jalali::format($task->due_at, 'Y/m/d');
-
-            if (str_starts_with($key, $prefix)) {
-                $byDay[(int) substr($key, -2)][] = $task;
-            }
+        foreach ($tasks as $task) {
+            $events[] = [
+                'id' => $task->id,
+                'kind' => 'task',
+                'title' => $task->title,
+                'date' => $task->due_at->toDateString(),
+                'status' => $task->status->value,
+                'statusLabel' => $task->status->label(),
+                'priority' => $task->priority->value,
+                'priorityLabel' => $task->priority->label(),
+                'overdue' => $task->isOverdue(),
+                'who' => $task->assignee?->name,
+            ];
         }
 
-        $msByDay = [];
         foreach ($this->event->milestones()->whereNotNull('due_at')->get() as $milestone) {
-            $key = (string) Jalali::format($milestone->due_at, 'Y/m/d');
-
-            if (str_starts_with($key, $prefix)) {
-                $msByDay[(int) substr($key, -2)][] = $milestone;
-            }
+            $events[] = [
+                'id' => $milestone->id,
+                'kind' => 'milestone',
+                'title' => $milestone->title,
+                'date' => $milestone->due_at->toDateString(),
+                'status' => $milestone->status->value,
+                'statusLabel' => $milestone->status->label(),
+                'overdue' => $milestone->isOverdue(),
+            ];
         }
 
-        [$ty, $tm, $td] = JalaliCalendar::today();
-
-        return [
-            'calendar' => $cal + ['today' => ($ty === $cal['year'] && $tm === $cal['month']) ? $td : null],
-            'calendarTasks' => $byDay,
-            'calendarMilestones' => $msByDay,
-            'undated' => $this->filteredQuery()->whereNull('due_at')->orderBy('position')->limit(50)->get(),
-        ];
+        return $events;
     }
 
     /** @return array<string, mixed>|null */
@@ -773,6 +772,24 @@ class EventTasks extends Component
             'status' => $q->orderByRaw("case status when 'doing' then 1 when 'blocked' then 2 when 'todo' then 3 when 'done' then 4 else 5 end")->orderBy('id'),
             default => $q->ordered(),
         };
+    }
+
+    /**
+     * تاریخ ISO میلادی (YYYY-MM-DD) از انتخاب‌گر. خالی → null؛ نامعتبر → false.
+     */
+    private function parseIso(string $value): Carbon|false|null
+    {
+        $value = trim($value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        if (! preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $m) || ! checkdate((int) $m[2], (int) $m[3], (int) $m[1])) {
+            return false;
+        }
+
+        return Carbon::createFromFormat('Y-m-d', $value)->startOfDay();
     }
 
     private function isClosed(): bool

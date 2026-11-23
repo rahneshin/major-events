@@ -6,8 +6,10 @@
  *  x-inview[.mid][.once]="expr"   وقتی عنصر وارد ناحیه‌ی دید (یا خط میانی صفحه) شد، expr اجرا می‌شود
  *  counter(to)         شمارنده‌ی عددی با ارقام فارسی
  *  countdown(iso)      شمارش معکوس تا یک زمان ISO-8601
+ *  jalaliCalendar / jalaliPicker   تقویم و انتخاب‌گر تاریخ شمسی (jalali.js)
  */
 
+import { registerJalali } from './jalali.js';
 import './stadium.js';
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -131,6 +133,8 @@ function register() {
             this.s = fa(pad(total % 60));
         },
     }));
+
+    registerJalali(Alpine);
 }
 
 if (window.Alpine) {
