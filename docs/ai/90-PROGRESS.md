@@ -15,11 +15,11 @@
 | Pest / Larastan / Pint | 5.3.7 / 3.15.0 / 1.32.3 (قفل‌شده) |
 | دیتابیس | SQLite (تا Step 16) |
 | مخزن Git | https://github.com/rahneshin/major-events |
-| شاخه‌ی کاری فعلی | `step/10-risk` (از سر `feat/hr-invite` @ `e775e53`؛ شامل 01 تا 07 + UI-2 + 06B + 08a + 09 + 08b/08c + منابع انسانی + 10) |
+| شاخه‌ی کاری فعلی | `step/10-final-calender` (آخرین سر؛ قبلاً `step/10-risk`) (از سر `feat/hr-invite` @ `e775e53`؛ شامل 01 تا 07 + UI-2 + 06B + 08a + 09 + 08b/08c + منابع انسانی + 10) |
 | شاخه‌ی اصلی | `main` — هنوز فقط Step 00؛ **مرج نشده** (مشکل ۴) |
 | آخرین مرحله‌ی DONE | **10** (ریسک؛ کد و تست نوشته شد، **اجرا توسط امیر**)، **منابع انسانی** (`feat/hr-invite`)، **08b + 08c**، 09، 08a، 06B، 07، UI-2 |
 | مرحله‌ی بعدی | **11** (اسپانسرینگ و بازاریابی) |
-| تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۹/۰۲ (10) |
+| تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۹/۰۴ (10-fix: بازبینی پنل‌ها) |
 
 ### توپولوژی شاخه‌ها (بررسی‌شده با `git merge-base --is-ancestor`)
 
@@ -327,6 +327,17 @@
 ---
 
 ## ۷. Changelog
+
+## UPDATE — 10-fix — بازبینی پنل‌ها، فرم وظیفه، تقویم، ممیزی — ۱۴۰۵/۰۹/۰۴
+
+Status: DONE (کد نوشته شد؛ **هیچ تست/آرتیسان/مایگریشن/مرورگری اجرا نشد**)
+Branch: روی سر `step/10-final-calender`
+Files created: [app/Support/ActivityDescriber.php، lang/fa/activity.php، components: audit-stamp، activity-log، last-action]
+Files modified: [EventTasks (فرم → مودال)، EventRisk (کمیته‌ی وظیفه‌ی کنترلی + فیلتر پیوند + تاریخ ISO)، EventBudget/EventForm (تاریخ ISO)، Jalali (long/range/stamp + پذیرش ISO)، helpers (jalali_long/jalali_range/person_name)، jalali.js/jalali-picker (پاپ‌آپ fixed)، app.css (رفع transform باقی‌مانده از page-enter؛ توکن‌های money/success/expense؛ مودال)، dashboard (حذف ساعت/دقیقه/ثانیه، فقط روز)، event-row/event-show، event-budget (درآمد سبز/هزینه قرمز ملایم)، ۳۵ ویو (مهاجرت رنگ‌های slate/gray/rose/emerald/amber/indigo/violet/fuchsia به توکن‌های ink/signal/success/flag/pool)، tests/Unit/JalaliTest]
+Fixed: [ویرایش وظیفه‌ی دوم به بعد (فرم بالای صفحه دیده نمی‌شد)؛ تقویم انتخاب تاریخ (transform روی main پاپ‌آپ fixed را خراب می‌کرد)؛ ریسک: ساخت وظیفه‌ی کنترلی و پیوند وظیفه جدا شد + انتخاب کمیته؛ «ثبت شده در تاریخ … توسط …» و تاریخچه‌ی اقدامات؛ تاریخ نوشتاری «نهم تیر تا هفتم آبان ۱۴۰۵»]
+Decision: [تاریخ‌ها در فرم‌ها ISO میلادی از انتخاب‌گر؛ `Jalali::parse` هر دو فرمت (ISO و شمسی) را می‌پذیرد → تست‌های قدیمی نمی‌شکنند]
+Known issues / TODO: [امیر: `npm run build`، `php artisan migrate`، `php artisan test`، `./vendor/bin/pint --test`، `./vendor/bin/phpstan analyse`؛ مرور بصری عرض ~۳۶۰px؛ کامپوننت‌های قدیمی `date-picker` و `welcome.blade.php` (لندینگ) دست‌نخورده ماندند]
+Next suggested step: بعد از سبز شدن موارد بالا ← Step 11
 
 ## UPDATE — Step 10 — ریسک و حادثه — ۱۴۰۵/۰۹/۰۲
 

@@ -1,7 +1,7 @@
 <div class="w-full max-w-sm">
     <div class="mb-8 text-center">
-        <h1 class="text-2xl font-bold text-gray-900">{{ __('auth.complete_profile_title') }}</h1>
-        <p class="mt-2 text-sm text-gray-500">{{ __('auth.complete_profile_subtitle') }}</p>
+        <h1 class="text-2xl font-bold text-ink-900">{{ __('auth.complete_profile_title') }}</h1>
+        <p class="mt-2 text-sm text-ink-500">{{ __('auth.complete_profile_subtitle') }}</p>
     </div>
 
     @if ($errors->any())
@@ -16,7 +16,7 @@
 
     <form wire:submit.prevent="save" class="space-y-5">
         <div class="space-y-1.5">
-            <label for="name" class="block text-sm font-medium text-gray-700">
+            <label for="name" class="block text-sm font-medium text-ink-700">
                 {{ __('ui.name') }}
                 <span class="text-red-500">*</span>
             </label>
@@ -26,8 +26,8 @@
                 type="text"
                 wire:model="name"
                 placeholder="{{ __('auth.name_placeholder') }}"
-                class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm
-                       placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                class="block w-full rounded-lg border border-ink-300 bg-white px-3 py-2 text-sm shadow-sm
+                       placeholder:text-ink-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 autocomplete="name"
             />
 
@@ -46,7 +46,7 @@
         </button>
     </form>
 
-    <p class="mt-4 text-center text-xs text-gray-400" wire:loading wire:target="save">
+    <p class="mt-4 text-center text-xs text-ink-400" wire:loading wire:target="save">
         در حال ذخیره...
     </p>
 </div>

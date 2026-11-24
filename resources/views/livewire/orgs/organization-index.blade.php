@@ -17,10 +17,10 @@
                 <x-card class="relative">
                     <div class="mb-3 flex items-start justify-between gap-2">
                         <div>
-                            <a href="{{ route('orgs.show', $org) }}" class="text-lg font-semibold text-gray-900 hover:text-primary-700">
+                            <a href="{{ route('orgs.show', $org) }}" class="text-lg font-semibold text-ink-900 hover:text-primary-700">
                                 {{ $org->name }}
                             </a>
-                            <p class="mt-1 text-xs text-gray-500">{{ $org->type->label() }}</p>
+                            <p class="mt-1 text-xs text-ink-500">{{ $org->type->label() }}</p>
                         </div>
                         @if ($currentId === $org->id)
                             <x-badge color="primary">{{ __('org.current') }}</x-badge>
@@ -28,7 +28,7 @@
                     </div>
 
                     @if ($org->city)
-                        <p class="mb-3 text-sm text-gray-600">{{ $org->city }}</p>
+                        <p class="mb-3 text-sm text-ink-600">{{ $org->city }}</p>
                     @endif
 
                     <div class="flex flex-wrap gap-2">
@@ -36,7 +36,7 @@
                             {{ __('ui.view') }}
                         </a>
                         @if ($currentId !== $org->id)
-                            <button type="button" wire:click="switchTo({{ $org->id }})" class="text-sm text-gray-600 hover:text-gray-900">
+                            <button type="button" wire:click="switchTo({{ $org->id }})" class="text-sm text-ink-600 hover:text-ink-900">
                                 {{ __('org.switch') }}
                             </button>
                         @endif

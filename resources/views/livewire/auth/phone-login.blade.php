@@ -1,7 +1,7 @@
 <div class="w-full max-w-sm">
     <div class="mb-8 text-center">
-        <h1 class="text-2xl font-bold text-gray-900">{{ __('auth.login_title') }}</h1>
-        <p class="mt-2 text-sm text-gray-500">{{ __('auth.login_subtitle') }}</p>
+        <h1 class="text-2xl font-bold text-ink-900">{{ __('auth.login_title') }}</h1>
+        <p class="mt-2 text-sm text-ink-500">{{ __('auth.login_subtitle') }}</p>
     </div>
 
     <form wire:submit="sendCode" class="space-y-5">

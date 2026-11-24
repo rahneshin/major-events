@@ -20,8 +20,8 @@
 
     <div class="fixed inset-0 flex items-center justify-center p-4">
         <div class="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl" @click.outside="open = false">
-            <h3 class="text-base font-semibold text-gray-900">{{ $title }}</h3>
-            <p class="mt-2 text-sm text-gray-600">{{ $message }}</p>
+            <h3 class="text-base font-semibold text-ink-900">{{ $title }}</h3>
+            <p class="mt-2 text-sm text-ink-600">{{ $message }}</p>
 
             <div class="mt-5 flex justify-end gap-2">
                 <x-button variant="secondary" @click="open = false">{{ $cancelText }}</x-button>

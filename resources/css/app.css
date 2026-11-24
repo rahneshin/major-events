@@ -50,14 +50,24 @@
     --color-pool-900: #0b2e62;
     --color-pool-950: #071c3d;
 
+    --color-flag-50: #fff8e1;
+    --color-flag-100: #ffefb8;
+    --color-flag-200: #ffe38a;
     --color-flag-300: #ffd95e;
     --color-flag-400: #ffc93a;
     --color-flag-500: #ffb800;
     --color-flag-600: #d99a00;
+    --color-flag-700: #a87500;
+    --color-flag-800: #7a5600;
+    --color-flag-900: #5c4100;
+    --color-flag-950: #3a2800;
 
     --color-signal-50: #fff1ee;
+    --color-signal-100: #ffdcd5;
+    --color-signal-200: #ffbcaf;
     --color-signal-500: #f0482f;
     --color-signal-600: #d7361f;
+    --color-signal-700: #b02a17;
 
     --color-ink-50: #f3f6fb;
     --color-ink-100: #e6ebf3;
@@ -74,9 +84,12 @@
     --color-success-50: #edf9f1;
     --color-success-100: #d3f1de;
     --color-success-200: #a8e3bf;
+    --color-success-300: #7dd8a1;
+    --color-success-400: #4cc97c;
     --color-success-500: #22c55e;
     --color-success-600: #17a34a;
     --color-success-700: #167a3b;
+    --color-success-800: #125f31;
 
     /* هزینه: قرمز ملایم (نرم‌تر از signal که برای خطا/تأخیر است) */
     --color-expense-50: #fdf1f1;

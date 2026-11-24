@@ -30,7 +30,7 @@ $widths = [
             @if ($title)
                 <div class="flex items-center justify-between border-b px-5 py-4">
                     <h3 class="text-base font-semibold">{{ $title }}</h3>
-                    <button type="button" @click="open = false" class="rounded p-1 hover:bg-gray-100">✕</button>
+                    <button type="button" @click="open = false" class="rounded p-1 hover:bg-ink-100">✕</button>
                 </div>
             @endif
 

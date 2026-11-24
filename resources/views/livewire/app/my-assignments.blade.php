@@ -22,7 +22,7 @@
                                     <span class="text-ink-400">·</span>
                                     <span class="font-semibold">{{ $committee->members->first()?->pivot->post ?: __('hr.my_no_post') }}</span>
                                     @if ($committee->isHead(auth()->user()))
-                                        <span class="ms-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">{{ __('hr.head') }}</span>
+                                        <span class="ms-1 rounded-full bg-flag-100 px-1.5 py-0.5 text-[10px] font-bold text-flag-700">{{ __('hr.head') }}</span>
                                     @endif
                                 </p>
                             @empty
@@ -47,7 +47,7 @@
                                     {{ $task->event->title }}@if ($task->committee) · {{ $task->committee->name }}@endif
                                     · {{ $task->status->label() }}
                                     @if ($task->due_at)
-                                        · @if ($task->due_at->isPast())<span class="font-semibold text-rose-600">{{ __('hr.my_overdue') }}</span>@else{{ __('hr.my_due', ['date' => jalali_long($task->due_at)]) }}@endif
+                                        · @if ($task->due_at->isPast())<span class="font-semibold text-signal-600">{{ __('hr.my_overdue') }}</span>@else{{ __('hr.my_due', ['date' => jalali_long($task->due_at)]) }}@endif
                                     @endif
                                 </p>
                             </li>

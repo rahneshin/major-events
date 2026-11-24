@@ -7,21 +7,21 @@
     }
 ">
     <div class="mb-8 text-center">
-        <h1 class="text-2xl font-bold text-gray-900">{{ __('auth.verify_title') }}</h1>
-        <p class="mt-2 text-sm text-gray-500">
+        <h1 class="text-2xl font-bold text-ink-900">{{ __('auth.verify_title') }}</h1>
+        <p class="mt-2 text-sm text-ink-500">
             {{ __('auth.verify_subtitle') }}
-            <span dir="ltr" class="font-medium text-gray-800">{{ phone($phone) }}</span>
+            <span dir="ltr" class="font-medium text-ink-800">{{ phone($phone) }}</span>
         </p>
     </div>
 
     @if ($debugCode)
-        <div class="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-center">
-            <p class="text-xs font-medium text-amber-800">{{ __('auth.debug_code_label') }}</p>
-            <p class="mt-1 text-3xl font-bold tracking-[0.3em] text-amber-900" dir="ltr">{{ $debugCode }}</p>
+        <div class="mb-5 rounded-xl border border-flag-300 bg-flag-50 p-4 text-center">
+            <p class="text-xs font-medium text-flag-800">{{ __('auth.debug_code_label') }}</p>
+            <p class="mt-1 text-3xl font-bold tracking-[0.3em] text-flag-900" dir="ltr">{{ $debugCode }}</p>
             <button
                 type="button"
                 wire:click="useDebugCode"
-                class="mt-3 text-sm font-medium text-amber-800 underline hover:text-amber-950"
+                class="mt-3 text-sm font-medium text-flag-800 underline hover:text-flag-950"
             >
                 {{ __('auth.debug_code_fill') }}
             </button>
@@ -49,7 +49,7 @@
         </x-button>
     </form>
 
-    <div class="mt-6 text-center text-sm text-gray-500">
+    <div class="mt-6 text-center text-sm text-ink-500">
         <template x-if="seconds > 0">
             <p>
                 {{ __('auth.resend_in') }}
@@ -71,7 +71,7 @@
     </div>
 
     <div class="mt-4 text-center">
-        <a href="{{ route('auth.login') }}" class="text-sm text-gray-500 hover:text-gray-700" wire:navigate>
+        <a href="{{ route('auth.login') }}" class="text-sm text-ink-500 hover:text-ink-700" wire:navigate>
             {{ __('auth.change_phone') }}
         </a>
     </div>
