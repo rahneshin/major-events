@@ -7,7 +7,7 @@
             <p class="text-sm text-ink-500">{{ $greeting }}</p>
             <h2 class="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">{{ auth()->user()->name ?? phone(auth()->user()->phone) }}</h2>
             <p class="mt-3 text-sm leading-7 text-ink-500">
-                امروز {{ fa_num(jalali(now(), 'Y/m/d')) }}. حساب شما {{ $accountLabel ?? '—' }} است.
+                امروز {{ jalali_long(now()) }}. حساب شما {{ $accountLabel ?? '—' }} است.
             </p>
             <div class="mt-5 flex flex-wrap gap-2">
                 @if ($canCreate)
@@ -21,25 +21,20 @@
             </div>
         </div>
 
-        <div class="led-panel rounded-3xl p-5 sm:p-6 lg:col-span-2"
-             @if ($nextEvent) x-data="countdown('{{ $nextEvent->start_date->copy()->startOfDay()->toIso8601String() }}')" @endif>
+        <div class="led-panel rounded-3xl p-5 sm:p-6 lg:col-span-2">
             @if ($nextEvent)
                 <p class="text-xs text-ink-300">رویداد بعدی شما</p>
                 <a href="{{ route('events.show', $nextEvent) }}" wire:navigate class="mt-1 block truncate text-lg font-bold text-white hover:text-flag-300">{{ $nextEvent->title }}</a>
-                <p class="mt-0.5 text-xs text-ink-300">شروع: {{ fa_num(jalali($nextEvent->start_date, 'Y/m/d')) }}</p>
+                <p class="mt-0.5 text-xs text-ink-300">{{ jalali_range($nextEvent->start_date, $nextEvent->end_date) }}</p>
 
-                <div class="mt-4 grid grid-cols-4 gap-2">
-                    @foreach ([['d', 'روز'], ['h', 'ساعت'], ['m', 'دقیقه'], ['s', 'ثانیه']] as $i => [$key, $unit])
-                        <div class="overflow-hidden rounded-xl bg-black/50 py-2.5 text-center ring-1 ring-white/10">
-                            @if ($key === 's')
-                                <p class="led-digit text-2xl font-bold sm:text-3xl" x-text="s"
-                                   x-effect="s; $el.classList.remove('roll'); void $el.offsetWidth; $el.classList.add('roll')">۰۰</p>
-                            @else
-                                <p class="led-digit roll text-2xl font-bold sm:text-3xl" style="--d: {{ $i * 80 }}ms" x-text="{{ $key }}">۰۰</p>
-                            @endif
-                            <p class="mt-0.5 text-[11px] text-ink-300">{{ $unit }}</p>
-                        </div>
-                    @endforeach
+                @php $daysLeft = (int) now()->startOfDay()->diffInDays($nextEvent->start_date->copy()->startOfDay(), false); @endphp
+                <div class="mt-4 rounded-2xl bg-black/50 px-4 py-4 text-center ring-1 ring-white/10">
+                    @if ($daysLeft > 0)
+                        <p class="led-digit text-4xl font-bold sm:text-5xl">{{ fa_num((string) $daysLeft) }}</p>
+                        <p class="mt-1 text-xs text-ink-300">روز تا شروع رویداد</p>
+                    @else
+                        <p class="text-lg font-bold text-flag-300">امروز شروع می‌شود</p>
+                    @endif
                 </div>
             @else
                 <p class="text-xs text-ink-300">رویداد بعدی شما</p>

@@ -21,3 +21,26 @@ it('returns null for invalid jalali string', function () {
     expect(Jalali::parse('invalid'))->toBeNull();
     expect(Jalali::parse(''))->toBeNull();
 });
+
+it('writes a date in words without time', function () {
+    $date = Jalali::parse('1405/04/09');
+
+    expect(Jalali::long($date))->toBe('نهم تیر ۱۴۰۵')
+        ->and(Jalali::long($date, false))->toBe('نهم تیر');
+});
+
+it('writes a date range and shows the year once when both ends share it', function () {
+    $from = Jalali::parse('1405/04/09');
+    $to = Jalali::parse('1405/08/07');
+    $next = Jalali::parse('1406/01/21');
+
+    expect(Jalali::range($from, $to))->toBe('نهم تیر تا هفتم آبان ۱۴۰۵')
+        ->and(Jalali::range($from, $next))->toBe('نهم تیر ۱۴۰۵ تا بیست و یکم فروردین ۱۴۰۶');
+});
+
+it('accepts the ISO value produced by the date picker', function () {
+    $iso = Jalali::parse('2026-11-23');
+
+    expect($iso?->toDateString())->toBe('2026-11-23')
+        ->and(Jalali::parse('2026-02-31'))->toBeNull();
+});

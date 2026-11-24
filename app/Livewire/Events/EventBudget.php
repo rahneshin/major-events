@@ -238,7 +238,7 @@ class EventBudget extends Component
             $this->txLineId = (string) $this->findLine($lineId)->id;
         }
 
-        $this->txDate = fa_num(Jalali::today());
+        $this->txDate = now()->toDateString();
         $this->section = 'transactions';
         $this->showTxForm = true;
     }
@@ -258,7 +258,7 @@ class EventBudget extends Component
         $this->editingTxId = $tx->id;
         $this->txLineId = (string) $tx->budget_line_id;
         $this->txAmount = $this->amountForInput($tx->amount);
-        $this->txDate = fa_num((string) Jalali::format($tx->date));
+        $this->txDate = $tx->date->toDateString();
         $this->txDescription = (string) $tx->description;
         $this->removeReceipt = false;
         $this->receipt = null;

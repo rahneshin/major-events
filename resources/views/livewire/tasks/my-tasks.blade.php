@@ -68,7 +68,7 @@
                                     @endif
                                     @if ($task->due_at)
                                         <span @class(['font-semibold', 'text-signal-600' => $overdue, 'text-ink-500' => ! $overdue])>
-                                            {{ $overdue ? __('task.ui.overdue').' · ' : '' }}{{ fa_num(jalali($task->due_at)) }}
+                                            {{ $overdue ? __('task.ui.overdue').' · ' : '' }}{{ jalali_long($task->due_at) }}
                                         </span>
                                     @endif
                                 </div>

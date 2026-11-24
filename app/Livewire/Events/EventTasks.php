@@ -582,7 +582,7 @@ class EventTasks extends Component
 
         if ($this->mode !== 'calendar') {
             $tasks = $this->sortedQuery()
-                ->with(['assignee', 'committee', 'parent'])
+                ->with(['assignee', 'committee', 'parent', 'creator'])
                 ->limit($limit + 1)
                 ->get();
 

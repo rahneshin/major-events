@@ -71,7 +71,20 @@
     --color-ink-900: #101827;
     --color-ink-950: #0a101c;
 
+    --color-success-50: #edf9f1;
+    --color-success-100: #d3f1de;
+    --color-success-200: #a8e3bf;
     --color-success-500: #22c55e;
+    --color-success-600: #17a34a;
+    --color-success-700: #167a3b;
+
+    /* هزینه: قرمز ملایم (نرم‌تر از signal که برای خطا/تأخیر است) */
+    --color-expense-50: #fdf1f1;
+    --color-expense-100: #fadcdc;
+    --color-expense-200: #f4bcbc;
+    --color-expense-500: #d9605f;
+    --color-expense-600: #c24a49;
+    --color-expense-700: #a13a3a;
     --color-warning-500: #f59e0b;
     --color-danger-500: #ef4444;
 
@@ -194,7 +207,7 @@ body {
 }
 @keyframes page-enter {
     from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    to { opacity: 1; transform: none; }
 }
 @keyframes progress-grow {
     from { transform: scaleX(0); }
@@ -222,7 +235,7 @@ body {
 }
 
 .animate-float-y { animation: float-y 5s ease-in-out infinite; }
-.animate-rise { animation: page-enter 0.55s ease-out both; }
+.animate-rise { animation: page-enter 0.55s ease-out backwards; }
 .stagger-1 { animation-delay: var(--d, 0ms); }
 
 .reveal {
@@ -238,7 +251,8 @@ body {
 .ring-fill { stroke-dashoffset: var(--full, 163); transition: stroke-dashoffset 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0.2s); }
 .ring-fill.is-in { stroke-dashoffset: var(--off, 0); }
 
-.page-enter { animation: page-enter 0.35s ease-out both; }
+/* backwards (نه both): بعد از پایان انیمیشن هیچ transform‌ی باقی نمی‌ماند؛ وگرنه مودال‌ها و پاپ‌آپ‌های fixed نسبت به همین عنصر جانمایی می‌شوند */
+.page-enter { animation: page-enter 0.35s ease-out backwards; }
 
 .skeleton {
     background: linear-gradient(90deg, rgba(16, 24, 39, 0.06) 25%, rgba(16, 24, 39, 0.12) 37%, rgba(16, 24, 39, 0.06) 63%);
@@ -292,3 +306,13 @@ body {
     .reveal { opacity: 1; transform: none; }
     .scroll-progress { display: none; }
 }
+
+/* Money: درآمد سبز، هزینه قرمز ملایم */
+.money-in { @apply text-success-700; }
+.money-out { @apply text-expense-600; }
+.surface-in { @apply border-success-200 bg-success-50; }
+.surface-out { @apply border-expense-200 bg-expense-50; }
+
+/* مودال فرم‌ها */
+.modal-backdrop { @apply fixed inset-0 z-50 flex items-end justify-center bg-ink-950/50 p-0 sm:items-center sm:p-4; }
+.modal-panel { @apply flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl; }

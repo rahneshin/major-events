@@ -34,10 +34,10 @@
 
 <div class="space-y-5">
     @if ($error)
-        <p class="rounded-xl bg-signal-50 px-4 py-2.5 text-xs font-semibold text-signal-600" role="alert">{{ $error }}</p>
+        <p class="sticky top-16 z-30 rounded-xl bg-signal-50 px-4 py-2.5 text-xs font-semibold text-signal-600 shadow-sm" role="alert">{{ $error }}</p>
     @endif
     @if ($notice)
-        <p class="rounded-xl bg-pool-50 px-4 py-2.5 text-xs font-semibold text-pool-700" role="status">{{ $notice }}</p>
+        <p class="sticky top-16 z-30 rounded-xl bg-pool-50 px-4 py-2.5 text-xs font-semibold text-pool-700 shadow-sm" role="status">{{ $notice }}</p>
     @endif
     @if ($closed)
         <p class="rounded-xl bg-flag-300/40 px-4 py-2.5 text-xs font-semibold text-ink-800">{{ __('task.ui.event_closed') }}</p>
@@ -153,101 +153,6 @@
         @endif
     </div>
 
-    {{-- ========================================================== فرم وظیفه --}}
-    @if ($showForm)
-        <div class="rounded-2xl border border-pool-100 bg-white p-5" wire:key="task-form">
-            <h3 class="mb-4 text-sm font-bold text-ink-900">
-                {{ $editingId ? __('task.ui.edit') : ($formParentId ? __('task.ui.add_subtask') : __('task.add')) }}
-            </h3>
-
-            <div class="grid gap-3 sm:grid-cols-2">
-                <div class="sm:col-span-2">
-                    <label for="t-title" class="{{ $label }}">{{ __('task.ui.f_title') }}</label>
-                    <input id="t-title" type="text" wire:model="title" maxlength="200" class="{{ $input }}">
-                    @error('title') <p class="{{ $err }}">{{ $message }}</p> @enderror
-                </div>
-
-                <div class="sm:col-span-2">
-                    <label for="t-desc" class="{{ $label }}">{{ __('task.ui.f_description') }}</label>
-                    <textarea id="t-desc" wire:model="description" rows="3" class="{{ $input }}"></textarea>
-                    @error('description') <p class="{{ $err }}">{{ $message }}</p> @enderror
-                </div>
-
-                <div>
-                    <label for="t-committee" class="{{ $label }}">{{ __('task.ui.f_committee') }}</label>
-                    <select id="t-committee" wire:model="committeeId" class="{{ $input }}">
-                        <option value="">{{ __('task.ui.no_committee') }}</option>
-                        @foreach ($formCommittees as $c)
-                            <option value="{{ $c->id }}">{{ $c->name }}</option>
-                        @endforeach
-                    </select>
-                    @error('committeeId') <p class="{{ $err }}">{{ $message }}</p> @enderror
-                </div>
-
-                <div>
-                    <label for="t-assignee" class="{{ $label }}">{{ __('task.ui.f_assignee') }}</label>
-                    <select id="t-assignee" wire:model="assigneeId" class="{{ $input }}">
-                        <option value="">{{ __('task.ui.unassigned') }}</option>
-                        @foreach ($members as $m)
-                            <option value="{{ $m->id }}">{{ $m->name ?? phone($m->phone) }}</option>
-                        @endforeach
-                    </select>
-                    @error('assigneeId') <p class="{{ $err }}">{{ $message }}</p> @enderror
-                </div>
-
-                <div>
-                    <label for="t-phase" class="{{ $label }}">{{ __('task.ui.f_phase') }}</label>
-                    <select id="t-phase" wire:model="phase" class="{{ $input }}">
-                        @foreach ($phases as $p)
-                            <option value="{{ $p->value }}">{{ $p->label() }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div>
-                    <label for="t-module" class="{{ $label }}">{{ __('task.ui.f_module') }}</label>
-                    <select id="t-module" wire:model="module" class="{{ $input }}">
-                        @foreach ($modules as $mo)
-                            <option value="{{ $mo->value }}">{{ $mo->label() }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div>
-                    <label for="t-priority" class="{{ $label }}">{{ __('task.ui.f_priority') }}</label>
-                    <select id="t-priority" wire:model="priority" class="{{ $input }}">
-                        @foreach ($priorities as $pr)
-                            <option value="{{ $pr->value }}">{{ $pr->label() }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div>
-                    <label for="t-hours" class="{{ $label }}">{{ __('task.ui.f_hours') }}</label>
-                    <input id="t-hours" type="text" inputmode="decimal" dir="ltr" wire:model="hours" class="{{ $input }}">
-                    @error('hours') <p class="{{ $err }}">{{ $message }}</p> @enderror
-                </div>
-
-                <div>
-                    <label for="t-start" class="{{ $label }}">{{ __('task.ui.f_start') }}</label>
-                    <x-jalali-picker id="t-start" wire:model="startAt" />
-                    @error('startAt') <p class="{{ $err }}">{{ $message }}</p> @enderror
-                </div>
-
-                <div>
-                    <label for="t-due" class="{{ $label }}">{{ __('task.ui.f_due') }}</label>
-                    <x-jalali-picker id="t-due" wire:model="dueAt" />
-                    @error('dueAt') <p class="{{ $err }}">{{ $message }}</p> @enderror
-                </div>
-            </div>
-
-            <div class="mt-4 flex gap-2">
-                <button type="button" wire:click="save" wire:loading.attr="disabled" class="{{ $btnPrimary }}">{{ __('ui.save') }}</button>
-                <button type="button" wire:click="cancelForm" class="{{ $btnGhost }}">{{ __('ui.cancel') }}</button>
-            </div>
-        </div>
-    @endif
-
     {{-- ============================================================== لیست --}}
     @if ($mode === 'list')
         @if ($tasks->isEmpty())
@@ -275,10 +180,11 @@
                                 @endif
                                 @if ($task->due_at)
                                     <span @class(['font-semibold', 'text-signal-600' => $overdue, 'text-ink-500' => ! $overdue])>
-                                        {{ $overdue ? __('task.ui.overdue').' · ' : '' }}{{ fa_num(jalali($task->due_at)) }}
+                                        {{ $overdue ? __('task.ui.overdue').' · ' : '' }}{{ jalali_long($task->due_at) }}
                                     </span>
                                 @endif
                             </div>
+                            <x-audit-stamp class="mt-1" :at="$task->created_at" :by="$task->creator" />
                         </div>
 
                         <div class="flex items-center gap-2">
@@ -337,7 +243,7 @@
                                 <div class="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
                                     <span class="rounded-full px-2 py-0.5 font-semibold {{ $priorityClass[$task->priority->value] }}">{{ $task->priority->label() }}</span>
                                     @if ($task->due_at)
-                                        <span @class(['font-semibold', 'text-signal-600' => $overdue, 'text-ink-500' => ! $overdue])>{{ fa_num(jalali($task->due_at, 'm/d')) }}</span>
+                                        <span @class(['font-semibold', 'text-signal-600' => $overdue, 'text-ink-500' => ! $overdue])>{{ jalali_long($task->due_at, false) }}</span>
                                     @endif
                                     @if ($task->committee)
                                         <span class="rounded-full bg-ink-50 px-2 py-0.5 text-ink-600">{{ $task->committee->name }}</span>
@@ -549,7 +455,7 @@
                             <p class="text-[11px] text-ink-500">
                                 {{ $ms->status->label() }}
                                 @if ($ms->due_at)
-                                    · <span @class(['font-semibold text-signal-600' => $msOverdue])>{{ fa_num(jalali($ms->due_at)) }}</span>
+                                    · <span @class(['font-semibold text-signal-600' => $msOverdue])>{{ jalali_long($ms->due_at) }}</span>
                                 @endif
                             </p>
                         </div>
@@ -629,10 +535,10 @@
                     <dl class="grid grid-cols-2 gap-3 rounded-xl bg-ink-50 p-3 text-xs">
                         <div><dt class="text-ink-400">{{ __('task.ui.f_assignee') }}</dt><dd class="mt-0.5 font-semibold text-ink-800">{{ $task->assignee?->name ?? ($task->assignee ? phone($task->assignee->phone) : '—') }}</dd></div>
                         <div><dt class="text-ink-400">{{ __('task.ui.f_committee') }}</dt><dd class="mt-0.5 font-semibold text-ink-800">{{ $task->committee?->name ?? '—' }}</dd></div>
-                        <div><dt class="text-ink-400">{{ __('task.ui.f_start') }}</dt><dd class="mt-0.5 font-semibold text-ink-800">{{ $task->start_at ? fa_num(jalali($task->start_at)) : '—' }}</dd></div>
-                        <div><dt class="text-ink-400">{{ __('task.ui.f_due') }}</dt><dd @class(['mt-0.5 font-semibold', 'text-signal-600' => $task->isOverdue(), 'text-ink-800' => ! $task->isOverdue()])>{{ $task->due_at ? fa_num(jalali($task->due_at)) : '—' }}</dd></div>
+                        <div><dt class="text-ink-400">{{ __('task.ui.f_start') }}</dt><dd class="mt-0.5 font-semibold text-ink-800">{{ $task->start_at ? jalali_long($task->start_at) : '—' }}</dd></div>
+                        <div><dt class="text-ink-400">{{ __('task.ui.f_due') }}</dt><dd @class(['mt-0.5 font-semibold', 'text-signal-600' => $task->isOverdue(), 'text-ink-800' => ! $task->isOverdue()])>{{ $task->due_at ? jalali_long($task->due_at) : '—' }}</dd></div>
                         <div><dt class="text-ink-400">{{ __('task.ui.f_hours') }}</dt><dd class="mt-0.5 font-semibold text-ink-800">{{ $task->estimated_hours !== null ? fa_num(rtrim(rtrim((string) $task->estimated_hours, '0'), '.')) : '—' }}</dd></div>
-                        <div><dt class="text-ink-400">{{ __('task.ui.completed_at') }}</dt><dd class="mt-0.5 font-semibold text-ink-800">{{ $task->completed_at ? fa_num(jalali($task->completed_at)) : '—' }}</dd></div>
+                        <div><dt class="text-ink-400">{{ __('task.ui.completed_at') }}</dt><dd class="mt-0.5 font-semibold text-ink-800">{{ $task->completed_at ? jalali_long($task->completed_at) : '—' }}</dd></div>
                     </dl>
 
                     @if ($task->description)
@@ -752,7 +658,7 @@
                                         <div class="mb-1 flex items-center justify-between gap-2 text-[11px] text-ink-400">
                                             <span class="font-semibold text-ink-600">{{ $comment->user?->name ?? '—' }}</span>
                                             <span class="flex items-center gap-2">
-                                                {{ fa_num(jalali($comment->created_at, 'Y/m/d H:i')) }}
+                                                {{ jalali_long($comment->created_at) }}
                                                 @if (auth()->user()->can('deleteComment', [$task, $comment]))
                                                     <button type="button" wire:click="deleteComment({{ $comment->id }})" wire:confirm="{{ __('task.ui.confirm_delete_comment') }}" class="text-signal-600 hover:underline" aria-label="{{ __('ui.delete') }}">✕</button>
                                                 @endif
@@ -768,8 +674,119 @@
                             <button type="button" wire:click="addComment" class="{{ $btnGhost }} mt-2">{{ __('task.ui.send_comment') }}</button>
                         @endif
                     </section>
+
+                    {{-- تاریخچه‌ی اقدامات: ثبت، تغییر وضعیت، ویرایش … با تاریخ و شخص --}}
+                    <x-activity-log :subject="$task" :limit="12" class="rounded-2xl bg-ink-50/60 p-3" />
                 </div>
             </aside>
+        </div>
+    @endif
+
+    {{-- ========================================== فرم وظیفه (مودال؛ همیشه در دید) --}}
+    @if ($showForm)
+        <div class="modal-backdrop" wire:key="task-form-{{ $editingId ?? 'new' }}-{{ $formParentId ?? 0 }}"
+             x-data x-on:keydown.escape.window="$wire.cancelForm()">
+            <div class="absolute inset-0" wire:click="cancelForm" aria-hidden="true"></div>
+            <div class="modal-panel relative" role="dialog" aria-modal="true" aria-label="{{ $editingId ? __('task.ui.edit') : __('task.add') }}">
+                <header class="flex items-center justify-between gap-3 border-b border-ink-100 px-5 py-4">
+                    <h3 class="text-sm font-bold text-ink-900">
+                        {{ $editingId ? __('task.ui.edit') : ($formParentId ? __('task.ui.add_subtask') : __('task.add')) }}
+                    </h3>
+                    <button type="button" wire:click="cancelForm" class="rounded-lg p-1.5 text-ink-500 hover:bg-ink-100" aria-label="{{ __('ui.close') }}">✕</button>
+                </header>
+
+                <div class="flex-1 overflow-y-auto px-5 py-4">
+                    @if ($error)
+                        <p class="mb-3 rounded-xl bg-signal-50 px-3 py-2 text-xs font-semibold text-signal-600" role="alert">{{ $error }}</p>
+                    @endif
+            <div class="grid gap-3 sm:grid-cols-2">
+                <div class="sm:col-span-2">
+                    <label for="t-title" class="{{ $label }}">{{ __('task.ui.f_title') }}</label>
+                    <input id="t-title" type="text" wire:model="title" maxlength="200" class="{{ $input }}">
+                    @error('title') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label for="t-desc" class="{{ $label }}">{{ __('task.ui.f_description') }}</label>
+                    <textarea id="t-desc" wire:model="description" rows="3" class="{{ $input }}"></textarea>
+                    @error('description') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label for="t-committee" class="{{ $label }}">{{ __('task.ui.f_committee') }}</label>
+                    <select id="t-committee" wire:model="committeeId" class="{{ $input }}">
+                        <option value="">{{ __('task.ui.no_committee') }}</option>
+                        @foreach ($formCommittees as $c)
+                            <option value="{{ $c->id }}">{{ $c->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('committeeId') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label for="t-assignee" class="{{ $label }}">{{ __('task.ui.f_assignee') }}</label>
+                    <select id="t-assignee" wire:model="assigneeId" class="{{ $input }}">
+                        <option value="">{{ __('task.ui.unassigned') }}</option>
+                        @foreach ($members as $m)
+                            <option value="{{ $m->id }}">{{ $m->name ?? phone($m->phone) }}</option>
+                        @endforeach
+                    </select>
+                    @error('assigneeId') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label for="t-phase" class="{{ $label }}">{{ __('task.ui.f_phase') }}</label>
+                    <select id="t-phase" wire:model="phase" class="{{ $input }}">
+                        @foreach ($phases as $p)
+                            <option value="{{ $p->value }}">{{ $p->label() }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label for="t-module" class="{{ $label }}">{{ __('task.ui.f_module') }}</label>
+                    <select id="t-module" wire:model="module" class="{{ $input }}">
+                        @foreach ($modules as $mo)
+                            <option value="{{ $mo->value }}">{{ $mo->label() }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label for="t-priority" class="{{ $label }}">{{ __('task.ui.f_priority') }}</label>
+                    <select id="t-priority" wire:model="priority" class="{{ $input }}">
+                        @foreach ($priorities as $pr)
+                            <option value="{{ $pr->value }}">{{ $pr->label() }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label for="t-hours" class="{{ $label }}">{{ __('task.ui.f_hours') }}</label>
+                    <input id="t-hours" type="text" inputmode="decimal" dir="ltr" wire:model="hours" class="{{ $input }}">
+                    @error('hours') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label for="t-start" class="{{ $label }}">{{ __('task.ui.f_start') }}</label>
+                    <x-jalali-picker id="t-start" wire:model="startAt" />
+                    @error('startAt') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label for="t-due" class="{{ $label }}">{{ __('task.ui.f_due') }}</label>
+                    <x-jalali-picker id="t-due" wire:model="dueAt" />
+                    @error('dueAt') <p class="{{ $err }}">{{ $message }}</p> @enderror
+                </div>
+            </div>
+
+                </div>
+
+                <footer class="flex gap-2 border-t border-ink-100 bg-white px-5 py-3">
+                    <button type="button" wire:click="save" wire:loading.attr="disabled" class="{{ $btnPrimary }}">{{ __('ui.save') }}</button>
+                    <button type="button" wire:click="cancelForm" class="{{ $btnGhost }}">{{ __('ui.cancel') }}</button>
+                </footer>
+            </div>
         </div>
     @endif
 </div>

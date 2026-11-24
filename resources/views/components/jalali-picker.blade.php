@@ -7,8 +7,9 @@
         <x-jalali-picker id="t-due" wire:model="dueAt" />
 --}}
 <div x-data="jalaliPicker" x-modelable="value" {{ $attributes->whereStartsWith('wire:model') }}
-     class="relative" x-on:keydown.escape.stop="open = false" x-on:click.outside="open = false">
-    <button type="button" @if ($id) id="{{ $id }}" @endif x-on:click="toggle()"
+     class="relative" x-on:keydown.escape.stop="open = false" x-on:click.outside="open = false"
+     x-on:scroll.window.capture.passive="open && place()" x-on:resize.window="open && place()">
+    <button type="button" x-ref="btn" @if ($id) id="{{ $id }}" @endif x-on:click="toggle()"
             class="flex w-full items-center justify-between gap-2 rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-start text-sm text-ink-900 transition-colors hover:border-ink-300 focus:border-pool-400 focus:outline-none focus:ring-2 focus:ring-pool-100"
             aria-haspopup="dialog" x-bind:aria-expanded="open.toString()">
         <span x-text="display || '{{ $placeholder }}'" :class="display ? 'text-ink-900' : 'text-ink-300'"></span>
@@ -16,7 +17,7 @@
     </button>
 
     <div x-show="open" x-cloak x-transition.opacity.duration.120ms role="dialog" aria-label="انتخاب تاریخ"
-         class="absolute start-0 z-40 mt-2 w-72 rounded-2xl border border-ink-100 bg-white p-3 shadow-xl">
+         x-bind:style="pos" class="fixed z-[80] w-72 rounded-2xl border border-ink-100 bg-white p-3 shadow-xl">
         <div class="mb-2 flex items-center justify-between">
             <button type="button" x-on:click="prev()" class="rounded-lg p-1.5 text-ink-600 hover:bg-ink-50" aria-label="ماه قبل">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>

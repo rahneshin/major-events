@@ -96,7 +96,7 @@
             <div class="min-w-0 flex-1">
                 <h1 class="truncate text-sm font-bold text-ink-900">@yield('page_title', 'پنل')</h1>
             </div>
-            <span class="hidden text-xs text-ink-500 sm:inline">امروز {{ fa_num(jalali(now(), 'Y/m/d')) }}</span>
+            <span class="hidden text-xs text-ink-500 sm:inline">امروز {{ jalali_long(now()) }}</span>
             <a href="{{ route('home') }}" class="hidden rounded-lg px-2.5 py-1.5 text-xs text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-800 sm:inline">مشاهده سایت</a>
         </header>
 

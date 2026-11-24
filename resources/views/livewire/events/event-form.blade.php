@@ -112,12 +112,12 @@
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label class="mb-1.5 block text-sm font-medium text-slate-700">{{ __('event.fields.start_date') }}</label>
-                        <input type="text" wire:model="start_date_jalali" dir="ltr" class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="1405/01/15">
+                        <x-jalali-picker id="start_date" wire:model="start_date_jalali" />
                         @error('start_date_jalali') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="mb-1.5 block text-sm font-medium text-slate-700">{{ __('event.fields.end_date') }}</label>
-                        <input type="text" wire:model="end_date_jalali" dir="ltr" class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="1405/01/20">
+                        <x-jalali-picker id="end_date" wire:model="end_date_jalali" />
                         @error('end_date_jalali') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
@@ -170,7 +170,7 @@
                     </div>
                     <div class="rounded-xl border border-slate-100 p-3">
                         <p class="text-xs text-slate-400">{{ __('event.fields.start_date') }}</p>
-                        <p class="font-medium" dir="ltr">{{ $start_date_jalali ?: '—' }}</p>
+                        <p class="font-medium">{{ $start_date_jalali ? jalali_long(\App\Support\Jalali::parse($start_date_jalali)) : '—' }}</p>
                     </div>
                     <div class="rounded-xl border border-slate-100 p-3">
                         <p class="text-xs text-slate-400">{{ __('event.fields.city') }}</p>

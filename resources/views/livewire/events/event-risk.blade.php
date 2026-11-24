@@ -198,7 +198,7 @@
                 </div>
                 <div class="sm:w-1/3">
                     <label for="r-review" class="{{ $label }}">{{ __('risk.fields.review_date') }}</label>
-                    <input id="r-review" type="text" dir="ltr" wire:model="rReview" placeholder="۱۴۰۵/۰۹/۱۵" class="{{ $input }}">
+                    <x-jalali-picker id="r-review" wire:model="rReview" />
                     @error('rReview') <p class="{{ $err }}">{{ $message }}</p> @enderror
                 </div>
 
@@ -243,11 +243,12 @@
                                     · {{ __('risk.impact_short') }}: {{ fa_num($risk->impact) }}
                                     · {{ $risk->response->label() }}
                                     · {{ $risk->owner ? ($risk->owner->name ?: phone($risk->owner->phone)) : __('risk.no_owner') }}
-                                    · {{ $risk->review_date ? __('risk.review_on', ['date' => fa_num(jalali($risk->review_date))]) : __('risk.no_review_date') }}
+                                    · {{ $risk->review_date ? __('risk.review_on', ['date' => jalali_long($risk->review_date)]) : __('risk.no_review_date') }}
                                 </p>
                                 @if ($risk->control_actions)
                                     <p class="mt-2 rounded-xl bg-pool-50 px-3 py-2 text-xs leading-6 text-pool-800">{{ $risk->control_actions }}</p>
                                 @endif
+                                <x-last-action class="mt-2" :subject="$risk" />
                             </div>
 
                             <div class="flex shrink-0 flex-wrap items-center gap-1.5">
@@ -293,22 +294,48 @@
                                 @endif
 
                                 @if ($canEdit)
-                                    <div class="grid gap-3 sm:grid-cols-2">
-                                        <div class="flex gap-2">
-                                            <input type="text" wire:model="ctTitle" placeholder="{{ __('risk.control_task_title') }}" class="{{ $input }}" maxlength="200" aria-label="{{ __('risk.control_task_title') }}">
-                                            <button type="button" wire:click="createControlTask({{ $risk->id }})" class="btn-primary shrink-0">{{ __('risk.create_control_task') }}</button>
+                                    <div class="grid gap-4 lg:grid-cols-2">
+                                        {{-- ۱) ساخت وظیفه‌ی کنترلیِ تازه --}}
+                                        <div class="rounded-2xl border border-pool-100 bg-pool-50/40 p-4">
+                                            <h6 class="text-xs font-bold text-pool-700">{{ __('risk.new_control_task') }}</h6>
+                                            <p class="mt-1 text-[11px] leading-5 text-ink-500">{{ __('risk.new_control_task_hint') }}</p>
+                                            <div class="mt-3 space-y-2">
+                                                <input type="text" wire:model="ctTitle" placeholder="{{ __('risk.control_task_title') }}" class="{{ $input }}" maxlength="200" aria-label="{{ __('risk.control_task_title') }}">
+                                                <select wire:model="ctCommitteeId" class="{{ $input }}" aria-label="{{ __('risk.control_task_committee') }}">
+                                                    <option value="">{{ __('risk.no_committee') }}</option>
+                                                    @foreach ($committees as $c)
+                                                        <option value="{{ $c->id }}">{{ $c->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <button type="button" wire:click="createControlTask({{ $risk->id }})" class="btn-primary w-full">{{ __('risk.create_control_task') }}</button>
+                                            </div>
                                         </div>
-                                        <div class="flex gap-2">
-                                            <select wire:model="ctTaskId" class="{{ $input }}" aria-label="{{ __('risk.link_task') }}">
-                                                <option value="">{{ __('risk.choose_task') }}</option>
-                                                @foreach ($linkableTasks as $lt)
-                                                    <option value="{{ $lt->id }}">{{ $lt->title }}</option>
-                                                @endforeach
-                                            </select>
-                                            <button type="button" wire:click="linkTask({{ $risk->id }})" class="btn-ghost shrink-0">{{ __('risk.link') }}</button>
+
+                                        {{-- ۲) پیوند وظیفه‌ی موجود (حتی از کمیته‌ای دیگر) --}}
+                                        <div class="rounded-2xl border border-ink-200 bg-white p-4">
+                                            <h6 class="text-xs font-bold text-ink-700">{{ __('risk.link_existing_task') }}</h6>
+                                            <p class="mt-1 text-[11px] leading-5 text-ink-500">{{ __('risk.link_existing_task_hint') }}</p>
+                                            <div class="mt-3 space-y-2">
+                                                <select wire:model.live="linkCommitteeId" class="{{ $input }}" aria-label="{{ __('risk.filter_by_committee') }}">
+                                                    <option value="">{{ __('risk.all_committees') }}</option>
+                                                    <option value="none">{{ __('risk.no_committee') }}</option>
+                                                    @foreach ($committees as $c)
+                                                        <option value="{{ $c->id }}">{{ $c->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <select wire:model="ctTaskId" class="{{ $input }}" aria-label="{{ __('risk.link_task') }}">
+                                                    <option value="">{{ __('risk.choose_task') }}</option>
+                                                    @foreach ($linkableTasks as $lt)
+                                                        <option value="{{ $lt->id }}">{{ $lt->title }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <button type="button" wire:click="linkTask({{ $risk->id }})" class="btn-ghost w-full">{{ __('risk.link') }}</button>
+                                            </div>
                                         </div>
                                     </div>
                                 @endif
+
+                                <x-activity-log :subject="$risk" :limit="6" class="rounded-2xl bg-ink-50/60 p-3" />
                             </div>
                         @endif
                     </li>
@@ -429,7 +456,7 @@
                     </div>
                     <div>
                         <label for="i-date" class="{{ $label }}">{{ __('risk.fields.occurred_date') }}</label>
-                        <input id="i-date" type="text" dir="ltr" wire:model="iDate" placeholder="۱۴۰۵/۰۹/۱۵" class="{{ $input }}">
+                        <x-jalali-picker id="i-date" wire:model="iDate" />
                         @error('iDate') <p class="{{ $err }}">{{ $message }}</p> @enderror
                     </div>
                     <div>
@@ -475,7 +502,7 @@
                             <div class="min-w-0 flex-1">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold {{ $incident->severity->badgeClasses() }}">{{ $incident->severity->label() }}</span>
-                                    <span class="text-[11px] text-ink-500" dir="ltr">{{ fa_num(jalali($incident->occurred_at)) }} {{ fa_num($incident->occurred_at->format('H:i')) }}</span>
+                                    <span class="text-[11px] text-ink-500">{{ jalali_long($incident->occurred_at) }} · ساعت {{ fa_num($incident->occurred_at->format('H:i')) }}</span>
                                     <span @class(['rounded-full px-2.5 py-0.5 text-[11px] font-semibold', 'bg-pool-50 text-pool-700' => $incident->isResolved(), 'bg-ink-50 text-ink-600' => ! $incident->isResolved()])>
                                         {{ $incident->isResolved() ? __('risk.resolved') : __('risk.unresolved') }}
                                     </span>
@@ -484,6 +511,8 @@
                                 @if ($incident->description)
                                     <p class="mt-1 text-xs leading-6 text-ink-600">{{ $incident->description }}</p>
                                 @endif
+                                <x-audit-stamp class="mt-1" :at="$incident->created_at" :by="$incident->reporter" verb="گزارش شده" />
+                                <x-last-action :subject="$incident" />
                                 <p class="mt-2 text-[11px] text-ink-500">
                                     {{ $incident->risk ? $incident->risk->title : __('risk.no_risk') }}
                                     @if ($incident->reporter)

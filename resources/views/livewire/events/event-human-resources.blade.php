@@ -71,7 +71,7 @@
                             <p class="text-xs text-slate-500">
                                 {{ $inv->role->label() }}
                                 @if ($inv->committee) · {{ $inv->committee->name }}@if ($inv->post) · {{ $inv->post }}@endif @endif
-                                · {{ __('hr.pending_expires', ['date' => jalali($inv->expires_at)]) }}
+                                · {{ __('hr.pending_expires', ['date' => jalali_long($inv->expires_at)]) }}
                             </p>
                         </div>
                         <div class="flex items-center gap-2">

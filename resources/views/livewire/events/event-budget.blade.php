@@ -74,26 +74,26 @@
         @if ($section === 'overview')
             <div class="grid gap-3 sm:grid-cols-3">
                 {{-- درآمد --}}
-                <div class="rounded-2xl border border-ink-100 bg-white p-4">
-                    <p class="text-xs font-semibold text-ink-500">{{ __('budget.total_revenue') }}</p>
-                    <p class="mt-2 text-lg font-bold tabular-nums text-ink-900"><bdi>{{ $m($totals['actual_revenue']) }}</bdi></p>
+                <div class="rounded-2xl border border-success-200 bg-success-50/60 p-4">
+                    <p class="flex items-center gap-1.5 text-xs font-semibold text-success-700"><span aria-hidden="true">▲</span>{{ __('budget.total_revenue') }}</p>
+                    <p class="mt-2 text-lg font-bold tabular-nums money-in"><bdi>{{ $m($totals['actual_revenue']) }}</bdi></p>
                     <p class="mt-1 text-xs text-ink-500">{{ __('budget.planned') }}: <bdi class="tabular-nums">{{ $m($totals['planned_revenue']) }}</bdi></p>
                     @if ($totals['revenue_achievement_percent'] !== null)
-                        <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-ink-100" role="img" aria-label="{{ fa_num($totals['revenue_achievement_percent']) }}٪">
-                            <div class="h-full rounded-full bg-pool-600" style="width: {{ min(100, (int) round($totals['revenue_achievement_percent'])) }}%"></div>
+                        <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-success-100" role="img" aria-label="{{ fa_num($totals['revenue_achievement_percent']) }}٪">
+                            <div class="h-full rounded-full bg-success-500" style="width: {{ min(100, (int) round($totals['revenue_achievement_percent'])) }}%"></div>
                         </div>
                         <p class="mt-1 text-[11px] text-ink-400">{{ __('budget.revenue_achieved', ['percent' => fa_num($totals['revenue_achievement_percent'])]) }}</p>
                     @endif
                 </div>
 
                 {{-- هزینه --}}
-                <div class="rounded-2xl border border-ink-100 bg-white p-4">
-                    <p class="text-xs font-semibold text-ink-500">{{ __('budget.total_expense') }}</p>
-                    <p class="mt-2 text-lg font-bold tabular-nums text-ink-900"><bdi>{{ $m($totals['actual_expense']) }}</bdi></p>
+                <div class="rounded-2xl border border-expense-200 bg-expense-50/60 p-4">
+                    <p class="flex items-center gap-1.5 text-xs font-semibold text-expense-700"><span aria-hidden="true">▼</span>{{ __('budget.total_expense') }}</p>
+                    <p class="mt-2 text-lg font-bold tabular-nums money-out"><bdi>{{ $m($totals['actual_expense']) }}</bdi></p>
                     <p class="mt-1 text-xs text-ink-500">{{ __('budget.planned') }}: <bdi class="tabular-nums">{{ $m($totals['planned_expense']) }}</bdi></p>
                     @if ($totals['expense_usage_percent'] !== null)
-                        <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-ink-100" role="img" aria-label="{{ fa_num($totals['expense_usage_percent']) }}٪">
-                            <div @class(['h-full rounded-full', 'bg-signal-500' => $totals['expense_overrun'], 'bg-flag-500' => ! $totals['expense_overrun']])
+                        <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-expense-100" role="img" aria-label="{{ fa_num($totals['expense_usage_percent']) }}٪">
+                            <div @class(['h-full rounded-full', 'bg-signal-500' => $totals['expense_overrun'], 'bg-expense-500' => ! $totals['expense_overrun']])
                                  style="width: {{ min(100, (int) round($totals['expense_usage_percent'])) }}%"></div>
                         </div>
                         <p class="mt-1 text-[11px] text-ink-400">{{ __('budget.expense_used', ['percent' => fa_num($totals['expense_usage_percent'])]) }}</p>
@@ -330,9 +330,11 @@
                 @foreach ([BudgetLineType::Expense, BudgetLineType::Revenue] as $type)
                     @php($group = $lines->filter(fn ($l) => $l->type === $type))
                     @if ($group->isNotEmpty())
-                        <div class="overflow-hidden rounded-2xl border border-ink-100 bg-white" wire:key="group-{{ $type->value }}">
-                            <h3 class="border-b border-ink-100 bg-ink-50 px-4 py-2.5 text-xs font-bold text-ink-700">
-                                {{ $type === BudgetLineType::Expense ? __('budget.expense_lines') : __('budget.revenue_lines') }}
+                        @php($isIn = $type === BudgetLineType::Revenue)
+                        <div @class(['overflow-hidden rounded-2xl border bg-white', 'border-success-200' => $isIn, 'border-expense-200' => ! $isIn]) wire:key="group-{{ $type->value }}">
+                            <h3 @class(['flex items-center gap-2 border-b px-4 py-2.5 text-xs font-bold', 'border-success-200 bg-success-50 text-success-700' => $isIn, 'border-expense-200 bg-expense-50 text-expense-700' => ! $isIn])>
+                                <span aria-hidden="true">{{ $isIn ? '▲' : '▼' }}</span>
+                                {{ $isIn ? __('budget.revenue_lines') : __('budget.expense_lines') }}
                             </h3>
                             <ul class="divide-y divide-ink-100">
                                 @foreach ($group as $line)
@@ -354,7 +356,7 @@
                                                 @endif
                                             </div>
                                             <div class="text-end text-xs tabular-nums">
-                                                <p class="font-bold text-ink-900"><bdi>{{ $m($line->planned_amount) }}</bdi></p>
+                                                <p @class(['font-bold', 'money-in' => $isIn, 'money-out' => ! $isIn])><bdi>{{ $isIn ? '+' : '−' }}{{ $m($line->planned_amount) }}</bdi></p>
                                                 <p @class(['mt-0.5', 'font-semibold text-signal-600' => $over, 'text-ink-500' => ! $over])>
                                                     {{ __('budget.actual') }}: <bdi>{{ $m($actual) }}</bdi>
                                                 </p>
@@ -374,6 +376,7 @@
                                                 @endif
                                             @endif
                                         </div>
+                                        <x-last-action :subject="$line" />
                                     </li>
                                 @endforeach
                             </ul>
@@ -419,7 +422,7 @@
                         </div>
                         <div>
                             <label for="txDate" class="{{ $label }}">{{ __('budget.fields.date') }}</label>
-                            <input id="txDate" type="text" wire:model="txDate" dir="ltr" placeholder="۱۴۰۵/۰۸/۲۹" class="{{ $input }}">
+                            <x-jalali-picker id="txDate" wire:model="txDate" :clearable="false" />
                             @error('txDate') <p class="{{ $err }}">{{ $message }}</p> @enderror
                         </div>
                         <div class="sm:col-span-2">
@@ -464,16 +467,17 @@
                             <div class="min-w-0">
                                 <p class="text-sm font-semibold text-ink-900">{{ $tx->line?->name }}</p>
                                 <p class="mt-0.5 text-[11px] text-ink-400">
-                                    {{ fa_num(jalali($tx->date)) }}
+                                    {{ jalali_long($tx->date) }}
                                     @if ($tx->line) · {{ $tx->line->type->label() }} @endif
-                                    @if ($tx->creator) · {{ $tx->creator->name ?? phone($tx->creator->phone) }} @endif
                                 </p>
+                                <x-audit-stamp :at="$tx->created_at" :by="$tx->creator" />
                                 @if ($tx->description)
                                     <p class="mt-1 text-xs leading-5 text-ink-600">{{ $tx->description }}</p>
                                 @endif
                             </div>
                             <div class="text-end">
-                                <p class="text-sm font-bold tabular-nums text-ink-900"><bdi>{{ $m($tx->amount) }}</bdi></p>
+                                @php($txIn = $tx->line?->type === BudgetLineType::Revenue)
+                                <p @class(['text-sm font-bold tabular-nums', 'money-in' => $txIn, 'money-out' => ! $txIn])><bdi>{{ $txIn ? '+' : '−' }}{{ $m($tx->amount) }}</bdi></p>
                                 <div class="mt-2 flex flex-wrap justify-end gap-2">
                                     @if ($tx->receipt_path)
                                         <button type="button" wire:click="downloadReceipt({{ $tx->id }})" class="rounded-lg border border-ink-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-pool-700 transition-colors hover:bg-pool-50">{{ __('budget.receipt') }}</button>
@@ -537,10 +541,7 @@
                                 ])>{{ $version->status->label() }}</span>
                             </div>
                             @if ($version->approved_at)
-                                <p class="text-[11px] text-ink-400">
-                                    {{ fa_num(jalali($version->approved_at)) }}
-                                    @if ($version->approver) · {{ $version->approver->name ?? phone($version->approver->phone) }} @endif
-                                </p>
+                                <x-audit-stamp :at="$version->approved_at" :by="$version->approver" verb="تأیید شده" />
                                 <p class="text-xs tabular-nums text-ink-700">
                                     {{ __('budget.revenue') }}: <bdi>{{ $m((int) $version->total_revenue) }}</bdi> ·
                                     {{ __('budget.expense') }}: <bdi>{{ $m((int) $version->total_expense) }}</bdi> ·

@@ -47,7 +47,7 @@
                                     {{ $task->event->title }}@if ($task->committee) · {{ $task->committee->name }}@endif
                                     · {{ $task->status->label() }}
                                     @if ($task->due_at)
-                                        · @if ($task->due_at->isPast())<span class="font-semibold text-rose-600">{{ __('hr.my_overdue') }}</span>@else{{ __('hr.my_due', ['date' => jalali($task->due_at)]) }}@endif
+                                        · @if ($task->due_at->isPast())<span class="font-semibold text-rose-600">{{ __('hr.my_overdue') }}</span>@else{{ __('hr.my_due', ['date' => jalali_long($task->due_at)]) }}@endif
                                     @endif
                                 </p>
                             </li>

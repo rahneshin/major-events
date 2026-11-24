@@ -76,8 +76,8 @@ class EventForm extends Component
         $this->scale = $event->scale?->value ?? 'medium';
         $this->main_goal_type = $event->main_goal_type?->value ?? '';
         $this->description = $event->description ?? '';
-        $this->start_date_jalali = $event->start_date ? Jalali::format($event->start_date, 'Y/m/d') : '';
-        $this->end_date_jalali = $event->end_date ? Jalali::format($event->end_date, 'Y/m/d') : '';
+        $this->start_date_jalali = $event->start_date?->toDateString() ?? '';
+        $this->end_date_jalali = $event->end_date?->toDateString() ?? '';
         $this->venue_name = $event->venue_name ?? '';
         $this->city = $event->city ?? '';
         $this->province = $event->province ?? '';

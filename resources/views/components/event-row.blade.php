@@ -33,7 +33,7 @@
         @endif
         <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-400">
             @if ($event->start_date)
-                <span>{{ fa_num(jalali($event->start_date, 'Y/m/d')) }}@if ($event->end_date) تا {{ fa_num(jalali($event->end_date, 'Y/m/d')) }}@endif</span>
+                <span>{{ jalali_range($event->start_date, $event->end_date) }}</span>
             @endif
             @if (isset($event->committees_count))
                 <span>{{ fa_num((string) $event->committees_count) }} کمیته</span>

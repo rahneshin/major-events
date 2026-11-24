@@ -75,6 +75,12 @@ class EventRisk extends Component
 
     public string $ctTitle = '';
 
+    /** کمیته‌ی وظیفه‌ی کنترلیِ جدید */
+    public string $ctCommitteeId = '';
+
+    /** فیلتر کمیته برای انتخاب وظیفه‌ی موجود جهت پیوند */
+    public string $linkCommitteeId = '';
+
     public string $ctTaskId = '';
 
     // ---- فرم حادثه
@@ -161,7 +167,7 @@ class EventRisk extends Component
         $this->rControl = (string) $risk->control_actions;
         $this->rOwnerId = (string) ($risk->owner_id ?? '');
         $this->rStatus = $risk->status->value;
-        $this->rReview = $risk->review_date !== null ? fa_num((string) Jalali::format($risk->review_date)) : '';
+        $this->rReview = $risk->review_date?->toDateString() ?? '';
         $this->showRiskForm = true;
     }
 
@@ -278,6 +284,8 @@ class EventRisk extends Component
         $this->expandedRiskId = $this->expandedRiskId === $risk->id ? null : $risk->id;
         $this->ctTitle = '';
         $this->ctTaskId = '';
+        $this->ctCommitteeId = '';
+        $this->linkCommitteeId = '';
         $this->clearMessages();
     }
 
@@ -286,16 +294,37 @@ class EventRisk extends Component
     public function createControlTask(int $riskId, RiskService $service): void
     {
         $this->authorize('manage', [Risk::class, $this->event]);
-        $this->authorize('create', [Task::class, $this->event]);
         $this->clearMessages();
 
         $this->validate([
             'ctTitle' => ['nullable', 'string', 'max:200'],
-        ], [], ['ctTitle' => __('risk.control_task_title')]);
+            'ctCommitteeId' => ['nullable', 'string'],
+        ], [], ['ctTitle' => __('risk.control_task_title'), 'ctCommitteeId' => __('risk.control_task_committee')]);
+
+        $committee = null;
+
+        if ($this->ctCommitteeId !== '') {
+            // فقط کمیته‌ی همین رویداد
+            $committee = ctype_digit($this->ctCommitteeId)
+                ? $this->event->committees()->whereKey((int) $this->ctCommitteeId)->first()
+                : null;
+
+            if ($committee === null) {
+                $this->error = __('risk.committee_invalid');
+
+                return;
+            }
+        }
+
+        $this->authorize('create', [Task::class, $this->event, $committee]);
 
         try {
-            $service->createControlTask($this->findRisk($riskId), Auth::user(), ['title' => $this->ctTitle]);
+            $service->createControlTask($this->findRisk($riskId), Auth::user(), [
+                'title' => $this->ctTitle,
+                'committee_id' => $committee?->id,
+            ]);
             $this->ctTitle = '';
+            $this->ctCommitteeId = '';
             $this->notice = __('risk.task_created');
         } catch (InvalidArgumentException|LimitExceededException $e) {
             $this->error = $e->getMessage();
@@ -380,7 +409,7 @@ class EventRisk extends Component
         $this->authorize('reportIncident', [Risk::class, $this->event]);
         $this->resetIncidentForm();
         $this->section = 'incidents';
-        $this->iDate = fa_num(Jalali::today());
+        $this->iDate = now()->toDateString();
         $this->iTime = fa_num(now()->format('H:i'));
         $this->showIncidentForm = true;
     }
@@ -400,7 +429,7 @@ class EventRisk extends Component
         $this->editingIncidentId = $incident->id;
         $this->iTitle = $incident->title;
         $this->iSeverity = $incident->severity->value;
-        $this->iDate = fa_num((string) Jalali::format($incident->occurred_at));
+        $this->iDate = $incident->occurred_at->toDateString();
         $this->iTime = fa_num($incident->occurred_at->format('H:i'));
         $this->iRiskId = (string) ($incident->risk_id ?? '');
         $this->iDescription = (string) $incident->description;
@@ -544,6 +573,7 @@ class EventRisk extends Component
             'incidents' => collect(),
             'allRisks' => collect(),
             'linkableTasks' => collect(),
+            'committees' => collect(),
             'existingTemplateKeys' => [],
         ];
 
@@ -563,7 +593,17 @@ class EventRisk extends Component
         }
 
         if ($data['canManage'] && $this->expandedRiskId !== null) {
-            $data['linkableTasks'] = $this->event->tasks()->orderByDesc('id')->limit(100)->get(['id', 'title']);
+            $data['committees'] = $this->event->committees()->get(['id', 'name']);
+
+            $linkable = $this->event->tasks()->orderByDesc('id');
+
+            if ($this->linkCommitteeId === 'none') {
+                $linkable->whereNull('committee_id');
+            } elseif (ctype_digit($this->linkCommitteeId)) {
+                $linkable->where('committee_id', (int) $this->linkCommitteeId);
+            }
+
+            $data['linkableTasks'] = $linkable->limit(100)->get(['id', 'title', 'committee_id']);
         }
 
         return view('livewire.events.event-risk', $data);

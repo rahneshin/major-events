@@ -20,9 +20,36 @@ if (! function_exists('fa_num')) {
 }
 
 if (! function_exists('jalali')) {
-    function jalali(\Carbon\Carbon|string|null $date, string $format = 'Y/m/d'): ?string
+    function jalali(\Carbon\CarbonInterface|string|null $date, string $format = 'Y/m/d'): ?string
     {
         return Jalali::format($date, $format);
+    }
+}
+
+if (! function_exists('jalali_long')) {
+    /** «نهم تیر ۱۴۰۵» (ارقام فارسی، بدون ساعت) */
+    function jalali_long(\Carbon\CarbonInterface|string|null $date, bool $withYear = true): string
+    {
+        return fa_num(Jalali::long($date, $withYear) ?? '—');
+    }
+}
+
+if (! function_exists('jalali_range')) {
+    /** «نهم تیر تا هفتم آبان ۱۴۰۵» */
+    function jalali_range(\Carbon\CarbonInterface|string|null $from, \Carbon\CarbonInterface|string|null $to = null): string
+    {
+        return fa_num(Jalali::range($from, $to) ?? '—');
+    }
+}
+
+if (! function_exists('person_name')) {
+    function person_name(?\App\Models\User $user): string
+    {
+        if ($user === null) {
+            return 'کاربر حذف‌شده';
+        }
+
+        return $user->name ?: (phone($user->phone) ?? '—');
     }
 }
 

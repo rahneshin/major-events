@@ -1,27 +1,26 @@
 <div>
     @section('page_title', $event->title)
 
-    <div class="mb-6 overflow-hidden rounded-3xl bg-gradient-to-l from-indigo-600 via-violet-600 to-fuchsia-600 p-6 text-white shadow-xl shadow-indigo-500/20 sm:p-7">
+    <div class="mb-6 overflow-hidden rounded-3xl bg-gradient-to-l from-pool-700 via-pool-800 to-ink-900 p-6 text-white shadow-xl shadow-pool-900/20 sm:p-7">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
                 <div class="mb-2 flex flex-wrap items-center gap-2">
                     <span class="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold backdrop-blur">
                         {{ $event->status?->label() }}
                     </span>
-                    <span class="text-xs text-indigo-100">{{ $event->event_type?->label() }}</span>
+                    <span class="text-xs text-pool-100">{{ $event->event_type?->label() }}</span>
                 </div>
                 <h2 class="text-2xl font-bold">{{ $event->title }}</h2>
-                <p class="mt-1 text-sm text-indigo-100">
+                <p class="mt-1 text-sm text-pool-100">
                     @if ($event->city) {{ $event->city }} @endif
                     @if ($event->start_date)
-                        · {{ fa_num(jalali($event->start_date, 'Y/m/d')) }}
-                        @if ($event->end_date) – {{ fa_num(jalali($event->end_date, 'Y/m/d')) }} @endif
+                        · {{ jalali_range($event->start_date, $event->end_date) }}
                     @endif
                 </p>
             </div>
             <div class="flex flex-wrap gap-2">
                 @if ($canUpdate)
-                    <a href="{{ route('events.edit', $event) }}" class="inline-flex items-center rounded-xl bg-white px-4 py-2 text-xs font-bold text-indigo-700 shadow-md transition hover:bg-indigo-50">
+                    <a href="{{ route('events.edit', $event) }}" class="inline-flex items-center rounded-xl bg-white px-4 py-2 text-xs font-bold text-pool-700 shadow-md transition hover:bg-pool-50">
                         {{ __('ui.edit') }}
                     </a>
                 @endif
@@ -30,9 +29,10 @@
                 </a>
             </div>
         </div>
+        <x-last-action class="mt-4 !text-pool-100/80" :subject="$event" />
     </div>
 
-    <div class="mb-5 flex gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white p-1 text-xs font-medium shadow-sm">
+    <div class="sticky top-14 z-20 mb-5 flex gap-1 overflow-x-auto rounded-xl border border-ink-200 bg-white/95 p-1 text-xs font-medium shadow-sm backdrop-blur">
         @foreach ([
             'overview' => __('event.tab_overview'),
             'members' => __('event.tab_members'),
@@ -43,7 +43,7 @@
         ] as $key => $label)
             <button type="button" wire:click="setTab('{{ $key }}')"
                 class="shrink-0 rounded-lg px-3.5 py-2.5 transition font-semibold
-                {{ $tab === $key ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25' : 'text-slate-600 hover:bg-slate-50' }}">
+                {{ $tab === $key ? 'bg-pool-700 text-white shadow-md shadow-pool-700/25' : 'text-ink-600 hover:bg-ink-50' }}">
                 {{ $label }}
             </button>
         @endforeach

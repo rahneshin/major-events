@@ -454,6 +454,7 @@ export function registerJalali(Alpine) {
         jy: 0,
         jm: 0,
         today: '',
+        pos: '',
         months: MONTHS,
         weekdaysShort: WEEKDAYS_SHORT,
 
@@ -488,7 +489,34 @@ export function registerJalali(Alpine) {
 
             if (this.open) {
                 this.syncView();
+                this.place();
             }
+        },
+
+        /**
+         * پاپ‌آپ position:fixed است تا داخل مودال/کارت‌های overflow دار بریده نشود؛
+         * مختصات از روی دکمه محاسبه می‌شود و اگر پایین جا نبود، بالای دکمه باز می‌شود.
+         */
+        place() {
+            const btn = this.$refs.btn;
+
+            if (!btn) {
+                return;
+            }
+
+            const r = btn.getBoundingClientRect();
+            const w = 288;
+            const h = 380;
+            const m = 8;
+            let left = document.documentElement.dir === 'rtl' ? r.right - w : r.left;
+            left = Math.max(m, Math.min(left, window.innerWidth - w - m));
+            let top = r.bottom + 6;
+
+            if (top + h > window.innerHeight - m && r.top - h - 6 > m) {
+                top = r.top - h - 6;
+            }
+
+            this.pos = `top:${Math.max(m, top)}px;left:${left}px`;
         },
 
         prev() {
