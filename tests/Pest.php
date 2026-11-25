@@ -101,3 +101,53 @@ function tk_blocked(callable $action): void
 
     expect(true)->toBeTrue();
 }
+
+/*
+|--------------------------------------------------------------------------
+| Sponsorship helpers (Step 11)
+|--------------------------------------------------------------------------
+|
+| Prefixed `sp_`; shared by several Sponsorship test files so each file can run alone.
+|
+*/
+
+function sp_service(): \App\Services\SponsorshipService
+{
+    return app(\App\Services\SponsorshipService::class);
+}
+
+/**
+ * @param  array<string, mixed>  $data
+ */
+function sp_sponsor(Event $event, User $actor, array $data = []): \App\Models\Sponsor
+{
+    return sp_service()->createSponsor($event, $actor, array_merge([
+        'name' => 'اسپانسر '.fake()->unique()->numerify('###'),
+        'category' => 'banking',
+        'cash_value' => 1_000_000,
+        'in_kind_value' => 500_000,
+    ], $data));
+}
+
+/**
+ * @param  array<string, mixed>  $data
+ */
+function sp_asset(Event $event, User $actor, array $data = []): \App\Models\SponsorshipAsset
+{
+    return sp_service()->createAsset($event, $actor, array_merge([
+        'name' => 'بنر '.fake()->unique()->numerify('###'),
+        'type' => 'signage',
+        'inventory' => 3,
+        'price' => 200_000,
+    ], $data));
+}
+
+/**
+ * @param  array<string, mixed>  $data
+ */
+function sp_deliverable(\App\Models\Sponsor $sponsor, User $actor, array $data = []): \App\Models\SponsorDeliverable
+{
+    return sp_service()->addDeliverable($sponsor, $actor, array_merge([
+        'commitment' => 'نصب بنر در ورودی',
+    ], $data));
+}

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Enums\CampaignStatus;
 use App\Enums\MilestoneStatus;
+use App\Enums\SponsorStatus;
 use App\Enums\RiskStatus;
 use App\Enums\TaskStatus;
 use App\Models\ActivityLog;
@@ -33,6 +35,8 @@ class ActivityDescriber
                 str_starts_with($log->action, 'task.') => TaskStatus::tryFrom($to)?->label(),
                 str_starts_with($log->action, 'risk.') => RiskStatus::tryFrom($to)?->label(),
                 str_starts_with($log->action, 'milestone.') => MilestoneStatus::tryFrom($to)?->label(),
+                str_starts_with($log->action, 'sponsor.') => SponsorStatus::tryFrom($to)?->label(),
+                str_starts_with($log->action, 'campaign.') => CampaignStatus::tryFrom($to)?->label(),
                 default => null,
             };
 

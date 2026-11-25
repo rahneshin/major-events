@@ -33,7 +33,7 @@ class EventShow extends Component
         $this->event = $event->load(['goals', 'organization', 'creator', 'members']);
 
         $requested = request()->query('tab');
-        if (is_string($requested) && in_array($requested, ['overview', 'members', 'committees', 'tasks', 'budget', 'risk'], true)) {
+        if (is_string($requested) && in_array($requested, ['overview', 'members', 'committees', 'tasks', 'budget', 'risk', 'sponsorship', 'marketing'], true)) {
             $this->tab = $requested;
         }
     }

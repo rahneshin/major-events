@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -155,6 +156,36 @@ class Event extends Model
     public function milestones(): HasMany
     {
         return $this->hasMany(Milestone::class);
+    }
+
+    public function sponsors(): HasMany
+    {
+        return $this->hasMany(Sponsor::class);
+    }
+
+    public function sponsorshipAssets(): HasMany
+    {
+        return $this->hasMany(SponsorshipAsset::class);
+    }
+
+    public function sponsorshipPackages(): HasMany
+    {
+        return $this->hasMany(SponsorshipPackage::class);
+    }
+
+    public function sponsorDeliverables(): HasMany
+    {
+        return $this->hasMany(SponsorDeliverable::class);
+    }
+
+    public function marketingPlan(): HasOne
+    {
+        return $this->hasOne(MarketingPlan::class);
+    }
+
+    public function campaignItems(): HasMany
+    {
+        return $this->hasMany(CampaignItem::class);
     }
 
     public function invitations(): HasMany

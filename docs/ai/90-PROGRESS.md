@@ -15,10 +15,10 @@
 | Pest / Larastan / Pint | 5.3.7 / 3.15.0 / 1.32.3 (قفل‌شده) |
 | دیتابیس | SQLite (تا Step 16) |
 | مخزن Git | https://github.com/rahneshin/major-events |
-| شاخه‌ی کاری فعلی | `step/10-final-calender` (آخرین سر؛ قبلاً `step/10-risk`) (از سر `feat/hr-invite` @ `e775e53`؛ شامل 01 تا 07 + UI-2 + 06B + 08a + 09 + 08b/08c + منابع انسانی + 10) |
+| شاخه‌ی کاری فعلی | `step/11-sponsorship` (روی سر `fix/panel-review`؛ قبلاً `step/10-final-calender`) (از سر `feat/hr-invite` @ `e775e53`؛ شامل 01 تا 07 + UI-2 + 06B + 08a + 09 + 08b/08c + منابع انسانی + 10) |
 | شاخه‌ی اصلی | `main` — هنوز فقط Step 00؛ **مرج نشده** (مشکل ۴) |
-| آخرین مرحله‌ی DONE | **10** (ریسک؛ کد و تست نوشته شد، **اجرا توسط امیر**)، **منابع انسانی** (`feat/hr-invite`)، **08b + 08c**، 09، 08a، 06B، 07، UI-2 |
-| مرحله‌ی بعدی | **11** (اسپانسرینگ و بازاریابی) |
+| آخرین مرحله‌ی DONE | **11** (اسپانسرینگ و بازاریابی؛ کد و تست نوشته شد، **اجرا توسط امیر**)، **10** (ریسک؛ کد و تست نوشته شد، **اجرا توسط امیر**)، **منابع انسانی** (`feat/hr-invite`)، **08b + 08c**، 09، 08a، 06B، 07، UI-2 |
+| مرحله‌ی بعدی | **12** (مسابقات 12A–12F) |
 | تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۹/۰۴ (10-fix: بازبینی پنل‌ها) |
 
 ### توپولوژی شاخه‌ها (بررسی‌شده با `git merge-base --is-ancestor`)
@@ -59,7 +59,7 @@
 | 08c | Kanban، تقویم، وظایف من، یادآور | ✅ (کد و تست نوشته شد؛ اجرا با امیر) | step/08b-08c-tasks-ui | Pest نوشته شد | کانبان (drag بومی + منوی وضعیت)، تقویم شمسی، صفحه‌ی «وظایف من»، `tasks:remind` + اعلان |
 | 09 | بودجه و درآمد | ✅ (کد و تست نوشته شد؛ اجرای تست‌ها و migration با امیر) | step/09-budget | Pest نوشته شد | خطوط، تراکنش، رسید، نسخه‌ی مصوب/قفل، هشدار اضافه‌هزینه، سربه‌سر؛ تب «بودجه» در هاب رویداد |
 | 10 | ریسک و حادثه | ✅ (کد و تست نوشته شد؛ اجرای تست‌ها و migration با امیر) | step/10-risk | Pest نوشته شد | ثبت ریسک با امتیاز احتمال×اثر، ماتریس ۵×۵ (سازمانی)، چک‌لیست‌های پیشنهادی (پزشکی/آب‌وهوا/جمعیت/تخلیه)، وظیفه‌ی کنترلی، ثبت حادثه؛ تب «ریسک» در هاب رویداد |
-| 11 | اسپانسرینگ و بازاریابی | ⬜ | | | |
+| 11 | اسپانسرینگ و بازاریابی | ✅ (کد و تست نوشته شد؛ اجرای تست‌ها و migration با امیر) | step/11-sponsorship | Pest نوشته شد | اسپانسر با وضعیت‌های جذب→قرارداد→تحویل، دارایی با موجودی، بسته‌ی اسپانسری، پیگیری تعهد با هشدار موعد و مدرک، پیوند به وظیفه‌ی روز رویداد؛ برنامه‌ی بازاریابی، تقویم محتوا (قبل/حین/بعد) و KPI؛ تب‌های «اسپانسرینگ» و «بازاریابی»؛ فقط حساب سازمانی |
 | 12 | مسابقات (12A–12F) | ⬜ | | | `competition_id` روی tasks در 12F اضافه می‌شود |
 | 13 | داشبورد و اعلان | ⬜ | | | |
 | 14 | خروجی گرفتن | ⬜ | | | |
@@ -139,6 +139,17 @@
 | ۱۴۰۵/۰۹/۰۲ | «ساخت وظیفه‌ی کنترلی» از `TaskService::create` با `module=risk` استفاده می‌کند (محدودیت طرح اعمال می‌شود)؛ اولویت از سطح ریسک: بحرانی=فوری، زیاد=بالا، بقیه=متوسط؛ شرح وظیفه = اقدام‌های کنترلی ریسک | استفاده‌ی مجدد از منطق 08a | سرویس جدا برای وظیفه | 10 |
 | ۱۴۰۵/۰۹/۰۲ | چک‌لیست‌های پیشنهادی در `config/risk.php` (ثابت، ۴ قالب × ۳ مورد)؛ فقط «قالب» با برچسب «پیشنهاد؛ نیازمند تأیید متخصص»؛ هر مورد با `template_key` یکتا فقط یک‌بار به هر رویداد اضافه می‌شود | قانون: ادعای تخصصی قطعی نداریم | جدول قالب در DB | 10 |
 | ۱۴۰۵/۰۹/۰۲ | شماره‌ی migration ریسک ۴۰ (`2026_11_26_000040`) | هم‌پیشوند نشدن با migrationهای منابع انسانی (۳۰ و ۳۱) | ۱۲ | 10 |
+| ۱۴۰۵/۰۹/۰۵ | Step 11 روی سر `fix/panel-review` (آخرین پوش) ساخته شد؛ `main` هنوز فقط Step 00 است | آخرین زنجیره‌ی کار | مرج به main | 11 |
+| ۱۴۰۵/۰۹/۰۵ | ماژول اسپانسرینگ **و** بازاریابی هر دو پشت یک ویژگی `sponsorship` (فقط حساب سازمانی، `*` در `config/plans.php`)؛ حساب عادی در UI فقط پیام ارتقا می‌بیند و سرویس‌ها هر نوشتنی را رد می‌کنند | سند: «ماژول فقط برای حساب سازمانی» | کلید جدا برای بازاریابی | 11 |
+| ۱۴۰۵/۰۹/۰۵ | جدول‌های `sponsorship_packages` و `sponsorship_package_asset` نسبت به سند اضافه شد؛ `sponsors.package_id` اختیاری؛ ستون `kpi` سند به `kpi_metric/kpi_target/kpi_actual` شکسته شد؛ `sponsor_deliverables.event_id` برای محدودسازی tenant تکرار شد و `quantity` اضافه شد | «بسته = تجمیع دارایی‌ها» و KPI قابل‌سنجش بدون جدول/ستون ممکن نیست | JSON برای بسته | 11 |
+| ۱۴۰۵/۰۹/۰۵ | وضعیت اسپانسر: prospect→negotiating→signed→delivered و lost؛ «delivered» فقط وقتی تعهد بازی نمانده؛ «lost» تعهدهای باز را لغو می‌کند و موجودی را آزاد؛ delivered→signed مجاز (بازگشایی) | قاعده‌ی تحویل و آزادسازی موجودی | انتقال آزاد | 11 |
+| ۱۴۰۵/۰۹/۰۵ | موجودی دارایی = مجموع `quantity` تعهدهای غیرلغوشده ≤ `inventory`؛ کاهش موجودی زیر تخصیص و حذف دارایی در حال استفاده رد می‌شود؛ ساخت تعهد از بسته همه‌یا‌هیچ است | جلوگیری از فروش بیش‌ازحد | رزرو نرم | 11 |
+| ۱۴۰۵/۰۹/۰۵ | تعهد معوق = `due_at` گذشته و وضعیت pending/in_progress؛ «نزدیک» = تا `config/sponsorship.due_soon_days` (۷) روز؛ هشدار فقط در UI (اعلان واقعی در Step 13) | سند: «هشدار موعد»؛ اعلان‌ها در 13 | فرمان `sponsorship:remind` | 11 |
+| ۱۴۰۵/۰۹/۰۵ | ⚠️ دسترسی: `manage` = EventPolicy@update؛ `viewModule` = مدیریت + رئیس کمیته + عضو (viewer و غیرعضو هیچ)؛ ارقام و اطلاعات تماس فقط برای `manage` در UI؛ بازاریابی (`view`) برای همه‌ی اعضای رویداد شفاف است | قراردادها حساس‌اند مثل بودجه؛ تقویم محتوا عملیاتی است | دسترسی مسئول وظیفه‌ی پیوندی | 11 |
+| ۱۴۰۵/۰۹/۰۵ | پیوند تعهد↔وظیفه با `sponsor_deliverables.task_id` (یک وظیفه برای هر تعهد)؛ ساخت از `TaskService::create` با `module=sponsorship`, `phase=during`, اولویت بالا، موعد = پایان روز؛ وظیفه‌ی حذف‌شده پیوند را آزاد می‌کند؛ همگام‌سازی خودکار وضعیت وظیفه↔تعهد نداریم | استفاده‌ی مجدد از 08a؛ سادگی | همگام‌سازی دوطرفه | 11 |
+| ۱۴۰۵/۰۹/۰۵ | مدرک تحویل روی دیسک خصوصی `local` (`sponsor-evidence/{event}`، PDF/JPG/PNG تا ۵ مگابایت)، دانلود فقط با اکشن Livewire دارای authorize؛ حذف تعهد فایل را برای ممیزی نگه می‌دارد | هم‌سو با رسید بودجه | دیسک عمومی | 11 |
+| ۱۴۰۵/۰۹/۰۵ | بازاریابی: یک برنامه برای هر رویداد (`marketing_plans.event_id` یکتا)؛ مرحله‌ی تقویم همان `TaskPhase`؛ مسئول فقط عضو غیر-viewer؛ آیتم لغوشده در جمع KPI نمی‌آید؛ برداشتن شاخص، هدف و مقدار واقعی را پاک می‌کند | سند: برنامه + تقویم + KPI | enum جدا برای مرحله | 11 |
+| ۱۴۰۵/۰۹/۰۵ | شماره‌ی migration اسپانسرینگ ۵۰ (`2026_11_27_000050`) | هم‌پیشوند نشدن با قبلی‌ها | | 11 |
 
 | ۱۴۰۵/۰۹/۰۱ | `blocked` فقط خودکار؛ دستی قابل‌انتخاب نیست؛ هنگام وجود پیش‌نیاز ناتمام فقط `cancelled` مجاز است | قاعده‌ی «blocked خودکار» سند | blocked دستی با دلیل | 08a |
 | ۱۴۰۵/۰۹/۰۱ | آزادشدن blocked ← `todo` (وضعیت قبلی `doing` ذخیره نمی‌شود) | سادگی | ستون وضعیت قبلی | 08a |
@@ -254,6 +265,16 @@
 - Config/Lang: `config/risk.php` (چک‌لیست‌ها)، `lang/fa/risk.php`؛ `risk_basic` در `config/plans.php`
 - Tests: `tests/Unit/RiskLevelTest.php`, `tests/Feature/Risk/{RiskServiceTest,RiskAccessTest}.php`
 
+### Sponsorship & Marketing (11)
+- Migration: `2026_11_27_000050_create_sponsorship_tables` (`sponsorship_packages`, `sponsorship_assets`, `sponsorship_package_asset`, `sponsors`, `sponsor_deliverables`, `marketing_plans`, `campaign_items`)
+- Models: `Sponsor`, `SponsorshipAsset`, `SponsorshipPackage`, `SponsorDeliverable`, `MarketingPlan`, `CampaignItem` (+ رابطه‌ها در `Event`)
+- Enums: `SponsorStatus`, `SponsorCategory`, `AssetType`, `DeliverableStatus`, `CampaignStatus`, `CampaignChannel`, `KpiMetric` (مرحله‌ی تقویم = `TaskPhase`)
+- Services: `SponsorshipService` (اسپانسر، دارایی/موجودی، بسته، تعهد، مدرک، وظیفه، خلاصه و هشدار)، `MarketingService` (برنامه، تقویم، KPI)
+- Policies: `SponsorPolicy` (`viewModule`, `manage`)، `CampaignItemPolicy` (`view`, `manage`)
+- Livewire/View: `Events/EventSponsorship`, `Events/EventMarketing` + `livewire/events/event-{sponsorship,marketing}.blade.php`؛ تب‌های `sponsorship` و `marketing` در `event-show.blade.php`/`EventShow`
+- Config/Lang: `config/sponsorship.php`، `lang/fa/{sponsorship,marketing}.php`؛ کلیدهای تب در `lang/fa/event.php`؛ اکشن‌ها در `lang/fa/activity.php` و `ActivityDescriber`
+- Tests: `tests/Unit/SponsorStatusTest.php`, `tests/Feature/Sponsorship/{SponsorshipServiceTest,SponsorshipAccessTest}.php`, `tests/Feature/Marketing/MarketingServiceTest.php`؛ helperهای `sp_*` در `tests/Pest.php`
+
 ### UI (UI و UI-2)
 - layouts: public, app, admin, guest (**public و app = قالب جدید UI-2**؛ admin/guest قدیمی)
 - Blade components: button, input, textarea, select, card, badge, modal, toast, empty-state, pagination, confirm-dialog, page-header, date-picker + **UI-2:** brand-mark, lane-rope, lanes, event-row
@@ -327,6 +348,17 @@
 ---
 
 ## ۷. Changelog
+
+## UPDATE — Step 11 — اسپانسرینگ و بازاریابی — ۱۴۰۵/۰۹/۰۵
+
+Status: DONE (کد نوشته شد؛ **هیچ تست/آرتیسان/مایگریشن/PHP اجرا نشد**)
+Branch: step/11-sponsorship (روی سر `fix/panel-review`)
+Files created: [migration 000050، ۶ مدل، ۷ enum، SponsorshipService، MarketingService، SponsorPolicy، CampaignItemPolicy، EventSponsorship، EventMarketing + ۲ ویو، config/sponsorship.php، lang/fa/sponsorship.php و marketing.php، ۴ فایل تست + Unit/SponsorStatusTest]
+Files modified: [Event (رابطه‌ها)، EventShow و event-show (دو تب)، lang/fa/event.php و activity.php، ActivityDescriber، tests/Pest.php (helperهای sp_*)، این فایل]
+Decision: [جزئیات در Decision Log، ردیف‌های ۱۱]
+Tests: [Unit: SponsorStatus؛ Feature: SponsorshipService (طرح، وضعیت‌ها، موجودی، بسته، موعد/هشدار، مدرک، وظیفه)، SponsorshipAccess (ماتریس مجوز، tenant، واحد تومان، مخفی‌بودن تماس برای عضو)، MarketingService (برنامه، تقویم، KPI، مسئول، طرح، Livewire)] — نوشته شد، اجرا نشد
+Known issues / TODO: [امیر: `php artisan migrate && php artisan test && ./vendor/bin/pint --test && ./vendor/bin/phpstan analyse`؛ تأیید فرض‌های ⚠️ (دسترسی عضو/رئیس کمیته، پنهان‌بودن ارقام و تماس، وضعیت‌های اسپانسر)؛ اتصال حمایت قطعی نقدی به درآمد بودجه و اعلان موعد تعهد در Step 13؛ مرور بصری دو تب جدید در عرض ~۳۶۰px]
+Next suggested step: 12 (مسابقات)
 
 ## UPDATE — 10-fix — بازبینی پنل‌ها، فرم وظیفه، تقویم، ممیزی — ۱۴۰۵/۰۹/۰۴
 
