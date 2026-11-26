@@ -17,8 +17,8 @@
 | مخزن Git | https://github.com/rahneshin/major-events |
 | شاخه‌ی کاری فعلی | `step/11-sponsorship` (روی سر `fix/panel-review`؛ قبلاً `step/10-final-calender`) (از سر `feat/hr-invite` @ `e775e53`؛ شامل 01 تا 07 + UI-2 + 06B + 08a + 09 + 08b/08c + منابع انسانی + 10) |
 | شاخه‌ی اصلی | `main` — هنوز فقط Step 00؛ **مرج نشده** (مشکل ۴) |
-| آخرین مرحله‌ی DONE | **11** (اسپانسرینگ و بازاریابی؛ کد و تست نوشته شد، **اجرا توسط امیر**)، **10** (ریسک؛ کد و تست نوشته شد، **اجرا توسط امیر**)، **منابع انسانی** (`feat/hr-invite`)، **08b + 08c**، 09، 08a، 06B، 07، UI-2 |
-| مرحله‌ی بعدی | **12** (مسابقات 12A–12F) |
+| آخرین مرحله‌ی DONE | **13** (داشبورد و اعلان‌ها؛ کد و تست نوشته شد، **اجرا توسط امیر**)، **11** (اسپانسرینگ و بازاریابی)، **10** (ریسک)، **منابع انسانی** (`feat/hr-invite`)، **08b + 08c**، 09، 08a، 06B، 07، UI-2 |
+| مرحله‌ی بعدی | **12** (مسابقات 12A–12F)، سپس **14** (خروجی) |
 | تاریخ آخرین به‌روزرسانی | ۱۴۰۵/۰۹/۰۴ (10-fix: بازبینی پنل‌ها) |
 
 ### توپولوژی شاخه‌ها (بررسی‌شده با `git merge-base --is-ancestor`)
@@ -61,7 +61,7 @@
 | 10 | ریسک و حادثه | ✅ (کد و تست نوشته شد؛ اجرای تست‌ها و migration با امیر) | step/10-risk | Pest نوشته شد | ثبت ریسک با امتیاز احتمال×اثر، ماتریس ۵×۵ (سازمانی)، چک‌لیست‌های پیشنهادی (پزشکی/آب‌وهوا/جمعیت/تخلیه)، وظیفه‌ی کنترلی، ثبت حادثه؛ تب «ریسک» در هاب رویداد |
 | 11 | اسپانسرینگ و بازاریابی | ✅ (کد و تست نوشته شد؛ اجرای تست‌ها و migration با امیر) | step/11-sponsorship | Pest نوشته شد | اسپانسر با وضعیت‌های جذب→قرارداد→تحویل، دارایی با موجودی، بسته‌ی اسپانسری، پیگیری تعهد با هشدار موعد و مدرک، پیوند به وظیفه‌ی روز رویداد؛ برنامه‌ی بازاریابی، تقویم محتوا (قبل/حین/بعد) و KPI؛ تب‌های «اسپانسرینگ» و «بازاریابی»؛ فقط حساب سازمانی |
 | 12 | مسابقات (12A–12F) | ⬜ | | | `competition_id` روی tasks در 12F اضافه می‌شود |
-| 13 | داشبورد و اعلان | ⬜ | | | |
+| 13 | داشبورد و اعلان | ✅ (کد و تست نوشته شد؛ اجرا با امیر) | step/13-dashboard-notifications | Pest نوشته شد | داشبورد رویداد (تب)، داشبورد خانه (وظایف من + دعوت‌ها)، اعلان‌ها (database + sms)، ترجیحات، سقف پیامک، Job صف‌شده با retry/backoff، زنگوله، مرکز کنترل روز رویداد |
 | 14 | خروجی گرفتن | ⬜ | | | |
 | 15 | پایگاه دانش: آپلود/استخراج | ⬜ | | | |
 | 16 | Chunk/Embedding/جست‌وجو | ⬜ | | | |
@@ -175,6 +175,17 @@
 | ۱۴۰۵/۰۹/۰۱ | محدودیت‌های لیست: حداکثر ۳۰۰ ردیف (`config/tasks.php` ← `list_limit`) با پیام؛ رویداد بایگانی/لغوشده فقط‌خواندنی (UI + اکشن‌ها) | کارایی و قانون وضعیت رویداد | pagination | 08b |
 | ۱۴۰۵/۰۹/۰۱ | کانبان/تقویم/«وظایف من» برای همه‌ی پلن‌ها (بدون گیت ویژگی) | سند محدودیتی ننوشته | گیت `tasks_full` | 08c |
 
+| ۱۴۰۵/۰۹/۰۵ | Step 13 از سر `fix/panel-review` (@ `4050bc6`) ساخته شد؛ به 11 و 12 (مدل دیگر) وابسته نیست و به جدول/مدل آن‌ها ارجاع ندارد. شماره‌ی migration ۱۳۰ (`2026_12_01_000130`) تا با 11/12 هم‌پیشوند نشود | هم‌زمانی با مدل دیگر | ۵۰ | 13 |
+| ۱۴۰۵/۰۹/۰۵ | همه‌ی اعلان‌ها از پایه‌ی `AppNotification` می‌آیند: کانال‌ها از `NotificationPreferenceService::channels()` (in-app پیش‌فرض؛ پیامک فقط وقتی خود اعلان «مهم» باشد و ترجیح کاربر روشن و سقف روزانه پر نشده باشد) | کنترل هزینه‌ی پیامک؛ سند: فقط موارد مهم | پیامک برای همه‌ی اعلان‌ها | 13 |
+| ۱۴۰۵/۰۹/۰۵ | «مهم» = تخصیص وظیفه‌ی `urgent`، `due_soon` (نه overdue)، اطلاعیه‌ی علامت‌خورده «فوری»؛ پیامک دعوت همچنان مستقیم از `HumanResourceService` (گیرنده ممکن است هنوز کاربر نباشد) | دعوت‌شده‌ی بدون حساب اعلان in-app ندارد | عبور دعوت از ترجیحات | 13 |
+| ۱۴۰۵/۰۹/۰۵ | سقف پیامک: ۵ در روز برای هر کاربر (`config/notifications.php` ← `sms.per_user_per_day`، روز به وقت تهران) و ۳ اطلاعیه‌ی پیامکی در روز برای هر رویداد؛ با `RateLimiter` (کش) بدون جدول | ساده و بدون migration اضافه | جدول sms_logs | 13 |
+| ۱۴۰۵/۰۹/۰۵ | اعلان‌ها صف‌شده نیستند (in-app فوری)؛ **فقط ارسال پیامک** Job صف‌شده است (`SendSmsMessage`: ۳ تلاش، backoff ۳۰ و ۱۲۰ ثانیه، پاسخ `false` = شکست، `failed()` خطا را در لاگ می‌نویسد با شماره‌ی ماسک‌شده) | بدون وابستگی به `queue:work` برای دیده‌شدن اعلان درون‌برنامه | صف‌کردن همه‌ی اعلان‌ها | 13 |
+| ۱۴۰۵/۰۹/۰۵ | اعلان «به شما وظیفه سپرده شد» با `TaskObserver` (ثبت در `NotificationServiceProvider`) و بدون دست‌زدن به `TaskService`؛ فقط وقتی کاربر واردشده‌ای اقدام کرده، نه خودِ مجری، فقط assignee فعال در رویداد فعال | تداخل نکردن با 12F (تغییر Task/TaskService) و سکوت در seed/کنسول/تست‌های قدیمی | hook داخل TaskService | 13 |
+| ۱۴۰۵/۰۹/۰۵ | داشبورد رویداد = تب `dashboard`، مرکز کنترل = تب `control` در هاب؛ هر بخش همان Policy تب خودش را دارد (مجموع بودجه ← `viewSummary`، ریسک ← `viewRegister`؛ فعالیت‌های `budget.*` برای بیننده پنهان) | بیننده از داشبورد چیزی نبیند که تب بودجه پنهان می‌کند | نمایش همه به همه | 13 |
+| ۱۴۰۵/۰۹/۰۵ | «کمیته‌ی عقب‌افتاده» = کمیته‌ای که حداقل یک وظیفه‌ی باز با موعد گذشته دارد (blocked هم باز است)؛ مرتب بر اساس تعداد تأخیر | سند تعریف نداشت؛ فرض ماست (⚠️ امیر تأیید کند) | درصد پیشرفت زیر آستانه | 13 |
+| ۱۴۰۵/۰۹/۰۵ | مرکز کنترل: فقط وظایف فاز `during` (برگ‌ها)، حوادث بازِ حل‌نشده، اطلاعیه‌ی سریع؛ دیدن = `view`، ارسال اطلاعیه = `update` و فقط رویداد فعال؛ اطلاعیه‌ها در `event_announcements` ذخیره و برای اعضا (جز فرستنده) اعلان می‌شوند | نسخه‌ی اولیه‌ی سند | کانال زنده/WebSocket | 13 |
+| ۱۴۰۵/۰۹/۰۵ | دعوت‌های pending در داشبورد خانه با تطبیق شماره‌ی خود کاربر دیده و با `HumanResourceService::accept` پذیرفته می‌شوند (بدون نیاز به توکن خام) | مشکل ۱۴ | ساخت لینک از توکن هش‌شده (ممکن نیست) | 13 |
+
 ### تصمیم‌های باز
 - [ ] سرویس پیامک ایرانی (Step 02/13)
 - [ ] RAG داخل Laravel یا FastAPI (Step 15)
@@ -184,7 +195,9 @@
 - [x] **08c:** Kanban — بدون پکیج (drag بومی + منوی وضعیت)؛ اگر UX لمسی کافی نبود، SortableJS بعداً اضافه شود
 - [x] **08a:** سقف حجم پیوست وظایف — با پیشنهاد سند پیاده شد (۵MB / ۲۰MB)؛ قابل تغییر در `config/tasks.php` و `config/plans.php`
 - [ ] **08a:** آیا `viewer` اجازه‌ی کامنت داشته باشد؟ (فعلاً نه)
-- [ ] **13:** اعلان «به شما وظیفه سپرده شد» + ارسال SMS یادآورها (فعلاً فقط اعلان درون‌برنامه‌ای برای یادآور)
+- [x] **13:** اعلان «به شما وظیفه سپرده شد» + SMS یادآورها (انجام شد؛ پیامک فقط موارد مهم و با سقف روزانه)
+- [ ] **13:** سرویس پیامک واقعی هنوز وصل نیست (`SMS_DRIVER=log`)؛ برای ارسال صف‌شده در production باید `php artisan queue:work` اجرا شود
+- [ ] **13:** تعریف «کمیته‌ی عقب‌افتاده» و دیدن ریسک/حادثه توسط بیننده را امیر تأیید کند
 
 ---
 
@@ -275,6 +288,18 @@
 - Config/Lang: `config/sponsorship.php`، `lang/fa/{sponsorship,marketing}.php`؛ کلیدهای تب در `lang/fa/event.php`؛ اکشن‌ها در `lang/fa/activity.php` و `ActivityDescriber`
 - Tests: `tests/Unit/SponsorStatusTest.php`, `tests/Feature/Sponsorship/{SponsorshipServiceTest,SponsorshipAccessTest}.php`, `tests/Feature/Marketing/MarketingServiceTest.php`؛ helperهای `sp_*` در `tests/Pest.php`
 
+### Dashboard & Notifications (13)
+- Migration: `2026_12_01_000130_create_notification_preferences_and_announcements` (`notification_preferences`, `event_announcements`)
+- Models: `NotificationPreference`, `EventAnnouncement`
+- Services: `DashboardService` (forEvent / controlCenter / forUser / countdown)، `NotificationPreferenceService` (کانال‌ها، ترجیحات، سقف پیامک)، `AnnouncementService`
+- Notifications: پایه‌ی `AppNotification`؛ `TaskAssigned`، `EventAnnouncementPosted`؛ `TaskDueReminder` و `AddedToCommittee` به پایه‌ی جدید منتقل شدند؛ کانال `Channels\SmsChannel`
+- Job: `Jobs\SendSmsMessage` (۳ تلاش، backoff، `failed()` ← لاگ)
+- Observer/Provider: `Observers\TaskObserver`، `Providers\NotificationServiceProvider` (در `bootstrap/providers.php`)
+- Support: `NotificationLink`
+- Livewire/View: `Events\EventDashboard`، `Events\EventControlCenter`، `Notifications\NotificationBell`، `Notifications\NotificationCenter`؛ تب‌های `dashboard` و `control` در `event-show.blade.php`؛ زنگوله و لینک اعلان‌ها در `layouts/app.blade.php`؛ تایل «وظایف باز من» و بخش دعوت‌ها در `app/dashboard.blade.php`
+- Config/Lang: `config/notifications.php`، `lang/fa/{notification,dashboard,control}.php`
+- Tests: `tests/Feature/Notifications/{NotificationPreferenceTest,TaskNotificationTest,AnnouncementTest,NotificationCenterTest}.php`، `tests/Feature/Dashboard/DashboardTest.php`؛ `notifications.index` به `RouteAccessTest` اضافه شد
+
 ### UI (UI و UI-2)
 - layouts: public, app, admin, guest (**public و app = قالب جدید UI-2**؛ admin/guest قدیمی)
 - Blade components: button, input, textarea, select, card, badge, modal, toast, empty-state, pagination, confirm-dialog, page-header, date-picker + **UI-2:** brand-mark, lane-rope, lanes, event-row
@@ -316,6 +341,9 @@
 | `/events/{event}/edit` | events.edit | " | `update` | ✅ |
 | `/events/{event}/committees` | events.committees | " | `view` (redirect به `?tab=committees`) | ✅ |
 | `/events/{event}?tab=budget` | events.show (تب) | " | `view` برای ورود؛ داخل `EventBudget`: `viewSummary` (مجموع) / `manage` و `approve` (جزئیات و اکشن‌ها) از `BudgetLinePolicy`؛ هر اکشن Livewire جداگانه authorize و شناسه‌ها فقط داخل همین رویداد | ✅ 09 |
+| `/notifications` | notifications.index | auth, account.type | فقط اعلان‌ها/ترجیحات خود کاربر (رابطه‌ی `notifications` + ترجیح با `user_id` خود)؛ اکشن‌ها هرگز id کاربر نمی‌گیرند | ✅ 13 |
+| `/events/{event}?tab=dashboard` | events.show (تب) | " | `view`؛ مجموع بودجه ← `BudgetLinePolicy@viewSummary`، ریسک ← `RiskPolicy@viewRegister` | ✅ 13 |
+| `/events/{event}?tab=control` | events.show (تب) | " | `view` برای دیدن؛ `publish` اطلاعیه ← `EventPolicy@update` + رویداد فعال | ✅ 13 |
 | `/tasks` | tasks.mine | auth, account.type | فقط وظایف خود کاربر؛ `TaskPolicy@transition` برای تغییر وضعیت | ✅ 08c |
 | `/events/{event}?tab=tasks[&task=uuid]` | events.show (تب) | " | `view` برای ورود؛ داخل `EventTasks`: هر اکشن با `TaskPolicy`/`MilestonePolicy` | ✅ 08b |
 | `/events/{event}?tab=risk` | events.show (تب) | " | `view` برای ورود؛ داخل `EventRisk`: `viewRegister` / `manage` / `reportIncident` از `RiskPolicy`؛ هر اکشن Livewire جداگانه authorize و شناسه‌ها فقط داخل همین رویداد؛ ماتریس/چک‌لیست/حادثه فقط طرح سازمانی | ✅ 10 |
@@ -340,9 +368,9 @@
 | 9 | CI: Larastan اجرا نمی‌شود | پایین | ✅ گام اضافه شد؛ اگر خطا داد baseline بسازید |
 | 10 | صفحات هاب رویداد/کمیته/سازمان هنوز با قالب قدیمی (alias های indigo/slate)؛ لایوت admin/guest قدیمی | پایین | باز — تدریجی |
 | 11 | `committees` ستون `uuid` ندارد (docs قدیمی داشت) | پایین | ثبت‌شده؛ در صورت نیاز |
-| 12 | نمایش اعلان‌ها در UI نیست (فقط ذخیره) | پایین | Step 13 |
+| 12 | نمایش اعلان‌ها در UI نیست (فقط ذخیره) | پایین | ✅ حل شد (13): زنگوله + `/notifications` |
 | 13 | بعد از pull: `composer install`، `npm run build`، `php artisan migrate` | — | یادآوری |
-| 14 | دعوت‌های pending رویداد لینک/پیامک ندارند (توکن خام هیچ‌جا ارسال نمی‌شود) | متوسط | Step 13 |
+| 14 | دعوت‌های pending رویداد لینک/پیامک ندارند (توکن خام هیچ‌جا ارسال نمی‌شود) | متوسط | ✅ برای کاربرِ موجود حل شد (13): پذیرش از داشبورد خانه؛ پیامک لینک همچنان از HR |
 | 15 | `organization_invitations` توکن خام را دور می‌ریزد (فقط هش bcrypt) و `findByToken` ندارد | پایین | Step 13 |
 
 ---
@@ -359,6 +387,22 @@ Decision: [جزئیات در Decision Log، ردیف‌های ۱۱]
 Tests: [Unit: SponsorStatus؛ Feature: SponsorshipService (طرح، وضعیت‌ها، موجودی، بسته، موعد/هشدار، مدرک، وظیفه)، SponsorshipAccess (ماتریس مجوز، tenant، واحد تومان، مخفی‌بودن تماس برای عضو)، MarketingService (برنامه، تقویم، KPI، مسئول، طرح، Livewire)] — نوشته شد، اجرا نشد
 Known issues / TODO: [امیر: `php artisan migrate && php artisan test && ./vendor/bin/pint --test && ./vendor/bin/phpstan analyse`؛ تأیید فرض‌های ⚠️ (دسترسی عضو/رئیس کمیته، پنهان‌بودن ارقام و تماس، وضعیت‌های اسپانسر)؛ اتصال حمایت قطعی نقدی به درآمد بودجه و اعلان موعد تعهد در Step 13؛ مرور بصری دو تب جدید در عرض ~۳۶۰px]
 Next suggested step: 12 (مسابقات)
+
+## UPDATE — Step 13 — داشبورد و اعلان‌ها — ۱۴۰۵/۰۹/۰۵
+
+Status: DONE (کد و تست نوشته شد؛ **هیچ تست/آرتیسان/مایگریشن/PHP اجرا نشد**)
+Branch: step/13-dashboard-notifications (روی سر `fix/panel-review` @ `4050bc6`؛ مستقل از 11 و 12)
+Commit: feat(dashboard): dashboards and notifications
+Files created: [Migration 000130؛ NotificationPreference، EventAnnouncement؛ DashboardService، NotificationPreferenceService، AnnouncementService؛ AppNotification، TaskAssigned، EventAnnouncementPosted، Channels/SmsChannel؛ Jobs/SendSmsMessage؛ Observers/TaskObserver؛ Providers/NotificationServiceProvider؛ Support/NotificationLink؛ Livewire: EventDashboard، EventControlCenter، NotificationBell، NotificationCenter + ۴ view؛ config/notifications.php؛ lang/fa/{notification,dashboard,control}.php؛ ۵ فایل تست]
+Files modified: [TaskDueReminder و AddedToCommittee (پایه‌ی AppNotification + url)؛ EventShow و event-show.blade (تب‌های dashboard/control)؛ App\Livewire\App\Dashboard و dashboard.blade (وظایف باز من، دعوت‌ها، پذیرش)؛ layouts/app.blade (زنگوله + لینک اعلان‌ها)؛ routes/web.php؛ bootstrap/providers.php؛ lang/fa/{event,activity,ui}.php؛ RouteAccessTest؛ این فایل]
+Migrations: [2026_12_01_000130_create_notification_preferences_and_announcements — اجرا نشده؛ توسط امیر]
+New env keys: []
+New packages: []
+Routes added: [notifications.index — `/notifications`؛ تب‌های `dashboard` و `control` در events.show]
+Decisions: [ردیف‌های 13 در Decision Log]
+Known issues / TODO: [امیر: `php artisan migrate && php artisan test && ./vendor/bin/pint --test && ./vendor/bin/phpstan analyse`؛ مرور بصری ~۳۶۰px (زنگوله و تب‌های جدید)؛ پیامک واقعی هنوز وصل نیست؛ در production `queue:work` لازم است؛ اگر هنگام merge با 11/12 تداخل در `EventShow.php`/`event-show.blade.php`/`routes/web.php` آمد، هر دو طرف را نگه دارید؛ تست‌های Livewire مربوط به `assertForbidden` بعد از `call` برای اولین بار اجرا می‌شوند]
+Tests: اجرا نشد (طبق دستور امیر)
+Next suggested step: بعد از سبز شدن موارد بالا و پایان 11/12 ← Step 14
 
 ## UPDATE — 10-fix — بازبینی پنل‌ها، فرم وظیفه، تقویم، ممیزی — ۱۴۰۵/۰۹/۰۴
 

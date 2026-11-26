@@ -40,6 +40,8 @@ return [
     'tab_risk' => 'ریسک',
     'tab_sponsorship' => 'اسپانسرینگ',
     'tab_marketing' => 'بازاریابی',
+    'tab_dashboard' => 'داشبورد',
+    'tab_control' => 'مرکز کنترل روز رویداد',
     'tab_coming_soon' => 'این بخش در مراحل بعدی فعال می‌شود',
     'tab_coming_soon_hint' => 'مراحل بعدی نقشه‌ی راه به‌زودی اضافه می‌شود.',
     'change_status' => 'تغییر وضعیت',

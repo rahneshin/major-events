@@ -58,14 +58,17 @@
             @endforeach
 
             <div class="my-3 border-t border-ink-100"></div>
-            <p class="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-400">به‌زودی</p>
-            @foreach (['اعلان‌ها'] as $soon)
-                <span class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-ink-400">
-                    <span class="h-5 w-5 rounded-md bg-ink-100"></span>
-                    {{ $soon }}
-                    <span class="ms-auto rounded-md bg-ink-100 px-1.5 py-0.5 text-[10px]">به‌زودی</span>
-                </span>
-            @endforeach
+            @php $notifActive = request()->routeIs('notifications.*'); @endphp
+            <a href="{{ route('notifications.index') }}" wire:navigate
+               @class([
+                   'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                   'bg-pool-50 text-pool-700' => $notifActive,
+                   'text-ink-600 hover:bg-ink-50 hover:text-ink-900' => ! $notifActive,
+               ])
+               @if ($notifActive) aria-current="page" @endif>
+                <svg class="h-5 w-5 shrink-0 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0"/></svg>
+                {{ __('notification.title') }}
+            </a>
         </nav>
 
         <div class="border-t border-ink-100 p-3">
@@ -97,6 +100,9 @@
                 <h1 class="truncate text-sm font-bold text-ink-900">@yield('page_title', 'پنل')</h1>
             </div>
             <span class="hidden text-xs text-ink-500 sm:inline">امروز {{ jalali_long(now()) }}</span>
+            @auth
+                <livewire:notifications.notification-bell />
+            @endauth
             <a href="{{ route('home') }}" class="hidden rounded-lg px-2.5 py-1.5 text-xs text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-800 sm:inline">مشاهده سایت</a>
         </header>
 

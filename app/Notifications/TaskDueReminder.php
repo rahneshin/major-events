@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\Task;
-use Illuminate\Notifications\Notification;
 
 /**
- * In-app reminder for the assignee (SMS arrives with Step 13).
+ * Reminder for the assignee: in-app always (per preference), SMS only for «due soon».
  * kind: due_soon | overdue
  */
-class TaskDueReminder extends Notification
+class TaskDueReminder extends AppNotification
 {
     public const DUE_SOON = 'due_soon';
 
@@ -22,10 +21,19 @@ class TaskDueReminder extends Notification
         public string $kind,
     ) {}
 
-    /** @return list<string> */
-    public function via(object $notifiable): array
+    public function category(): string
     {
-        return ['database'];
+        return 'task_due';
+    }
+
+    public function smsEligible(): bool
+    {
+        return $this->kind === self::DUE_SOON;
+    }
+
+    public function toSms(object $notifiable): ?string
+    {
+        return $this->toArray($notifiable)['message'];
     }
 
     /** @return array<string, mixed> */
@@ -42,6 +50,7 @@ class TaskDueReminder extends Notification
             'event_uuid' => $event->uuid,
             'event_title' => $event->title,
             'due_at' => $this->task->due_at?->toIso8601String(),
+            'url' => route('events.show', ['event' => $event->uuid, 'tab' => 'tasks', 'task' => $this->task->uuid]),
             'message' => __($this->kind === self::OVERDUE ? 'task.notify_overdue' : 'task.notify_due_soon', [
                 'task' => $this->task->title,
                 'event' => $event->title,

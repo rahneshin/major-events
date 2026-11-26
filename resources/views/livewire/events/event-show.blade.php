@@ -35,6 +35,7 @@
     <div class="sticky top-14 z-20 mb-5 flex gap-1 overflow-x-auto rounded-xl border border-ink-200 bg-white/95 p-1 text-xs font-medium shadow-sm backdrop-blur">
         @foreach ([
             'overview' => __('event.tab_overview'),
+            'dashboard' => __('event.tab_dashboard'),
             'members' => __('event.tab_members'),
             'committees' => __('event.tab_committees'),
             'tasks' => __('event.tab_tasks'),
@@ -42,7 +43,8 @@
             'risk' => __('event.tab_risk'),
             'sponsorship' => __('event.tab_sponsorship'),
             'marketing' => __('event.tab_marketing'),
-                        'competitions' => __('competition.tab'),
+            'competitions' => __('competition.tab'),
+            'control' => __('event.tab_control'),
         ] as $key => $label)
             <button type="button" wire:click="setTab('{{ $key }}')"
                 class="shrink-0 rounded-lg px-3.5 py-2.5 transition font-semibold
@@ -136,6 +138,12 @@
                 @endif
             </div>
         </div>
+
+    @elseif ($tab === 'dashboard')
+        <livewire:events.event-dashboard :event="$event" :key="'dashboard-'.$event->id" />
+
+    @elseif ($tab === 'control')
+        <livewire:events.event-control-center :event="$event" :key="'control-'.$event->id" />
 
     @elseif ($tab === 'members')
         <livewire:events.event-human-resources :event="$event" :key="'hr-'.$event->id" />

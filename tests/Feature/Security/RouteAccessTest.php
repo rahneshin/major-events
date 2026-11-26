@@ -10,6 +10,7 @@ $authRoutes = [
     'events.index' => '/events',
     'events.create' => '/events/create',
     'tasks.mine' => '/tasks',
+    'notifications.index' => '/notifications',
     'admin.dashboard' => '/admin',
     'system.dashboard' => '/system',
 ];

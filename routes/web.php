@@ -13,6 +13,7 @@ use App\Livewire\Events\AcceptInvitation;
 use App\Livewire\Events\EventForm;
 use App\Livewire\Events\EventIndex;
 use App\Livewire\Events\EventShow;
+use App\Livewire\Notifications\NotificationCenter;
 use App\Livewire\Orgs\OrganizationForm;
 use App\Livewire\Orgs\OrganizationIndex;
 use App\Livewire\Orgs\OrganizationShow;
@@ -82,6 +83,9 @@ Route::middleware('auth')->group(function () {
 
             return redirect()->route('events.show', ['event' => $event, 'tab' => 'committees']);
         })->name('events.committees');
+
+        // اعلان‌ها و ترجیحات (فقط اعلان‌های خود کاربر)
+        Route::get('/notifications', NotificationCenter::class)->name('notifications.index');
 
         // «وظایف من»: فقط وظایف خود کاربر (همه‌ی رویدادهای قابل‌مشاهده)
         Route::get('/tasks', MyTasks::class)->name('tasks.mine');

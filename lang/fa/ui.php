@@ -49,5 +49,6 @@ return [
         'showing' => 'نمایش :from تا :to از :total مورد',
     ],
     'dashboard' => 'داشبورد',
+    'my_tasks_link' => 'مشاهده‌ی وظایف من',
     'system_dashboard' => 'داشبورد سیستم',
 ];

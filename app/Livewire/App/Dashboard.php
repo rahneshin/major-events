@@ -5,9 +5,14 @@ declare(strict_types=1);
 namespace App\Livewire\App;
 
 use App\Models\Committee;
+use App\Exceptions\LimitExceededException;
 use App\Models\Event;
+use App\Models\EventInvitation;
+use App\Services\DashboardService;
 use App\Services\EntitlementService;
+use App\Services\HumanResourceService;
 use Illuminate\Support\Facades\Auth;
+use InvalidArgumentException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -45,9 +50,41 @@ class Dashboard extends Component
         }
     }
 
+    /**
+     * پذیرش دعوتِ در انتظار از همین صفحه. فقط دعوتی که برای شماره‌ی خود کاربرِ واردشده است
+     * پیدا می‌شود؛ بقیه‌ی قواعد (انقضا، سقف، شماره) در HumanResourceService::accept است.
+     */
+    public function acceptInvitation(int $id, HumanResourceService $hr): void
+    {
+        $user = Auth::user();
+
+        $invitation = EventInvitation::query()
+            ->whereKey($id)
+            ->where('phone', $user->phone)
+            ->first();
+
+        if ($invitation === null) {
+            session()->flash('error', __('hr.invite_invalid'));
+
+            return;
+        }
+
+        try {
+            $event = $hr->accept($invitation, $user);
+        } catch (InvalidArgumentException|LimitExceededException $e) {
+            session()->flash('error', $e->getMessage());
+
+            return;
+        }
+
+        session()->flash('success', __('notification.invite_accepted', ['event' => $event->title]));
+        $this->redirect(route('events.show', $event), navigate: true);
+    }
+
     public function render()
     {
         $user = Auth::user();
+        $mine = app(DashboardService::class)->forUser($user);
 
         $visible = fn () => Event::query()->visibleTo($user);
 
@@ -102,6 +139,7 @@ class Dashboard extends Component
             'canCreate' => $canCreate,
             'checklist' => $checklist,
             'doneCount' => $doneCount,
+            'mine' => $mine,
         ])->title(__('ui.dashboard'));
     }
 }

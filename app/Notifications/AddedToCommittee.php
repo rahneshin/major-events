@@ -5,20 +5,18 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\Committee;
-use Illuminate\Notifications\Notification;
 
-class AddedToCommittee extends Notification
+class AddedToCommittee extends AppNotification
 {
     public function __construct(
         public Committee $committee,
         public string $role,
     ) {}
 
-    /** @return list<string> */
-    public function via(object $notifiable): array
+    public function category(): string
     {
-        // In-app only; SMS arrives with Step 13.
-        return ['database'];
+        // In-app only (SMS for committee assignment is sent by HumanResourceService).
+        return 'committee';
     }
 
     /** @return array<string, mixed> */
@@ -33,6 +31,7 @@ class AddedToCommittee extends Notification
             'event_uuid' => $event->uuid,
             'event_title' => $event->title,
             'role' => $this->role,
+            'url' => route('events.show', ['event' => $event->uuid, 'tab' => 'committees']),
             'message' => __('committee.notify_added', [
                 'committee' => $this->committee->name,
                 'event' => $event->title,

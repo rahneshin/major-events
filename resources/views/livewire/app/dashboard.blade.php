@@ -73,11 +73,38 @@
             <p class="mt-3 text-[11px] text-ink-400">{{ $orgLimit === null ? 'بدون سقف' : 'سقف: '.fa_num((string) $orgLimit) }}</p>
         </div>
         <div class="p-5">
-            <p class="text-xs font-medium text-ink-500">وظایف من</p>
-            <p class="mt-1 text-3xl font-bold text-ink-300">—</p>
-            <p class="mt-3 text-[11px] text-ink-400">با ماژول وظایف فعال می‌شود</p>
+            <p class="text-xs font-medium text-ink-500">{{ __('dashboard.open_tasks_stat') }}</p>
+            <p class="mt-1 text-3xl font-bold tabular-nums text-ink-900">{{ fa_num((string) $mine['open_tasks']) }}</p>
+            <p @class(['mt-3 text-[11px]', 'font-bold text-signal-600' => $mine['overdue_tasks'] > 0, 'text-ink-400' => $mine['overdue_tasks'] === 0])>
+                @if ($mine['overdue_tasks'] > 0)
+                    {{ __('dashboard.overdue_stat', ['count' => fa_num((string) $mine['overdue_tasks'])]) }}
+                @elseif ($mine['open_tasks'] === 0)
+                    {{ __('dashboard.no_open_tasks') }}
+                @else
+                    <a href="{{ route('tasks.mine') }}" wire:navigate class="hover:text-pool-700">{{ __('ui.my_tasks_link') }}</a>
+                @endif
+            </p>
         </div>
     </section>
+
+    @if ($mine['invitations']->isNotEmpty())
+        <section class="rounded-2xl border border-pool-200 bg-pool-50/50 p-5">
+            <h3 class="mb-3 text-base font-bold text-ink-900">{{ __('dashboard.invitations') }}</h3>
+            <ul class="space-y-2">
+                @foreach ($mine['invitations'] as $invitation)
+                    <li class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white px-4 py-3" wire:key="inv-{{ $invitation->id }}">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-ink-900">{{ __('dashboard.invitation_to', ['event' => $invitation->event->title]) }}</p>
+                            @if ($invitation->inviter)
+                                <p class="text-[11px] text-ink-400">{{ __('dashboard.invitation_by', ['name' => person_name($invitation->inviter)]) }}</p>
+                            @endif
+                        </div>
+                        <button type="button" wire:click="acceptInvitation({{ $invitation->id }})" wire:loading.attr="disabled" class="btn-primary text-xs">{{ __('dashboard.accept') }}</button>
+                    </li>
+                @endforeach
+            </ul>
+        </section>
+    @endif
 
     <livewire:app.my-assignments />
 

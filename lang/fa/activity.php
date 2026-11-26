@@ -82,6 +82,7 @@ return [
         'event.member_invited' => 'دعوت‌نامه ارسال شد',
         'hr.invited' => 'دعوت‌نامه ارسال شد',
         'hr.invite_revoked' => 'دعوت‌نامه لغو شد',
+        'announcement.posted' => 'اطلاعیه برای اعضا ارسال شد',
         'hr.invite_accepted' => 'دعوت‌نامه پذیرفته شد',
     ],
 ];
