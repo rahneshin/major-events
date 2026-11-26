@@ -117,15 +117,15 @@
     {{-- ============================= قرعه ============================== --}}
     @elseif ($section === 'draw')
         <div class="glass space-y-4 rounded-2xl p-5">
-            @if ($stage)
+            @if ($drawStage)
                 <p class="text-sm text-slate-700">
-                    <span class="font-bold">{{ $stage->name }}</span> · {{ $stage->format->label() }} ·
-                    {{ $stage->status->label() }}
-                    @if ($stage->format->value === 'round_robin') · {{ __('competition.legs', ['legs' => fa_num((int) $stage->config('legs', 1))]) }} @endif
+                    <span class="font-bold">{{ $drawStage->name }}</span> · {{ $drawStage->format->label() }} ·
+                    {{ $drawStage->status->label() }}
+                    @if ($drawStage->format->value === 'round_robin') · {{ __('competition.legs', ['legs' => fa_num((int) $drawStage->config('legs', 1))]) }} @endif
                 </p>
             @endif
 
-            @if ($stage && $stage->status->value === 'pending')
+            @if ($drawStage && $drawStage->status->value === 'pending')
                 @if ($canManage && $hasFeature)
                     <div class="grid gap-3 sm:grid-cols-3">
                         <select wire:model="dMethod" class="rounded-lg border-slate-300 text-sm">
@@ -135,23 +135,56 @@
                         <input type="text" wire:model="dSeed" maxlength="64" placeholder="{{ __('competition.draw_seed_hint') }}" class="rounded-lg border-slate-300 text-sm" dir="ltr">
                         <button type="button" wire:click="previewDraw" class="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700">{{ __('competition.preview') }}</button>
                     </div>
+                    @if ($drawStage->format->value === 'groups')
+                        <div class="grid gap-3 sm:grid-cols-3">
+                            <label class="text-xs text-slate-600">{{ __('competition.draw_groups') }}
+                                <input type="number" wire:model="dGroups" min="2" max="16" class="mt-1 w-full rounded-lg border-slate-300 text-sm" dir="ltr">
+                            </label>
+                            <label class="text-xs text-slate-600">{{ __('competition.draw_advance') }}
+                                <input type="number" wire:model="dAdvance" min="1" max="8" class="mt-1 w-full rounded-lg border-slate-300 text-sm" dir="ltr">
+                            </label>
+                        </div>
+                    @endif
+                    @if ($knockoutAhead)
+                        <label class="flex items-center gap-2 text-xs text-slate-600">
+                            <input type="checkbox" wire:model="dThird" class="rounded border-slate-300"> {{ __('competition.draw_third_place') }}
+                        </label>
+                        @if ($drawStage->format->value === 'single_elim')
+                            <p class="text-xs text-slate-500">{{ __('competition.draw_bracket_hint') }}</p>
+                        @endif
+                    @endif
                 @endif
 
                 @if ($preview)
                     <div class="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
                         <p class="mb-2 text-xs text-slate-500">{{ __('competition.preview_note', ['seed' => $preview['seed']]) }}</p>
-                        <ol class="grid gap-1 text-sm sm:grid-cols-2">
-                            @foreach ($preview['order'] as $i => $cid)
-                                <li class="tabular-nums">{{ fa_num($i + 1) }}. {{ $preview['names'][$cid] ?? '—' }}</li>
-                            @endforeach
-                        </ol>
+                        @if ($preview['groups'])
+                            <div class="grid gap-3 text-sm sm:grid-cols-2">
+                                @foreach ($preview['groups'] as $gName => $gIds)
+                                    <div class="rounded-lg border border-indigo-100 bg-white p-3">
+                                        <p class="mb-1 text-xs font-bold text-indigo-700">{{ __('competition.group_name', ['name' => $gName]) }}</p>
+                                        <ul class="space-y-0.5">
+                                            @foreach ($gIds as $cid)
+                                                <li>{{ $preview['names'][$cid] ?? '—' }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <ol class="grid gap-1 text-sm sm:grid-cols-2">
+                                @foreach ($preview['order'] as $i => $cid)
+                                    <li class="tabular-nums">{{ fa_num($i + 1) }}. {{ $preview['names'][$cid] ?? '—' }}</li>
+                                @endforeach
+                            </ol>
+                        @endif
                         @if ($canManage)
                             <button type="button" wire:click="confirmDraw" wire:confirm="{{ __('competition.confirm_draw') }}"
                                 class="mt-3 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700">{{ __('competition.confirm_draw_btn') }}</button>
                         @endif
                     </div>
                 @endif
-            @elseif ($stage)
+            @elseif ($drawStage)
                 @if ($draw)
                     <p class="text-xs text-slate-500">
                         {{ __('competition.draw_doc', [
@@ -163,16 +196,16 @@
                 @endif
                 <ol class="grid gap-1 text-sm sm:grid-cols-2">
                     @foreach ($entries as $e)
-                        <li class="tabular-nums">{{ fa_num($e->draw_position) }}. {{ $e->competitor->name }}</li>
+                        <li class="tabular-nums">{{ fa_num($e->draw_position) }}. {{ $e->competitor->name }}@if ($e->group_name) <span class="text-xs text-slate-500">({{ __('competition.group_name', ['name' => $e->group_name]) }})</span>@endif</li>
                     @endforeach
                 </ol>
 
                 @if ($canManage && $hasFeature)
                     <div class="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-                        @if ($stage->status->value === 'drawn' && ! $stage->matches()->exists())
+                        @if ($drawStage->status->value === 'drawn' && ! $drawStage->matches()->exists())
                             <button type="button" wire:click="generateFixtures" class="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700">{{ __('competition.generate_fixtures') }}</button>
                         @endif
-                        @if ($comp->status->value === 'drawn' && $stage->matches()->exists())
+                        @if ($comp->status->value === 'drawn' && $drawStage->matches()->exists())
                             <button type="button" wire:click="markReady" class="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700">{{ __('competition.mark_ready') }}</button>
                         @endif
                         <button type="button" wire:click="resetDraw" wire:confirm="{{ __('competition.confirm_reset') }}" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100">{{ __('competition.reset_draw') }}</button>
@@ -187,6 +220,15 @@
             $unit = (string) $comp->config('unit', 'goals');
             $open = $comp->status->acceptsResults();
         @endphp
+
+        @if ($stages->count() > 1)
+            <div class="flex flex-wrap gap-2 text-xs font-semibold">
+                @foreach ($stages as $st)
+                    <button type="button" wire:click="selectStage('{{ $st->id }}')" wire:key="stage-tab-{{ $st->id }}"
+                        class="rounded-lg px-3 py-2 {{ $stage && $stage->id === $st->id ? 'bg-slate-800 text-white' : 'border border-slate-200 bg-white text-slate-600' }}">{{ $st->name }} · {{ $st->status->label() }}</button>
+                @endforeach
+            </div>
+        @endif
 
         @if ($comp->status->value === 'finished' && $canManage && $hasFeature)
             <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
@@ -219,6 +261,16 @@
                         <input type="number" min="0" max="999" wire:model="mScoreB" class="w-24 rounded-lg border-slate-300 text-sm" dir="ltr">
                     </div>
                 @endif
+                @if ($unit !== 'games' && $stage && $stage->format->value === 'single_elim')
+                    <label class="block text-xs text-slate-600">{{ __('competition.tiebreak_label') }}
+                        <select wire:model="mTiebreak" class="mt-1 rounded-lg border-slate-300 text-sm">
+                            <option value="">—</option>
+                            <option value="a">{{ $editing->a?->name }}</option>
+                            <option value="b">{{ $editing->b?->name }}</option>
+                        </select>
+                    </label>
+                    <p class="text-xs text-slate-500">{{ __('competition.tiebreak_hint') }}</p>
+                @endif
                 <div class="flex gap-2">
                     <button type="submit" class="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700">{{ __('competition.save_result') }}</button>
                     <button type="button" wire:click="cancelEdit" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600">{{ __('competition.cancel') }}</button>
@@ -245,18 +297,47 @@
             <div class="glass rounded-2xl px-6 py-12 text-center text-sm text-slate-500">{{ __('competition.no_fixtures') }}</div>
         @else
             <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
-                <button type="button" wire:click="setFixturesView('rounds')" class="rounded-lg px-3 py-2 {{ $fixturesView === 'rounds' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-200' }}">{{ __('competition.view_rounds') }}</button>
-                <button type="button" wire:click="setFixturesView('matrix')" class="rounded-lg px-3 py-2 {{ $fixturesView === 'matrix' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-200' }}">{{ __('competition.view_matrix') }}</button>
-                @if ($fixturesView === 'rounds')
+                <button type="button" wire:click="setFixturesView('rounds')" class="rounded-lg px-3 py-2 {{ $fixtures['view'] === 'rounds' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-200' }}">{{ __('competition.view_rounds') }}</button>
+                @if ($stage->format->value === 'round_robin')
+                    <button type="button" wire:click="setFixturesView('matrix')" class="rounded-lg px-3 py-2 {{ $fixtures['view'] === 'matrix' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-200' }}">{{ __('competition.view_matrix') }}</button>
+                @elseif ($stage->format->value === 'single_elim')
+                    <button type="button" wire:click="setFixturesView('bracket')" class="rounded-lg px-3 py-2 {{ $fixtures['view'] === 'bracket' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-200' }}">{{ __('competition.view_bracket') }}</button>
+                @endif
+                @if ($fixtures['view'] === 'rounds')
                     <select wire:change="setRound($event.target.value)" class="rounded-lg border-slate-300 text-xs">
                         @foreach ($fixtures['rounds'] as $r)
-                            <option value="{{ $r }}" @selected($r === $fixtures['current'])>{{ __('competition.round', ['round' => fa_num($r)]) }}</option>
+                            <option value="{{ $r }}" @selected($r === $fixtures['current'])>{{ $fixtures['labels'][$r] ?? __('competition.round', ['round' => fa_num($r)]) }}</option>
                         @endforeach
                     </select>
                 @endif
             </div>
 
-            @if ($fixturesView === 'matrix' && $fixtures['matrix'])
+            @if ($fixtures['view'] === 'bracket' && $fixtures['bracket'])
+                <div class="glass overflow-x-auto rounded-2xl p-4">
+                    <div class="flex min-w-max gap-6">
+                        @foreach ($fixtures['bracket'] as $bRound => $bMatches)
+                            <div class="flex w-52 flex-col justify-around gap-3" wire:key="br-{{ $bRound }}">
+                                <p class="text-center text-xs font-bold text-indigo-700">{{ $fixtures['labels'][$bRound] ?? $bRound }}</p>
+                                @foreach ($bMatches as $bm)
+                                    <div class="rounded-lg border border-slate-200 bg-white p-2 text-xs" wire:key="bm-{{ $bm->id }}">
+                                        @if ($bm->bracket === 'third_place') <p class="mb-1 text-[10px] font-bold text-amber-700">{{ __('competition.third_place_match') }}</p> @endif
+                                        @foreach (['a', 'b'] as $bSide)
+                                            @php
+                                                $bScore = $bSide === 'a' ? $bm->score_a : $bm->score_b;
+                                                $bId = $bSide === 'a' ? $bm->a_id : $bm->b_id;
+                                            @endphp
+                                            <div class="flex items-center justify-between gap-2 py-0.5 {{ $bm->winner_id && $bId === $bm->winner_id ? 'font-bold text-emerald-700' : 'text-slate-700' }}">
+                                                <span class="truncate">{{ $this->slotLabel($bm, $bSide) }}</span>
+                                                <span class="tabular-nums">{{ $bScore !== null ? fa_num($bScore) : ($bm->status->value === 'walkover' && $bm->winner_id === $bId ? '+' : '') }}</span>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @elseif ($fixtures['view'] === 'matrix' && $fixtures['matrix'])
                 @php $mx = $fixtures['matrix']; @endphp
                 <div class="glass overflow-x-auto rounded-2xl p-4">
                     <table class="min-w-full text-xs">
@@ -315,7 +396,7 @@
                             @endphp
                             <li class="space-y-2 py-3 {{ $cancelled ? 'opacity-50' : '' }}" wire:key="m-{{ $m->id }}">
                                 <div class="flex flex-wrap items-center justify-between gap-2">
-                                    <span class="font-medium">{{ $m->a?->name ?? '—' }}</span>
+                                    <span class="font-medium {{ $m->a_id ? '' : 'text-slate-400' }}">{{ $this->slotLabel($m, 'a') }}</span>
                                     <span class="mx-2 tabular-nums text-slate-600">
                                         @if ($m->score_a !== null)
                                             {{ fa_num($m->score_a) }} : {{ fa_num($m->score_b) }}
@@ -325,10 +406,13 @@
                                             {{ __('competition.vs') }}
                                         @endif
                                     </span>
-                                    <span class="font-medium">{{ $m->b?->name ?? '—' }}</span>
+                                    <span class="font-medium {{ $m->b_id ? '' : 'text-slate-400' }}">{{ $this->slotLabel($m, 'b') }}</span>
                                 </div>
                                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
                                     <span>{{ $m->status->label() }}@if ($m->result_status) · {{ $m->result_status->label() }} @endif</span>
+                                    @if ($m->group_name) <span class="font-semibold text-indigo-700">{{ __('competition.group_name', ['name' => $m->group_name]) }}</span> @endif
+                                    @if ($m->bracket === 'third_place') <span class="font-semibold text-amber-700">{{ __('competition.third_place_match') }}</span> @endif
+                                    @if (! empty($m->result_meta['tiebreak'])) <span>{{ __('competition.tiebreak_winner', ['name' => $this->slotLabel($m, $m->result_meta['tiebreak']), ]) }}</span> @endif
                                     @if ($m->scheduled_at)
                                         <span class="tabular-nums">{{ fa_num(jalali($m->scheduled_at, 'Y/m/d')) }} {{ fa_num($m->scheduled_at->format('H:i')) }}</span>
                                     @endif
@@ -347,7 +431,9 @@
                                     @if ($canConfirm && $open && ! $played && $both && ! $cancelled)
                                         <button type="button" wire:click="walkoverMatch({{ $m->id }}, 'a')" wire:confirm="{{ __('competition.confirm_walkover') }}" class="font-semibold text-slate-600">{{ __('competition.walkover_a') }}</button>
                                         <button type="button" wire:click="walkoverMatch({{ $m->id }}, 'b')" wire:confirm="{{ __('competition.confirm_walkover') }}" class="font-semibold text-slate-600">{{ __('competition.walkover_b') }}</button>
-                                        <button type="button" wire:click="cancelMatch({{ $m->id }})" wire:confirm="{{ __('competition.confirm_cancel_match') }}" class="font-semibold text-rose-700">{{ __('competition.cancel_match') }}</button>
+                                        @if ($stage->format->value !== 'single_elim')
+                                            <button type="button" wire:click="cancelMatch({{ $m->id }})" wire:confirm="{{ __('competition.confirm_cancel_match') }}" class="font-semibold text-rose-700">{{ __('competition.cancel_match') }}</button>
+                                        @endif
                                     @endif
                                     @if ($canManage && $hasFeature && ! $played && ! $cancelled && $comp->status->value !== 'finished')
                                         <button type="button" wire:click="startSchedule({{ $m->id }})" class="font-semibold text-slate-600">{{ __('competition.schedule') }}</button>
@@ -375,7 +461,7 @@
                 </form>
             @endif
 
-            @if ($canManage && $hasFeature && $comp->status->value !== 'finished')
+            @if ($canManage && $hasFeature && $comp->status->value !== 'finished' && $stage->format->value === 'round_robin')
                 <form wire:submit="addManualMatch" class="glass space-y-3 rounded-2xl p-5">
                     <h3 class="text-sm font-bold text-slate-900">{{ __('competition.manual_title') }}</h3>
                     <div class="grid gap-3 sm:grid-cols-4">
@@ -396,6 +482,60 @@
 
     {{-- ============================ رده‌بندی ============================ --}}
     @elseif ($section === 'standings')
+        @if ($stages->count() > 1)
+            <div class="flex flex-wrap gap-2 text-xs font-semibold">
+                @foreach ($stages as $st)
+                    <button type="button" wire:click="selectStage('{{ $st->id }}')" wire:key="stage-tab-{{ $st->id }}"
+                        class="rounded-lg px-3 py-2 {{ $stage && $stage->id === $st->id ? 'bg-slate-800 text-white' : 'border border-slate-200 bg-white text-slate-600' }}">{{ $st->name }} · {{ $st->status->label() }}</button>
+                @endforeach
+            </div>
+        @endif
+
+        @if ($stage && $stage->format->value === 'groups')
+            @php $advanceCount = (int) $stage->config('advance_count', 2); @endphp
+            @forelse ($groupTables as $gName => $gRows)
+                <div class="glass overflow-x-auto rounded-2xl p-5" wire:key="grp-{{ $gName }}">
+                    <h3 class="mb-2 text-sm font-bold text-indigo-700">{{ __('competition.group_name', ['name' => $gName]) }}</h3>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-100 text-xs text-slate-400">
+                                <th class="py-2 text-start">{{ __('competition.col.rank') }}</th>
+                                <th class="text-start">{{ __('competition.col.name') }}</th>
+                                @foreach (['played', 'won', 'drawn', 'lost', 'for', 'against', 'diff', 'points'] as $col)
+                                    <th class="text-center">{{ __('competition.col.'.$col) }}</th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($gRows as $i => $row)
+                                <tr class="border-b border-slate-50 {{ $i < $advanceCount ? 'bg-emerald-50/60' : '' }}" wire:key="st-{{ $gName }}-{{ $row['competitor_id'] }}">
+                                    <td class="py-2 tabular-nums">{{ fa_num($row['rank']) }}@if ($row['tied']) <span title="{{ __('competition.tied') }}">=</span> @endif</td>
+                                    <td class="font-medium">{{ $row['name'] }}</td>
+                                    @foreach (['played', 'won', 'drawn', 'lost', 'for', 'against', 'diff', 'points'] as $col)
+                                        <td class="text-center tabular-nums {{ $col === 'points' ? 'font-bold' : '' }}">{{ fa_num($row[$col]) }}</td>
+                                    @endforeach
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @empty
+                <div class="glass rounded-2xl"><p class="py-8 text-center text-sm text-slate-500">{{ __('competition.no_standings') }}</p></div>
+            @endforelse
+            <p class="text-xs text-slate-500">{{ __('competition.advance_note', ['count' => fa_num($advanceCount)]) }}</p>
+        @elseif ($stage && $stage->format->value === 'single_elim')
+            <div class="glass rounded-2xl p-5">
+                @if ($standingRows === [])
+                    <p class="py-8 text-center text-sm text-slate-500">{{ __('competition.standings_knockout_hint') }}</p>
+                @else
+                    <ol class="space-y-1 text-sm">
+                        @foreach ($standingRows as $entry)
+                            <li class="tabular-nums" wire:key="rk-{{ $entry->id }}">{{ fa_num($entry->final_rank) }}. {{ $entry->competitor->name }}</li>
+                        @endforeach
+                    </ol>
+                @endif
+            </div>
+        @else
         <div class="glass overflow-x-auto rounded-2xl p-5">
             @if ($standingRows === [])
                 <p class="py-8 text-center text-sm text-slate-500">{{ __('competition.no_standings') }}</p>
@@ -424,6 +564,7 @@
                 </table>
             @endif
         </div>
+        @endif
 
     {{-- ============================ تنظیمات ============================ --}}
     @else

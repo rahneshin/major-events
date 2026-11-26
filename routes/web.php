@@ -8,7 +8,9 @@ use App\Livewire\Auth\CompleteProfile;
 use App\Livewire\Auth\PhoneLogin;
 use App\Livewire\Auth\SelectAccountType;
 use App\Livewire\Auth\VerifyOtp;
+use App\Http\Controllers\PublicCompetitionController;
 use App\Livewire\Competitions\CompetitionShow;
+use App\Livewire\Competitions\RankedShow;
 use App\Livewire\Events\AcceptInvitation;
 use App\Livewire\Events\EventForm;
 use App\Livewire\Events\EventIndex;
@@ -47,6 +49,12 @@ Route::get('/invite/{token}', AcceptInvitation::class)
     ->middleware('throttle:30,1')
     ->name('events.invitation');
 
+// Step 12E: صفحه‌ی عمومی فقط‌خواندنی ورزش (بدون ورود)
+Route::get('/c/{token}', PublicCompetitionController::class)
+    ->where('token', '[A-Za-z0-9]{32,64}')
+    ->middleware('throttle:60,1')
+    ->name('competitions.public');
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', PhoneLogin::class)->name('auth.login');
     Route::get('/verify', VerifyOtp::class)->name('auth.verify');
@@ -78,6 +86,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/events/{event}', EventShow::class)->name('events.show');
         Route::get('/events/{event}/edit', EventForm::class)->name('events.edit');
         Route::get('/events/{event}/competitions/{competition}', CompetitionShow::class)->name('competitions.show');
+        Route::get('/events/{event}/competitions/{competition}/ranked', RankedShow::class)->name('competitions.ranked');
         Route::get('/events/{event}/committees', function (\App\Models\Event $event) {
             abort_unless(auth()->user()->can('view', $event), 403);
 

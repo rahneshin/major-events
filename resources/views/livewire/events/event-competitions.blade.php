@@ -74,5 +74,8 @@
         @empty
             <div class="glass rounded-2xl px-6 py-12 text-center text-sm text-slate-500">{{ __('competition.empty') }}</div>
         @endforelse
+
+        @livewire('events.event-medals', ['event' => $event])
+        @livewire('competitions.public-links', ['event' => $event])
     @endif
 </div>

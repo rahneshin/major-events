@@ -8,6 +8,7 @@ use App\Enums\CompetitionStatus;
 use App\Enums\CompetitorStatus;
 use App\Enums\MatchStatus;
 use App\Enums\ResultStatus;
+use App\Enums\StageFormat;
 use App\Enums\StageStatus;
 use App\Models\Competition;
 use App\Models\Competitor;
@@ -21,12 +22,16 @@ use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 /**
- * Step 12C — نتیجه‌ی بازی‌ها (لیگ دوره‌ای).
+ * Step 12C/12D — نتیجه‌ی بازی‌ها (لیگ دوره‌ای، گروه‌ها و جدول حذفی).
  *
  * چرخه: ثبت‌کننده نتیجه را «ثبت» می‌کند (entered) و مدیر «تأیید» می‌کند (confirmed). نتیجه‌ی مدیر یا ورزشی که
  * `requires_confirmation=false` دارد مستقیم تأییدشده است. فقط نتیجه‌ی تأییدشده در رده‌بندی می‌آید.
  * ویرایش نتیجه‌ی تأییدشده فقط با دسترسی تأیید؛ بعد از پایان ورزش همه‌چیز قفل است (بازگشایی صریح مدیر).
  * سرویس Gate صدا نمی‌زند؛ کامپوننت مجوز را می‌سنجد و `$canConfirm` را می‌دهد.
+ *
+ * حذفی (12D): تساوی ممکن نیست (برنده با `tiebreak` = a|b تعیین می‌شود)، نتیجه‌ی تأییدشده برنده را به بازی بعد
+ * می‌برد، تغییر نتیجه‌ی پیشروی‌کرده فقط وقتی مجاز است که بازی‌های بعدی نتیجه نداشته باشند، و بازی حذفی لغو نمی‌شود
+ * (برد اداری). پایان همه‌ی بازی‌های گروه‌ها جدول حذفی را خودکار پر می‌کند (BracketService).
  */
 class MatchService
 {
@@ -38,6 +43,7 @@ class MatchService
         private CompetitionService $competitions,
         private GameScoreValidator $games,
         private StandingsService $standings,
+        private BracketService $brackets,
     ) {}
 
     // ----------------------------------------------------------------- نتیجه
@@ -68,7 +74,13 @@ class MatchService
             throw new InvalidArgumentException(__('competition.errors.nothing_to_confirm'));
         }
 
-        $match->update(['result_status' => ResultStatus::Confirmed->value, 'confirmed_by' => $actor->id]);
+        DB::transaction(function () use ($match, $actor): void {
+            $match->update(['result_status' => ResultStatus::Confirmed->value, 'confirmed_by' => $actor->id]);
+
+            if ($this->brackets->isKnockout($match->stage)) {
+                $this->brackets->advance($match->refresh(), $actor);
+            }
+        });
 
         self::logActivity('match.result_confirmed', $match, $competition->event_id, $this->logProps($match));
 
@@ -91,11 +103,18 @@ class MatchService
             throw new InvalidArgumentException(__('competition.errors.no_result'));
         }
 
-        $before = $this->logProps($match);
+        $this->assertNotLocked($match);
 
-        DB::transaction(function () use ($match): void {
+        $before = $this->logProps($match);
+        $wasAdvanced = $match->result_status === ResultStatus::Confirmed || $match->status === MatchStatus::Walkover;
+
+        DB::transaction(function () use ($match, $wasAdvanced): void {
             $match->games()->delete();
             $match->update($this->emptyResult());
+
+            if ($wasAdvanced && $this->brackets->isKnockout($match->stage)) {
+                $this->brackets->retract($match->refresh());
+            }
         });
 
         self::logActivity('match.result_cleared', $match, $competition->event_id, ['before' => $before]);
@@ -120,6 +139,8 @@ class MatchService
             throw new InvalidArgumentException(__('competition.errors.invalid_value'));
         }
 
+        $this->assertNotLocked($match);
+
         DB::transaction(function () use ($match, $actor, $winnerSide): void {
             $match->games()->delete();
             $match->update([
@@ -127,9 +148,14 @@ class MatchService
                 'winner_id' => $winnerSide === 'a' ? $match->a_id : $match->b_id,
                 'score_a' => null, 'score_b' => null, 'points_a' => null, 'points_b' => null,
                 'result_status' => ResultStatus::Confirmed->value,
+                'result_meta' => null,
                 'entered_by' => $actor->id,
                 'confirmed_by' => $actor->id,
             ]);
+
+            if ($this->brackets->isKnockout($match->stage)) {
+                $this->brackets->advance($match->refresh(), $actor);
+            }
         });
 
         self::logActivity('match.walkover', $match, $competition->event_id, $this->logProps($match));
@@ -147,6 +173,10 @@ class MatchService
         $competition = $this->competitionOf($match);
         $this->assertResultsOpen($competition);
         $this->assertNoResult($match);
+
+        if ($this->brackets->isKnockout($match->stage)) {
+            throw new InvalidArgumentException(__('competition.errors.knockout_cancel_blocked'));
+        }
 
         $match->update(['status' => MatchStatus::Cancelled->value, 'counts_in_standings' => false]);
 
@@ -223,7 +253,9 @@ class MatchService
         $competition = $stage->competition;
         $this->assertOpenForEdit($competition);
 
-        if (in_array($competition->status, [CompetitionStatus::Registration], true) || $stage->status === StageStatus::Pending) {
+        if (in_array($competition->status, [CompetitionStatus::Registration], true)
+            || $stage->status === StageStatus::Pending
+            || $stage->format !== StageFormat::RoundRobin) {
             throw new InvalidArgumentException(__('competition.errors.manual_not_allowed'));
         }
 
@@ -384,11 +416,22 @@ class MatchService
                 ->pluck('id')->map(fn ($id) => (int) $id)->all();
 
             $matches = SportMatch::query()
+                ->with('stage')
                 ->whereIn('stage_id', $competition->stages()->pluck('id'))
                 ->where(fn ($q) => $q->where('a_id', $competitor->id)->orWhere('b_id', $competitor->id))
+                ->orderBy('stage_id')
+                ->orderBy('round')
                 ->get();
 
             foreach ($matches as $match) {
+                // حذفی: بازی بی‌نتیجه‌ی او با حریفِ معلوم، برد اداری حریف است و پیشروی می‌کند؛
+                // اگر حریف هنوز معلوم نیست، وقتی حریف در خانه نشست همین کار خودکار انجام می‌شود
+                if ($match->stage->format === StageFormat::SingleElim) {
+                    $this->brackets->settleWithdrawn($match, $actor);
+
+                    continue;
+                }
+
                 $unplayed = $match->result_status === null
                     && in_array($match->status, [MatchStatus::Scheduled, MatchStatus::Postponed, MatchStatus::Live], true);
 
@@ -436,38 +479,93 @@ class MatchService
     // ------------------------------------------------------- وضعیت ورزش/مرحله
 
     /**
-     * ورزش را از روی بازی‌ها هم‌گام می‌کند: ready→running با اولین نتیجه، و پایان ورزش (با رتبه‌ی نهایی)
-     * وقتی همه‌ی بازی‌های غیرلغوشده تمام و تأییدشده‌اند.
+     * ورزش و مرحله‌ها را از روی بازی‌ها هم‌گام می‌کند (محاسبه‌ی وضعیت از داده، نه رویداد؛ تکرارپذیر):
+     *  - هر مرحله: drawn ↔ running با اولین/آخرین نتیجه.
+     *  - مرحله‌ی گروهی با حذفیِ بعدی: وقتی همه‌ی بازی‌ها تأیید شد ← پایان‌یافته و جدول حذفی پر می‌شود؛
+     *    اگر نتیجه‌ای حذف/باز شد ← حذفی دوباره «در انتظار» می‌شود (تا قبل از اولین نتیجه‌ی حذفی).
+     *  - ورزش: ready → running با اولین نتیجه؛ پایان (با رتبه‌ی نهایی) وقتی همه‌ی بازی‌های غیرلغوشده‌ی
+     *    مرحله‌ی نهایی تمام و تأییدشده‌اند.
      */
     public function refreshState(Competition $competition): void
     {
         $competition->refresh();
-        $stage = $competition->firstStage();
 
-        if ($stage === null || $competition->status === CompetitionStatus::Finished) {
+        if ($competition->status === CompetitionStatus::Finished) {
             return;
         }
 
-        $matches = $stage->matches()->get(['id', 'status', 'result_status']);
-        $live = $matches->filter(fn ($m) => $m->status !== MatchStatus::Cancelled);
+        $stages = $competition->stages()->get()->values();
 
-        $hasResult = $live->contains(fn ($m) => $m->result_status !== null || $m->status === MatchStatus::Walkover);
-
-        if ($hasResult && $competition->status === CompetitionStatus::Ready) {
-            $competition->update(['status' => CompetitionStatus::Running->value]);
-            $stage->update(['status' => StageStatus::Running->value]);
-        } elseif (! $hasResult && $competition->status === CompetitionStatus::Running) {
-            $competition->update(['status' => CompetitionStatus::Ready->value]);
-            $stage->update(['status' => StageStatus::Drawn->value]);
+        if ($stages->isEmpty()) {
+            return;
         }
 
-        $allDone = $live->isNotEmpty() && $live->every(
-            fn ($m) => $m->result_status === ResultStatus::Confirmed
-                && in_array($m->status, [MatchStatus::Finished, MatchStatus::Walkover], true),
-        );
+        $final = $stages->firstWhere('is_final', true) ?? $stages->last();
+        $anyResult = false;
+        $finalDone = false;
 
-        if ($allDone && $stage->is_final && $competition->status === CompetitionStatus::Running) {
-            $this->finish($competition->refresh(), $stage->refresh());
+        foreach ($stages as $i => $stage) {
+            // مرحله‌ی قبلی ممکن است همین حالا این مرحله را پر کرده باشد (resolveFromGroups)
+            $stage->refresh();
+            $next = $stages->get($i + 1);
+
+            $matches = $stage->matches()->get(['id', 'status', 'result_status']);
+            $live = $matches->filter(fn ($m) => $m->status !== MatchStatus::Cancelled);
+
+            $hasResult = $live->contains(fn ($m) => $m->result_status !== null || $m->status === MatchStatus::Walkover);
+            $allDone = $live->isNotEmpty() && $live->every(
+                fn ($m) => $m->result_status === ResultStatus::Confirmed
+                    && in_array($m->status, [MatchStatus::Finished, MatchStatus::Walkover], true),
+            );
+
+            $anyResult = $anyResult || $hasResult;
+
+            // جدول حذفیِ منتظر صعودکننده‌ها هنوز شروع نشده است
+            if ($stage->status === StageStatus::Pending) {
+                continue;
+            }
+
+            if ($stage->format === StageFormat::Groups && $next !== null && $next->format === StageFormat::SingleElim) {
+                if ($allDone) {
+                    if ($stage->status !== StageStatus::Finished) {
+                        $stage->update(['status' => StageStatus::Finished->value]);
+                    }
+
+                    $this->brackets->resolveFromGroups($stage->refresh(), $next, null);
+                } elseif ($stage->status === StageStatus::Finished) {
+                    $this->brackets->unresolve($next);
+                    $stage->update(['status' => ($hasResult ? StageStatus::Running : StageStatus::Drawn)->value]);
+                } else {
+                    $this->syncRunning($stage, $hasResult);
+                }
+
+                continue;
+            }
+
+            $this->syncRunning($stage, $hasResult);
+
+            if ($stage->is($final) && $allDone) {
+                $finalDone = true;
+            }
+        }
+
+        if ($anyResult && $competition->status === CompetitionStatus::Ready) {
+            $competition->update(['status' => CompetitionStatus::Running->value]);
+        } elseif (! $anyResult && $competition->status === CompetitionStatus::Running) {
+            $competition->update(['status' => CompetitionStatus::Ready->value]);
+        }
+
+        if ($finalDone && $competition->refresh()->status === CompetitionStatus::Running) {
+            $this->finish($competition, $final->refresh());
+        }
+    }
+
+    private function syncRunning(Stage $stage, bool $hasResult): void
+    {
+        if ($hasResult && $stage->status === StageStatus::Drawn) {
+            $stage->update(['status' => StageStatus::Running->value]);
+        } elseif (! $hasResult && $stage->status === StageStatus::Running) {
+            $stage->update(['status' => StageStatus::Drawn->value]);
         }
     }
 
@@ -485,7 +583,10 @@ class MatchService
             throw new InvalidArgumentException(__('competition.errors.confirmed_locked'));
         }
 
+        $this->assertNotLocked($match);
+
         $scores = $this->resolveScores($competition, $input);
+        $knockout = $this->brackets->isKnockout($match->stage);
 
         $winner = match (true) {
             $scores['score_a'] > $scores['score_b'] => $match->a_id,
@@ -493,9 +594,21 @@ class MatchService
             default => null,
         };
 
+        // حذفی: تساوی ممکن نیست؛ برنده‌ی ضربات پنالتی/تعیین‌کننده را کاربر صریحاً انتخاب می‌کند
+        $tiebreak = null;
+        if ($winner === null && $knockout) {
+            $tiebreak = $input['tiebreak'] ?? null;
+
+            if (! in_array($tiebreak, ['a', 'b'], true)) {
+                throw new InvalidArgumentException(__('competition.errors.knockout_tie'));
+            }
+
+            $winner = $tiebreak === 'a' ? $match->a_id : $match->b_id;
+        }
+
         $confirmed = $canConfirm || ! $competition->requires_confirmation;
 
-        DB::transaction(function () use ($match, $scores, $winner, $confirmed, $actor): void {
+        DB::transaction(function () use ($match, $scores, $winner, $confirmed, $actor, $knockout, $tiebreak): void {
             $match->games()->delete();
 
             foreach ($scores['games'] as $i => [$pa, $pb]) {
@@ -510,9 +623,14 @@ class MatchService
                 'points_a' => $scores['points_a'],
                 'points_b' => $scores['points_b'],
                 'result_status' => ($confirmed ? ResultStatus::Confirmed : ResultStatus::Entered)->value,
+                'result_meta' => $tiebreak !== null ? ['tiebreak' => $tiebreak] : null,
                 'entered_by' => $actor->id,
                 'confirmed_by' => $confirmed ? $actor->id : null,
             ]);
+
+            if ($knockout && $confirmed) {
+                $this->brackets->advance($match->refresh(), $actor);
+            }
         });
 
         self::logActivity('match.result_entered', $match, $competition->event_id, $this->logProps($match->refresh()));
@@ -608,6 +726,13 @@ class MatchService
         }
     }
 
+    private function assertNotLocked(SportMatch $match): void
+    {
+        if ($this->brackets->isLocked($match)) {
+            throw new InvalidArgumentException(__('competition.errors.advanced_locked'));
+        }
+    }
+
     private function assertNoScheduleClash(SportMatch $match, Competition $competition, CarbonInterface $at, ?string $court): void
     {
         $minutes = (int) ($match->stage->config('match_minutes') ?? config('competitions.match_minutes', 60));
@@ -639,11 +764,19 @@ class MatchService
     private function finish(Competition $competition, Stage $stage): void
     {
         DB::transaction(function () use ($competition, $stage): void {
-            $rows = $this->standings->forStage($stage);
+            $ranks = [];
 
-            foreach ($rows as $row) {
-                Competitor::query()->whereKey($row['competitor_id'])->update(['final_rank' => $row['rank']]);
-                $stage->entries()->where('competitor_id', $row['competitor_id'])->update(['final_rank' => $row['rank']]);
+            if ($this->brackets->isKnockout($stage)) {
+                $ranks = $this->brackets->finalRanks($stage);
+            } else {
+                foreach ($this->standings->forStage($stage) as $row) {
+                    $ranks[(int) $row['competitor_id']] = (int) $row['rank'];
+                }
+            }
+
+            foreach ($ranks as $competitorId => $rank) {
+                Competitor::query()->whereKey($competitorId)->update(['final_rank' => $rank]);
+                $stage->entries()->where('competitor_id', $competitorId)->update(['final_rank' => $rank]);
             }
 
             $stage->update(['status' => StageStatus::Finished->value]);
@@ -662,7 +795,7 @@ class MatchService
             'status' => MatchStatus::Scheduled->value,
             'winner_id' => null,
             'score_a' => null, 'score_b' => null, 'points_a' => null, 'points_b' => null,
-            'result_status' => null, 'entered_by' => null, 'confirmed_by' => null,
+            'result_status' => null, 'result_meta' => null, 'entered_by' => null, 'confirmed_by' => null,
         ];
     }
 

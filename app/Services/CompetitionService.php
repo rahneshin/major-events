@@ -235,10 +235,14 @@ class CompetitionService
         }
 
         DB::transaction(function () use ($competition): void {
+            // فقط مرحله‌ی نهایی دوباره باز می‌شود؛ مرحله‌ی گروهیِ پایان‌یافته پایان‌یافته می‌ماند
+            $final = $competition->stages->firstWhere('is_final', true) ?? $competition->stages->last();
+
             foreach ($competition->stages as $stage) {
                 $stage->entries()->update(['final_rank' => null]);
-                $stage->update(['status' => StageStatus::Running->value]);
             }
+
+            $final?->update(['status' => StageStatus::Running->value]);
             $competition->competitors()->update(['final_rank' => null]);
             $competition->update(['status' => CompetitionStatus::Running->value]);
         });

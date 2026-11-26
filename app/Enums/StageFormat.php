@@ -17,9 +17,9 @@ enum StageFormat: string
         return __('competition.format.'.$this->value);
     }
 
-    /** فرمت‌هایی که در این مرحله‌ی توسعه (12A/12B) جدولشان ساخته می‌شود. */
+    /** فرمت‌هایی که در این مرحله‌ی توسعه (تا 12D) جدولشان ساخته می‌شود؛ دوحذفی در 12F، سری‌ها در 12E. */
     public function isSupported(): bool
     {
-        return $this === self::RoundRobin;
+        return in_array($this, [self::RoundRobin, self::SingleElim, self::Groups], true);
     }
 }

@@ -10,6 +10,7 @@ use App\Enums\CompetitorStatus;
 use App\Enums\EventRole;
 use App\Enums\MatchStatus;
 use App\Enums\ResultStatus;
+use App\Enums\StageFormat;
 use App\Enums\StageStatus;
 use App\Models\Competition;
 use App\Models\Competitor;
@@ -65,7 +66,14 @@ class CompetitionShow extends Component
 
     public string $dSeed = '';
 
-    /** @var array{method: string, seed: string, order: list<int>, names: array<int, string>}|null */
+    /** تعداد گروه‌ها، تعداد صعودکننده از هر گروه، و بازی ردهبندی (فقط برای مرحله‌های مربوط) */
+    public string $dGroups = '4';
+
+    public string $dAdvance = '2';
+
+    public bool $dThird = true;
+
+    /** @var array{method: string, seed: string, order: list<int>, names: array<int, string>, groups: array<string, list<int>>|null, options: array<string, mixed>}|null */
     public ?array $preview = null;
 
     // ---- تنظیمات
@@ -85,6 +93,12 @@ class CompetitionShow extends Component
     public string $fixturesView = 'rounds';
 
     public string $roundFilter = '';
+
+    /** مرحله‌ی نمایش‌داده‌شده در برنامه/رده‌بندی (خالی = مرحله‌ی فعال) */
+    public string $stageId = '';
+
+    /** برنده‌ی تساوی در بازی حذفی: a | b */
+    public string $mTiebreak = '';
 
     public ?int $editingMatchId = null;
 
@@ -123,6 +137,14 @@ class CompetitionShow extends Component
 
         $this->event = $event;
         $this->competition = $competition;
+
+        // Step 12E: ورزش رتبه‌ای (سری‌ها) صفحه‌ی اختصاصی دارد
+        if ($competition->result_type === 'ranked') {
+            $this->redirect(route('competitions.ranked', ['event' => $event, 'competition' => $competition]), navigate: true);
+
+            return;
+        }
+
         $this->section = $this->normalizeSection($this->section);
         $this->fillSettings();
     }
@@ -232,7 +254,11 @@ class CompetitionShow extends Component
         }
 
         try {
-            $this->preview = $service->preview($this->competition, $this->dMethod, $this->dSeed !== '' ? $this->dSeed : null);
+            $this->preview = $service->preview($this->competition, $this->dMethod, $this->dSeed !== '' ? $this->dSeed : null, [
+                'groups' => $this->dGroups,
+                'advance' => $this->dAdvance,
+                'third_place' => $this->dThird,
+            ]);
             $this->dSeed = $this->preview['seed'];
         } catch (InvalidArgumentException $e) {
             $this->preview = null;
@@ -253,7 +279,7 @@ class CompetitionShow extends Component
 
         try {
             // همان seed و روش پیش‌نمایش ← همان نتیجه
-            $service->confirm($this->competition, Auth::user(), $this->preview['method'], $this->preview['seed']);
+            $service->confirm($this->competition, Auth::user(), $this->preview['method'], $this->preview['seed'], $this->preview['options']);
             $this->preview = null;
             $this->competition->refresh();
             $this->notice = __('competition.draw_done');
@@ -393,7 +419,17 @@ class CompetitionShow extends Component
 
     public function setFixturesView(string $view): void
     {
-        $this->fixturesView = in_array($view, ['rounds', 'matrix'], true) ? $view : 'rounds';
+        $this->fixturesView = in_array($view, ['rounds', 'matrix', 'bracket'], true) ? $view : 'rounds';
+        $this->cancelEdit();
+    }
+
+    public function selectStage(string $id): void
+    {
+        $stage = ctype_digit($id) ? $this->competition->stages()->whereKey((int) $id)->first() : null;
+
+        $this->stageId = $stage !== null ? (string) $stage->id : '';
+        $this->roundFilter = '';
+        $this->fixturesView = 'rounds';
         $this->cancelEdit();
     }
 
@@ -414,6 +450,7 @@ class CompetitionShow extends Component
         $this->mScoreA = $match->score_a !== null ? (string) $match->score_a : '';
         $this->mScoreB = $match->score_b !== null ? (string) $match->score_b : '';
         $this->mGames = [];
+        $this->mTiebreak = (string) ($match->result_meta['tiebreak'] ?? '');
 
         if ($this->competition->config('unit', 'goals') === 'games') {
             foreach ($match->games()->get() as $game) {
@@ -429,7 +466,7 @@ class CompetitionShow extends Component
     {
         $this->editingMatchId = null;
         $this->scheduleMatchId = null;
-        $this->reset(['mScoreA', 'mScoreB', 'mGames', 'scDate', 'scTime', 'scCourt']);
+        $this->reset(['mScoreA', 'mScoreB', 'mGames', 'mTiebreak', 'scDate', 'scTime', 'scCourt']);
     }
 
     public function saveResult(MatchService $service): void
@@ -454,6 +491,7 @@ class CompetitionShow extends Component
                 'score_a' => $this->mScoreA,
                 'score_b' => $this->mScoreB,
                 'games' => $games,
+                'tiebreak' => $this->mTiebreak,
             ], Auth::user()->can('confirmResult', $this->competition));
 
             $this->cancelEdit();
@@ -550,8 +588,10 @@ class CompetitionShow extends Component
         $this->authorize('manage', $this->competition);
         $this->clearMessages();
 
-        $stage = $this->competition->firstStage();
+        $stage = $this->competition->stages()->where('format', StageFormat::RoundRobin->value)->first();
         if ($stage === null) {
+            $this->error = __('competition.errors.manual_not_allowed');
+
             return;
         }
 
@@ -652,33 +692,55 @@ class CompetitionShow extends Component
     public function render(CompetitionService $service, StandingsService $standings)
     {
         $competition = $this->competition->fresh(['stages']) ?? $this->competition;
-        $stage = $competition->stages->first();
+        $stages = $competition->stages;
+        $drawStage = $stages->first();
+        $stage = $this->activeStage($stages);
 
         $competitors = $competition->competitors()->withCount('members')->orderBy('id')->get();
 
-        $fixtures = ['rounds' => [], 'current' => null, 'list' => collect(), 'matrix' => null];
+        $fixtures = ['rounds' => [], 'current' => null, 'list' => collect(), 'matrix' => null, 'bracket' => null, 'labels' => [], 'view' => 'rounds'];
         $draw = null;
         $standingRows = [];
+        $groupTables = [];
         $entries = collect();
+        $stageEntries = collect();
 
-        if ($stage !== null && $stage->status !== StageStatus::Pending) {
-            $entries = $stage->entries()->with('competitor')->get();
-            $draw = $stage->draws()->with('performer')->latest('id')->first();
+        if ($drawStage !== null && $drawStage->status !== StageStatus::Pending) {
+            $entries = $drawStage->entries()->with('competitor')->get();
+            $draw = $drawStage->draws()->with('performer')->latest('id')->first();
+        }
+
+        if ($stage !== null && ($stage->status !== StageStatus::Pending || $stage->matches()->exists())) {
+            $stageEntries = $stage->is($drawStage) ? $entries : $stage->entries()->with('competitor')->get();
 
             if ($this->section === 'fixtures') {
-                $fixtures = $this->fixtureData($stage, $entries);
+                $fixtures = $this->fixtureData($stage, $stageEntries);
             }
 
             if ($this->section === 'standings') {
-                $standingRows = $standings->forStage($stage);
+                if ($stage->format === StageFormat::Groups) {
+                    $groupTables = $standings->forGroups($stage);
+                } elseif ($stage->format === StageFormat::RoundRobin) {
+                    $standingRows = $standings->forStage($stage);
+                } else {
+                    $standingRows = $stageEntries->whereNotNull('final_rank')->sortBy('final_rank')->values()->all();
+                }
             }
         }
+
+        $knockoutAhead = $drawStage !== null
+            && ($drawStage->format === StageFormat::SingleElim
+                || ($drawStage->format === StageFormat::Groups && $stages->contains(fn (Stage $s) => $s->format === StageFormat::SingleElim)));
 
         $user = Auth::user();
 
         return view('livewire.competitions.competition-show', [
             'comp' => $competition,
             'stage' => $stage,
+            'stages' => $stages,
+            'drawStage' => $drawStage,
+            'knockoutAhead' => $knockoutAhead,
+            'groupTables' => $groupTables,
             'competitors' => $competitors,
             'entries' => $entries,
             'draw' => $draw,
@@ -709,15 +771,89 @@ class CompetitionShow extends Component
     // -------------------------------------------------------------- internals
 
     /**
-     * داده‌ی بخش برنامه‌ی بازی‌ها: دور جاری (صفحه‌بندی بر اساس دور) و ماتریس لیگ.
+     * مرحله‌ی نمایش‌داده‌شده: انتخاب کاربر، وگرنه آخرین مرحله‌ای که شروع شده (حذفیِ منتظر صعودکننده‌ها شروع‌نشده است).
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection<int, Stage>  $stages
+     */
+    private function activeStage($stages): ?Stage
+    {
+        if (ctype_digit($this->stageId)) {
+            $picked = $stages->firstWhere('id', (int) $this->stageId);
+
+            if ($picked !== null) {
+                return $picked;
+            }
+        }
+
+        return $stages->reverse()->first(fn (Stage $s) => $s->status !== StageStatus::Pending) ?? $stages->first();
+    }
+
+    /**
+     * برچسب یک طرف بازی: نام شرکت‌کننده، یا منبعش تا وقتی مشخص نشده (اول گروه A، برنده‌ی بازی ۱ دور ۱ …).
+     */
+    public function slotLabel(SportMatch $match, string $side): string
+    {
+        $competitor = $side === 'a' ? $match->a : $match->b;
+
+        if ($competitor !== null) {
+            return $competitor->name;
+        }
+
+        $source = $side === 'a' ? $match->a_source : $match->b_source;
+
+        if (is_array($source)) {
+            if (isset($source['group_rank'])) {
+                return __('competition.slot.group_rank', ['rank' => fa_num($source['group_rank'][1]), 'group' => $source['group_rank'][0]]);
+            }
+
+            foreach (['winner_of', 'loser_of'] as $kind) {
+                if (isset($source[$kind]) && preg_match('/^R(\d+)M(\d+)$/', (string) $source[$kind], $m) === 1) {
+                    return __('competition.slot.'.$kind, ['number' => fa_num($m[2]), 'round' => fa_num($m[1])]);
+                }
+            }
+        }
+
+        return '—';
+    }
+
+    /**
+     * نام دور: برای حذفی «فینال / نیمه‌نهایی / …»، وگرنه «دور N».
+     */
+    public function roundLabel(Stage $stage, int $round): string
+    {
+        if ($stage->format !== StageFormat::SingleElim) {
+            return __('competition.round', ['round' => fa_num($round)]);
+        }
+
+        $size = (int) $stage->config('bracket_size', 0);
+        $remaining = $size > 0 ? intdiv($size, 2 ** ($round - 1)) : 0;
+
+        return match ($remaining) {
+            2 => __('competition.rounds.final'),
+            4 => __('competition.rounds.semi'),
+            8 => __('competition.rounds.quarter'),
+            16 => __('competition.rounds.r16'),
+            32 => __('competition.rounds.r32'),
+            default => __('competition.round', ['round' => fa_num($round)]),
+        };
+    }
+
+    /**
+     * داده‌ی بخش برنامه‌ی بازی‌ها: دور جاری (صفحه‌بندی بر اساس دور)، ماتریس لیگ و نمای جدول حذفی.
      *
      * @param  Collection<int, \App\Models\StageEntry>  $entries
-     * @return array{rounds: list<int>, current: int|null, list: Collection<int, SportMatch>, matrix: array<string, mixed>|null}
+     * @return array{rounds: list<int>, current: int|null, list: Collection<int, SportMatch>, matrix: array<string, mixed>|null, bracket: array<int, Collection<int, SportMatch>>|null, labels: array<int, string>, view: string}
      */
     private function fixtureData(Stage $stage, Collection $entries): array
     {
         $all = $stage->matches()->with(['a', 'b'])->orderBy('round')->orderBy('number')->limit(1000)->get();
         $rounds = $all->pluck('round')->unique()->values()->map(fn ($r) => (int) $r)->all();
+
+        $view = match ($stage->format) {
+            StageFormat::RoundRobin => in_array($this->fixturesView, ['rounds', 'matrix'], true) ? $this->fixturesView : 'rounds',
+            StageFormat::SingleElim => in_array($this->fixturesView, ['rounds', 'bracket'], true) ? $this->fixturesView : 'rounds',
+            default => 'rounds',
+        };
 
         $current = null;
         if ($rounds !== []) {
@@ -730,7 +866,7 @@ class CompetitionShow extends Component
         }
 
         $matrix = null;
-        if ($this->fixturesView === 'matrix' && $entries->isNotEmpty()) {
+        if ($view === 'matrix' && $entries->isNotEmpty()) {
             $cells = [];
             foreach ($all as $m) {
                 if ($m->a_id !== null && $m->b_id !== null) {
@@ -740,7 +876,22 @@ class CompetitionShow extends Component
             $matrix = ['entries' => $entries->values(), 'cells' => $cells, 'legs' => (int) $stage->config('legs', 1)];
         }
 
-        return ['rounds' => $rounds, 'current' => $current, 'list' => $all->where('round', $current)->values(), 'matrix' => $matrix];
+        $bracket = $view === 'bracket' ? $all->groupBy('round')->map(fn ($g) => $g->values())->all() : null;
+
+        $labels = [];
+        foreach ($rounds as $round) {
+            $labels[$round] = $this->roundLabel($stage, $round);
+        }
+
+        return [
+            'rounds' => $rounds,
+            'current' => $current,
+            'list' => $all->where('round', $current)->values(),
+            'matrix' => $matrix,
+            'bracket' => $bracket,
+            'labels' => $labels,
+            'view' => $view,
+        ];
     }
 
     /**

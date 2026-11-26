@@ -55,6 +55,48 @@ return [
                 ],
             ],
         ],
+        'quick_knockout' => [
+            'name_fa' => 'حذفی تک‌شکست سریع',
+            'participant_type' => 'team',
+            'result_type' => 'match',
+            'scoring_config' => [
+                'unit' => 'goals',
+                'table_points' => ['win' => 3, 'draw' => 1, 'loss' => 0],
+                'tiebreakers' => $tiebreakers,
+            ],
+            'stages' => [
+                [
+                    'name' => 'جدول حذفی',
+                    'format' => 'single_elim',
+                    'is_final' => true,
+                    'config' => ['fixture_mode' => 'auto', 'third_place' => false, 'withdrawal_policy' => 'keep_played'],
+                ],
+            ],
+        ],
+        'group_knockout' => [
+            'name_fa' => 'گروهی ← حذفی (المپیاد درون‌دانشگاهی)',
+            'participant_type' => 'team',
+            'result_type' => 'match',
+            'scoring_config' => [
+                'unit' => 'goals',
+                'table_points' => ['win' => 3, 'draw' => 1, 'loss' => 0],
+                'tiebreakers' => $tiebreakers,
+            ],
+            'stages' => [
+                [
+                    'name' => 'مرحله‌ی گروهی',
+                    'format' => 'groups',
+                    'is_final' => false,
+                    'config' => ['legs' => 1, 'fixture_mode' => 'auto', 'withdrawal_policy' => 'keep_played', 'advance_count' => 2],
+                ],
+                [
+                    'name' => 'مرحله‌ی حذفی',
+                    'format' => 'single_elim',
+                    'is_final' => true,
+                    'config' => ['fixture_mode' => 'auto', 'third_place' => false],
+                ],
+            ],
+        ],
         'squash_league' => [
             'name_fa' => 'لیگ اسکواش (بهترین از ۵ گیم تا ۱۱)',
             'participant_type' => 'individual',
