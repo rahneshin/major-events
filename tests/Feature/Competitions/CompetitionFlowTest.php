@@ -167,15 +167,21 @@ it('confirms the draw with an audit document and moves the status', function () 
     expect(fn () => app(RegistrationService::class)->register($competition, $owner, ['name' => 'دیرهنگام']))->toThrow(InvalidArgumentException::class);
 });
 
-it('rejects withdrawal after the draw until the result module handles it', function () {
+it('applies the withdrawal policy after the draw instead of refusing', function () {
     $owner = cp_owner();
     $competition = cp_competition(tk_event($owner), $owner);
     cp_fill($competition, $owner, 4);
     cp_draw($competition, $owner);
 
     $competitor = $competition->competitors()->first();
+    app(RegistrationService::class)->withdraw($competitor, $owner);
 
-    expect(fn () => app(RegistrationService::class)->withdraw($competitor, $owner))->toThrow(InvalidArgumentException::class);
+    $matches = $competition->firstStage()->matches()
+        ->where(fn ($q) => $q->where('a_id', $competitor->id)->orWhere('b_id', $competitor->id))->get();
+
+    expect($competitor->refresh()->status->value)->toBe('withdrawn')
+        ->and($matches)->toHaveCount(3)
+        ->and($matches->every(fn ($m) => $m->status->value === 'walkover' && (int) $m->winner_id !== $competitor->id))->toBeTrue();
 });
 
 it('generates 210 matches for 15 teams in two legs and can be marked ready', function () {

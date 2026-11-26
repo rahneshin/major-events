@@ -9,6 +9,7 @@ use App\Enums\CompetitionRole;
 use App\Enums\CompetitionStatus;
 use App\Enums\EventRole;
 use App\Enums\EventStatus;
+use App\Enums\StageStatus;
 use App\Models\Competition;
 use App\Models\CompetitionTemplate;
 use App\Models\Event;
@@ -216,6 +217,33 @@ class CompetitionService
         self::logActivity('competition.status_changed', $competition, $competition->event_id, [
             'to' => CompetitionStatus::Ready->value,
         ]);
+
+        return $competition->refresh();
+    }
+
+    /**
+     * بازگشایی ورزش پایان‌یافته (مدیر): رتبه‌های نهایی پاک و ثبت/ویرایش نتیجه دوباره ممکن می‌شود.
+     *
+     * @throws InvalidArgumentException
+     */
+    public function reopen(Competition $competition, User $actor): Competition
+    {
+        $this->assertWritable($competition);
+
+        if ($competition->status !== CompetitionStatus::Finished) {
+            throw new InvalidArgumentException(__('competition.errors.not_finished'));
+        }
+
+        DB::transaction(function () use ($competition): void {
+            foreach ($competition->stages as $stage) {
+                $stage->entries()->update(['final_rank' => null]);
+                $stage->update(['status' => StageStatus::Running->value]);
+            }
+            $competition->competitors()->update(['final_rank' => null]);
+            $competition->update(['status' => CompetitionStatus::Running->value]);
+        });
+
+        self::logActivity('competition.reopened', $competition, $competition->event_id, []);
 
         return $competition->refresh();
     }

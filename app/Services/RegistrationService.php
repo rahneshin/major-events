@@ -17,7 +17,7 @@ use InvalidArgumentException;
  * Step 12A — ثبت‌نام تیم/نفر در یک ورزش.
  *
  * قواعد: نام داخل هر ورزش یکتا (بدون حساسیت به حروف)، ظرفیت (بدون احتساب انصرافی‌ها)،
- * ثبت‌نام فقط تا قبل از قرعه؛ انصراف بعد از قرعه در 12C (سیاست انصراف) پیاده می‌شود.
+ * ثبت‌نام فقط تا قبل از قرعه؛ انصراف بعد از قرعه با سیاست مرحله (MatchService::applyWithdrawal).
  */
 class RegistrationService
 {
@@ -25,7 +25,10 @@ class RegistrationService
 
     public const MAX_NAME_LENGTH = 120;
 
-    public function __construct(private CompetitionService $competitions) {}
+    public function __construct(
+        private CompetitionService $competitions,
+        private MatchService $matches,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $data  name, affiliation?, seed?, members? (list<string>), documents? (list<string>)
@@ -120,8 +123,8 @@ class RegistrationService
         $this->competitions->assertWritable($competition);
 
         if ($competition->status !== CompetitionStatus::Registration) {
-            // بعد از قرعه، انصراف با سیاست «keep_played/void_all/walkover» در Step 12C انجام می‌شود
-            throw new InvalidArgumentException(__('competition.errors.withdraw_after_draw'));
+            // بعد از قرعه: سیاست انصراف (keep_played / void_all) روی بازی‌ها اعمال می‌شود
+            return $this->matches->applyWithdrawal($competitor, $actor);
         }
 
         $competitor->update(['status' => CompetitorStatus::Withdrawn->value]);

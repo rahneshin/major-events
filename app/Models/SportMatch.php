@@ -8,6 +8,7 @@ use App\Enums\MatchStatus;
 use App\Enums\ResultStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 /** بازی (جدول `matches`)؛ نام `Match` در PHP رزرو است. */
@@ -47,6 +48,11 @@ class SportMatch extends Model
     public function stage(): BelongsTo
     {
         return $this->belongsTo(Stage::class);
+    }
+
+    public function games(): HasMany
+    {
+        return $this->hasMany(MatchGame::class, 'match_id')->orderBy('game_no');
     }
 
     public function a(): BelongsTo
