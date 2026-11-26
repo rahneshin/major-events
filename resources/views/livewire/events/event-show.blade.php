@@ -42,6 +42,7 @@
             'risk' => __('event.tab_risk'),
             'sponsorship' => __('event.tab_sponsorship'),
             'marketing' => __('event.tab_marketing'),
+                        'competitions' => __('competition.tab'),
         ] as $key => $label)
             <button type="button" wire:click="setTab('{{ $key }}')"
                 class="shrink-0 rounded-lg px-3.5 py-2.5 transition font-semibold
@@ -154,6 +155,9 @@
     @elseif ($tab === 'marketing')
         <livewire:events.event-marketing :event="$event" :key="'marketing-'.$event->id" />
 
+    @elseif ($tab === 'competitions')
+        <livewire:events.event-competitions :event="$event" :key="'competitions-'.$event->id" />
+            
     @elseif ($tab === 'committees')
         <livewire:events.event-committees :event="$event" :key="'committees-'.$event->id" />
 
